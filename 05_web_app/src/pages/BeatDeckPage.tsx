@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, Play, Square, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Pause, Play, Shuffle, Square, Trash2, X } from 'lucide-react';
 import { holoAudio } from '../audio/HoloAudioEngine';
 import { useHoloSfx } from '../audio/useHoloSfx';
 import { CardArtwork } from '../components/artwork/CardArtwork';
@@ -12,7 +12,8 @@ import {
   SOUND_CARDS,
   getCardById,
 } from '../data/soundCards';
-import { useHoloStore } from '../store/useHoloStore';
+import { BEAT_PRESETS, useHoloStore } from '../store/useHoloStore';
+import type { BeatPresetId } from '../types/holo';
 
 export const BeatDeckPage: React.FC = () => {
   const isPlaying = useHoloStore((s) => s.isPlaying);
@@ -42,6 +43,7 @@ export const BeatDeckPage: React.FC = () => {
   const playSfx = useHoloSfx();
   const [activeStep, setActiveStep] = useState<number>(() => holoAudio.getCurrentStep());
   const [swapTrackIdx, setSwapTrackIdx] = useState<number | null>(null);
+  const [activePreset, setActivePreset] = useState<BeatPresetId | null>('MARKET');
 
   const oledCanvasRef = useRef<HTMLCanvasElement>(null);
   const paintModeRef = useRef<{ painting: boolean; value: boolean; trackIdx: number }>({
@@ -58,7 +60,7 @@ export const BeatDeckPage: React.FC = () => {
     return unsub;
   }, []);
 
-  // Spacebar Play/Stop shortcut on Beat Deck
+  // Spacebar Play/Pause shortcut on Beat Deck
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' && (e.target as HTMLElement)?.tagName !== 'INPUT') {
@@ -70,7 +72,6 @@ export const BeatDeckPage: React.FC = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  // Release pad drag-painting globally
   useEffect(() => {
     const onUp = () => {
       paintModeRef.current.painting = false;
@@ -79,45 +80,47 @@ export const BeatDeckPage: React.FC = () => {
     return () => window.removeEventListener('pointerup', onUp);
   }, []);
 
-  // Sync audio parameters whenever store changes
   useEffect(() => {
     holoAudio.syncFromStore();
   }, [bpm, swing, tracks, liveFx]);
 
-  // 60fps Master OLED Spectrum + Neon Waveform Visualizer (1:1 Mockup 2!)
+  // 60fps Master OLED Spectrum + Neon Oscilloscope Visualizer
   useEffect(() => {
     let raf = 0;
     const barColors = [
-      '#00D4AA',
-      '#00D4AA',
-      '#38BDF8',
-      '#38BDF8',
-      '#7C3AED',
-      '#A855F7',
-      '#FF3D9A',
-      '#FF3D9A',
-      '#FF5C2B',
-      '#FF5C2B',
-      '#FFD60A',
-      '#FFD60A',
+      '#00D4AA', '#00D4AA', '#38BDF8', '#38BDF8',
+      '#7C3AED', '#A855F7', '#FF3D9A', '#FF3D9A',
+      '#FF5526', '#FF5526', '#FFD426', '#FFD426',
     ];
 
     const render = (t: number) => {
       const canvas = oledCanvasRef.current;
       if (canvas) {
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const cssW = Math.max(120, canvas.clientWidth);
+        const cssH = Math.max(36, canvas.clientHeight);
+        const targetW = Math.round(cssW * dpr);
+        const targetH = Math.round(cssH * dpr);
+        if (canvas.width !== targetW || canvas.height !== targetH) {
+          canvas.width = targetW;
+          canvas.height = targetH;
+        }
+
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          const w = canvas.width;
-          const h = canvas.height;
-          ctx.fillStyle = '#181820';
+          ctx.save();
+          ctx.scale(dpr, dpr);
+          const w = cssW;
+          const h = cssH;
+          ctx.fillStyle = '#14151B';
           ctx.fillRect(0, 0, w, h);
 
           const fft = holoAudio.getFftData();
           const wave = holoAudio.getWaveformData();
           const playing = useHoloStore.getState().isPlaying;
 
-          // Left half: 12 Rainbow FFT Spectrum Bars
-          const spectrumW = w * 0.44;
+          // Left half: Crisp Retina Rainbow FFT Spectrum Bars
+          const spectrumW = Math.min(w * 0.44, 240);
           const barCount = barColors.length;
           const gap = 3.5;
           const bw = (spectrumW - 14 - gap * (barCount - 1)) / barCount;
@@ -127,28 +130,28 @@ export const BeatDeckPage: React.FC = () => {
             const norm = Math.min(1, Math.max(0, (db + 88) / 68));
             const idle = playing
               ? 0.22 + Math.abs(Math.sin(t * 0.008 + i * 0.7)) * 0.55
-              : 0.16 + Math.sin((i / barCount) * Math.PI) * (0.45 + Math.sin(t * 0.003 + i) * 0.12);
+              : 0.16 + Math.sin(((i + 0.5) / barCount) * Math.PI) * (0.46 + Math.sin(t * 0.003 + i) * 0.12);
             const lvl = Math.max(norm, idle * (playing ? 0.85 : 0.72));
-            const bh = Math.max(5, lvl * (h - 14));
+            const bh = Math.max(4, lvl * (h - 12));
             const x = 8 + i * (bw + gap);
             ctx.fillStyle = barColors[i];
             ctx.beginPath();
-            ctx.roundRect(x, h - 7 - bh, bw, bh, 2);
+            ctx.roundRect(x, h - 6 - bh, bw, bh, 2);
             ctx.fill();
           }
 
-          // Subtle vertical divider inside OLED
+          // Vertical divider inside OLED
           const midX = spectrumW + 6;
-          ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+          ctx.strokeStyle = 'rgba(255,255,255,0.14)';
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(midX, 8);
           ctx.lineTo(midX, h - 8);
           ctx.stroke();
 
-          // Right half: Glowing Cyan -> Magenta Oscilloscope Wave
-          const waveStart = midX + 8;
-          const waveW = w - waveStart - 10;
+          // Right half: Crisp Retina Glowing Cyan -> Magenta Oscilloscope Wave
+          const waveStart = midX + 10;
+          const waveW = Math.max(40, w - waveStart - 10);
           const grad = ctx.createLinearGradient(waveStart, 0, waveStart + waveW, 0);
           grad.addColorStop(0, '#00D4AA');
           grad.addColorStop(0.5, '#38BDF8');
@@ -160,15 +163,15 @@ export const BeatDeckPage: React.FC = () => {
           ctx.shadowBlur = 6;
           ctx.beginPath();
 
-          const samples = 48;
+          const samples = 56;
           for (let i = 0; i < samples; i++) {
             const idx = Math.floor((i / samples) * wave.length);
             const raw = wave[idx] ?? 0;
             const idleWave =
-              Math.sin(i * 0.65 + t * 0.006) *
+              Math.sin(i * 0.55 + t * 0.006) *
               Math.sin((i / (samples - 1)) * Math.PI) *
-              (playing ? 0.35 : 0.25);
-            const val = Math.abs(raw) > 0.01 ? raw * 1.45 : idleWave;
+              (playing ? 0.36 : 0.28);
+            const val = Math.abs(raw) > 0.01 ? raw * 1.5 : idleWave;
             const px = waveStart + (i / (samples - 1)) * waveW;
             const py = h / 2 + val * (h * 0.42);
             if (i === 0) ctx.moveTo(px, py);
@@ -176,6 +179,7 @@ export const BeatDeckPage: React.FC = () => {
           }
           ctx.stroke();
           ctx.shadowBlur = 0;
+          ctx.restore();
         }
       }
       raf = requestAnimationFrame(render);
@@ -184,12 +188,24 @@ export const BeatDeckPage: React.FC = () => {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Show visual playhead on step 4 (column 5, 1-indexed) as crisp default preview if stopped, or live step when playing
-  const displayPlayhead = isPlaying ? activeStep : 4;
+  // Only light up the moving playhead when transport is active!
+  const livePlayhead = isPlaying && activeStep >= 0 ? activeStep : -1;
+  const anySolo = tracks.some((t) => t.solo);
+
+  const handleLoadPreset = (presetId: BeatPresetId) => {
+    playSfx('cartridgeLock');
+    setActivePreset(presetId);
+    applyBeatPreset(presetId);
+    const meta = BEAT_PRESETS[presetId];
+    pushToast({
+      text: `♪ 已装填「${meta.zhTitle}」(${meta.bpm} BPM · ${SCALE_META[meta.scale].zhLabel})`,
+      accent: presetId === 'MARKET' ? '#FFD426' : presetId === 'NIGHT' ? '#7C3AED' : '#00D4AA',
+    });
+  };
 
   return (
-    <div className="w-full h-full p-3 flex flex-col gap-3 overflow-hidden">
-      {/* ================= 1. TOP TRANSPORT & MASTER OLED BAR ================= */}
+    <div className="w-full h-full p-3.5 flex flex-col gap-3 overflow-hidden">
+      {/* ================= 1. TOP TRANSPORT & MASTER OLED DECK ================= */}
       <section className="brutal-panel px-3 py-2 flex items-center justify-between gap-2.5 shrink-0">
         {/* Left: PLAY / STOP / REC CARD */}
         <div className="flex items-center gap-2 shrink-0">
@@ -198,13 +214,18 @@ export const BeatDeckPage: React.FC = () => {
               playSfx('click', 0.8);
               void holoAudio.togglePlay();
             }}
-            className={`brutal-btn h-[50px] px-4 rounded-xl flex items-center gap-1.5 text-[15px] font-black tracking-wide ${
+            title="播放 / 暂停（快捷键 Space）"
+            className={`brutal-btn h-[48px] px-4 rounded-xl flex items-center gap-1.5 text-[14px] font-black tracking-wide ${
               isPlaying
-                ? 'bg-[#00D4AA] text-[#1A1A1F] ring-2 ring-[#1A1A1F]'
-                : 'bg-[#00D4AA] text-[#1A1A1F]'
+                ? 'bg-[#FFD426] text-[#17171C] ring-2 ring-[#17171C]'
+                : 'bg-[#00D4AA] text-[#17171C]'
             }`}
           >
-            <Play className={`w-4 h-4 fill-current ${isPlaying ? 'animate-pulse' : ''}`} />
+            {isPlaying ? (
+              <Pause className="w-4 h-4 fill-current" />
+            ) : (
+              <Play className="w-4 h-4 fill-current" />
+            )}
             <span>{isPlaying ? 'PAUSE' : 'PLAY'}</span>
           </button>
 
@@ -213,9 +234,9 @@ export const BeatDeckPage: React.FC = () => {
               playSfx('click', 0.35);
               holoAudio.stopTransport();
             }}
-            className="brutal-btn h-[50px] px-3.5 rounded-xl bg-[#FFFDF8] text-[#1A1A1F] flex items-center gap-1.5 text-[15px] font-black tracking-wide"
+            className="brutal-btn h-[48px] px-3 rounded-xl bg-[#FBF9F4] text-[#17171C] flex items-center gap-1.5 text-[14px] font-black tracking-wide"
           >
-            <Square className="w-4 h-4 fill-current" />
+            <Square className="w-3.5 h-3.5 fill-current" />
             <span>STOP</span>
           </button>
 
@@ -225,9 +246,9 @@ export const BeatDeckPage: React.FC = () => {
               sendBeatToForge();
             }}
             title="灌录当前节拍快照送入 04 闪卡铸造屋"
-            className="brutal-btn h-[50px] px-3.5 rounded-xl bg-[#FF5C2B] text-[#1A1A1F] flex items-center gap-2 text-[13px] font-black leading-tight text-left"
+            className="brutal-btn h-[48px] px-3 rounded-xl bg-[#FF5526] text-[#17171C] flex items-center gap-1.5 text-[12px] font-black leading-tight text-left"
           >
-            <span className="w-4 h-4 rounded-full bg-[#FFFDF8] border-[2.5px] border-[#1A1A1F] shrink-0" />
+            <span className="w-3.5 h-3.5 rounded-full bg-[#FBF9F4] border-[2.5px] border-[#17171C] shrink-0" />
             <span>
               REC
               <br />
@@ -236,12 +257,12 @@ export const BeatDeckPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Center: Wide Dark Charcoal OLED Visualizer + Scale Lock Pill */}
-        <div className="flex-1 h-[54px] rounded-2xl bg-[#181820] border-[2.5px] border-[#1A1A1F] px-2 flex items-center gap-2 min-w-[200px] overflow-hidden">
+        {/* Center: Wide Deep-Obsidian OLED Visualizer + Scale Lock Pill */}
+        <div className="relative oled-scanlines flex-1 h-[52px] rounded-2xl bg-[#14151B] border-[2.5px] border-[#17171C] shadow-[inset_0_3px_10px_rgba(0,0,0,0.65)] px-2 flex items-center gap-2 min-w-[180px] overflow-hidden">
           <canvas
             ref={oledCanvasRef}
             width={360}
-            height={50}
+            height={48}
             className="flex-1 h-full min-w-0 block"
           />
           <button
@@ -249,135 +270,154 @@ export const BeatDeckPage: React.FC = () => {
               playSfx('click', 0.75);
               cycleScale();
             }}
-            title={`调式锁定：${SCALE_META[scale].zhLabel}（点击切换）`}
-            className="h-8 px-3 rounded-full bg-[#FFFDF8] border-[2px] border-[#1A1A1F] font-mono-hw text-xs font-black text-[#1A1A1F] flex items-center gap-1 shrink-0 cursor-pointer hover:bg-[#FFD60A] transition-colors"
+            title={`调式锁定：${SCALE_META[scale].zhLabel}（点击切换五声 / 小调 / 爵士）`}
+            className="relative z-10 h-8 px-2.5 rounded-full bg-[#FBF9F4] border-[2px] border-[#17171C] font-mono-hw text-[11px] font-black text-[#17171C] flex items-center gap-1 shrink-0 cursor-pointer hover:bg-[#FFD426] transition-colors"
           >
             <span>{SCALE_META[scale].label}</span>
             <ChevronDown className="w-3.5 h-3.5" strokeWidth={3} />
           </button>
         </div>
 
-        <div className="h-10 w-[2px] bg-[#1A1A1F]/25 shrink-0 hidden xl:block" />
-
-        {/* Right: BPM Stepper + SWING Knob + 2x2 Presets */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        {/* Right: BPM Stepper + SWING Calibrated Knob + 3 Demo Presets + RAND/CLEAR */}
+        <div className="flex items-center gap-2 shrink-0">
           {/* BPM Stepper Pill */}
-          <div className="h-[42px] rounded-xl bg-[#FFFDF8] border-[2.5px] border-[#1A1A1F] shadow-[2px_2px_0px_0px_#1A1A1F] px-1.5 flex items-center gap-1">
+          <div className="h-[42px] rounded-xl bg-[#FBF9F4] border-[2.5px] border-[#17171C] shadow-[2px_2px_0px_0px_#17171C] px-1 flex items-center gap-0.5">
             <button
               onClick={() => {
                 playSfx('knobTick', 0.3);
                 setBpm(bpm - 4);
               }}
-              className="p-1 hover:bg-[#EDE7D9] rounded-lg cursor-pointer"
+              className="p-1 hover:bg-[#E7E1D3] rounded-lg cursor-pointer"
               aria-label="decrease bpm"
             >
-              <ChevronLeft className="w-4 h-4 fill-current" />
+              <ChevronLeft className="w-3.5 h-3.5 fill-current" />
             </button>
-            <div className="px-2.5 py-1 rounded-lg bg-[#181820] font-mono-hw text-xs font-black text-[#FFFDF8] whitespace-nowrap">
-              BPM {bpm}
+            <div className="px-2 py-1 rounded-lg bg-[#14151B] font-mono-hw text-[11.5px] font-black text-[#FBF9F4] whitespace-nowrap">
+              {bpm} BPM
             </div>
             <button
               onClick={() => {
                 playSfx('knobTick', 0.8);
                 setBpm(bpm + 4);
               }}
-              className="p-1 hover:bg-[#EDE7D9] rounded-lg cursor-pointer"
+              className="p-1 hover:bg-[#E7E1D3] rounded-lg cursor-pointer"
               aria-label="increase bpm"
             >
-              <ChevronRight className="w-4 h-4 fill-current" />
+              <ChevronRight className="w-3.5 h-3.5 fill-current" />
             </button>
           </div>
 
-          {/* SWING Rotary Knob */}
+          {/* SWING Calibrated Rotary Knob */}
           <BrutalKnob
             value={swing / 0.6}
             onChange={(v) => setSwing(v * 0.6)}
-            color="#FFD60A"
-            size={38}
+            color="#FFD426"
+            size={34}
             label="SWING"
-            title={`摇摆度 Swing: ${Math.round(swing * 100)}%（上下拖拽调节）`}
+            title={`摇摆度 Swing: ${Math.round(swing * 100)}%（上下拖拽或滚轮调节）`}
           />
 
-          {/* 2x2 Presets: MARKET / NIGHT / RAND / CLEAR */}
-          <div className="grid grid-cols-2 gap-1.5">
-            <button
-              onClick={() => {
-                playSfx('cartridgeLock');
-                applyBeatPreset('MARKET');
-                pushToast({ text: '已加载预设：胡同早市 MARKET (120 BPM · 五声C)', accent: '#FFD60A' });
-              }}
-              className="brutal-pad px-2.5 py-1 rounded-lg bg-[#FFFDF8] hover:bg-[#FFD60A] text-[11px] font-black tracking-wide"
-            >
-              MARKET
-            </button>
-            <button
-              onClick={() => {
-                playSfx('cartridgeLock');
-                applyBeatPreset('NIGHT');
-                pushToast({ text: '已加载预设：赛博夜市 NIGHT (128 BPM · 霓虹小调)', accent: '#7C3AED' });
-              }}
-              className="brutal-pad px-2.5 py-1 rounded-lg bg-[#FFFDF8] hover:bg-[#7C3AED] hover:text-white text-[11px] font-black tracking-wide"
-            >
-              NIGHT
-            </button>
-            <button
-              onClick={() => {
-                playSfx('ratchet');
-                randomizeBeat();
-              }}
-              className="brutal-pad px-2.5 py-1 rounded-lg bg-[#FFFDF8] hover:bg-[#00D4AA] text-[11px] font-black tracking-wide"
-            >
-              RAND
-            </button>
-            <button
-              onClick={() => {
-                playSfx('click', 0.2);
-                clearBeat();
-              }}
-              className="brutal-pad px-2.5 py-1 rounded-lg bg-[#FFFDF8] hover:bg-[#FF5C2B] hover:text-white text-[11px] font-black tracking-wide"
-            >
-              CLEAR
-            </button>
+          {/* Compact Curated Presets + Tools */}
+          <div className="flex flex-col gap-1">
+            <div className="grid grid-cols-3 gap-1">
+              {(['MARKET', 'NIGHT', 'LOFI'] as BeatPresetId[]).map((pid) => {
+                const isSel = activePreset === pid;
+                return (
+                  <button
+                    key={pid}
+                    onClick={() => handleLoadPreset(pid)}
+                    title={BEAT_PRESETS[pid].zhTitle}
+                    className={`brutal-pad px-2 py-0.5 rounded-md text-[10px] font-black tracking-wide whitespace-nowrap ${
+                      isSel
+                        ? 'bg-[#FFD426] text-[#17171C]'
+                        : 'bg-[#FBF9F4] text-[#17171C] hover:bg-[#E7E1D3]'
+                    }`}
+                  >
+                    {BEAT_PRESETS[pid].label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              <button
+                onClick={() => {
+                  playSfx('ratchet');
+                  setActivePreset(null);
+                  randomizeBeat();
+                }}
+                title="一键随机生成街头律动"
+                className="brutal-pad px-2 py-0.5 rounded-md bg-[#FBF9F4] hover:bg-[#00D4AA] text-[10px] font-black tracking-wide flex items-center justify-center gap-1"
+              >
+                <Shuffle className="w-2.5 h-2.5" strokeWidth={2.8} />
+                <span>RAND</span>
+              </button>
+              <button
+                onClick={() => {
+                  playSfx('click', 0.2);
+                  setActivePreset(null);
+                  clearBeat();
+                }}
+                title="清空全部打击垫"
+                className="brutal-pad px-2 py-0.5 rounded-md bg-[#FBF9F4] hover:bg-[#FF5526] hover:text-white text-[10px] font-black tracking-wide flex items-center justify-center gap-1"
+              >
+                <Trash2 className="w-2.5 h-2.5" strokeWidth={2.8} />
+                <span>CLEAR</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ================= 2. MAIN 4-TRACK SEQUENCER CHASSIS ================= */}
-      <section className="brutal-panel flex-1 flex flex-col px-3 py-2.5 min-h-0 overflow-hidden">
-        {/* Step Column Numbers 1..16 Aligned Over the Pad Matrix */}
-        <div className="grid grid-cols-[188px_156px_1fr] gap-3 items-center pb-1.5 shrink-0">
-          <div className="text-[11px] font-black uppercase tracking-wider text-[#5C5C6B] pl-1">
-            CARTRIDGE SLOTS
+      <section className="brutal-panel flex-1 flex flex-col px-3.5 py-2.5 min-h-0 overflow-hidden">
+        {/* Step Column Numbers 1..16 + Live 4-Beat Bar LEDs */}
+        <div className="grid grid-cols-[194px_162px_1fr] gap-3 items-center pb-1.5 shrink-0">
+          <div className="flex items-center justify-between pl-1">
+            <span className="hw-silkscreen">CARTRIDGE SLOTS</span>
+            <span className="hw-silkscreen !text-[8px] opacity-70">UNIT 02</span>
           </div>
-          <div className="text-[11px] font-black uppercase tracking-wider text-[#5C5C6B] text-center">
-            MIXER
-          </div>
+          <div className="hw-silkscreen text-center">CHANNEL MIXER</div>
           <div className="grid grid-cols-16 gap-1.5 px-1">
             {Array.from({ length: 16 }, (_, stepIdx) => {
               const isGroupStart = stepIdx % 4 === 0;
-              const isHead = displayPlayhead === stepIdx;
+              const isHead = livePlayhead === stepIdx;
+              const isBarActive = isPlaying && livePlayhead >= 0 && Math.floor(livePlayhead / 4) === Math.floor(stepIdx / 4);
               return (
                 <div
                   key={stepIdx}
-                  className={`relative text-center font-mono-hw text-xs font-black transition-colors ${
-                    isHead ? 'text-[#FF5C2B] scale-110' : 'text-[#1A1A1F]'
+                  className={`relative flex flex-col items-center justify-center font-mono-hw text-[11px] font-black transition-all ${
+                    isHead
+                      ? 'text-[#FF5526] scale-115'
+                      : isGroupStart
+                        ? 'text-[#17171C]'
+                        : 'text-[#626272]'
                   }`}
                 >
-                  {isGroupStart && (
-                    <span className="absolute -left-[4px] top-0.5 bottom-0.5 w-[2px] bg-[#1A1A1F]/40" />
+                  {isGroupStart && stepIdx > 0 && (
+                    <span className="absolute -left-[4px] top-0.5 bottom-0.5 w-[1.5px] bg-[#17171C]/28" />
                   )}
-                  {stepIdx + 1}
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full mb-0.5 transition-colors ${
+                      isHead
+                        ? 'bg-[#FF5526] shadow-[0_0_6px_#FF5526]'
+                        : isGroupStart
+                          ? isBarActive
+                            ? 'bg-[#00D4AA]'
+                            : 'bg-[#17171C]/35'
+                          : 'bg-transparent'
+                    }`}
+                  />
+                  <span>{stepIdx + 1}</span>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* 4 Horizontal Track Rows + Continuous Vertical Glowing Playhead Column */}
+        {/* 4 Horizontal Track Rows + Continuous Vertical Glowing Playhead Column (Only When Playing!) */}
         <div className="flex-1 grid grid-rows-4 gap-2 min-h-0 relative">
-          {/* Continuous Vertical Neon Yellow Playhead Bar (1:1 Mockup 2!) */}
-          {displayPlayhead >= 0 && displayPlayhead < 16 && (
-            <div className="pointer-events-none absolute inset-0 z-20 grid grid-cols-[188px_156px_1fr] gap-3 px-2.5">
+          {livePlayhead >= 0 && livePlayhead < 16 && (
+            <div className="pointer-events-none absolute inset-0 z-20 grid grid-cols-[194px_162px_1fr] gap-3 px-2.5">
               <div />
               <div />
               <div className="grid grid-cols-16 gap-1.5 px-1 h-full">
@@ -385,8 +425,8 @@ export const BeatDeckPage: React.FC = () => {
                   <div
                     key={idx}
                     className={
-                      idx === displayPlayhead
-                        ? 'h-full -my-1 rounded-xl border-[3px] border-[#FFD60A] bg-[#FFD60A]/14 shadow-[0_0_16px_rgba(255,214,10,0.85),inset_0_0_10px_rgba(255,214,10,0.35)]'
+                      idx === livePlayhead
+                        ? 'h-full -my-0.5 rounded-xl border-[2.5px] border-[#FFD426] bg-[#FFD426]/12 shadow-[0_0_16px_rgba(255,212,38,0.65),inset_0_0_8px_rgba(255,212,38,0.28)]'
                         : ''
                     }
                   />
@@ -394,80 +434,94 @@ export const BeatDeckPage: React.FC = () => {
               </div>
             </div>
           )}
+
           {tracks.map((track, trackIdx) => {
             const card = getCardById(track.cardId);
             const catMeta = CATEGORY_META[track.category];
             const rarMeta = RARITY_META[card.rarity];
+            const isMuted = track.mute || (anySolo && !track.solo);
+            const isRowFiring = !isMuted && livePlayhead >= 0 && track.steps[livePlayhead];
 
             return (
               <div
                 key={track.category}
-                className="grid grid-cols-[188px_156px_1fr] gap-3 items-center rounded-2xl border-[2px] border-[#1A1A1F]/80 bg-[#FFFDF8] px-2.5 py-1.5 shadow-[inset_0_-1px_0_rgba(0,0,0,0.06)]"
+                className={`grid grid-cols-[194px_162px_1fr] gap-3 items-center rounded-2xl border-[2px] px-2.5 py-1.5 transition-colors ${
+                  isMuted
+                    ? 'border-[#17171C]/35 bg-[#F3EFE6]/70 opacity-72'
+                    : 'border-[#17171C]/85 bg-[#FBF9F4] shadow-[inset_0_1px_0_rgba(255,255,255,0.88)]'
+                }`}
               >
                 {/* LEFT: Physical Cartridge Sound-Card Slot + Eject Button */}
-                <div className="flex items-stretch gap-1.5 h-full min-h-[68px]">
+                <div className="flex items-stretch gap-1.5 h-full max-h-[76px] min-h-[62px]">
                   <button
                     onClick={() => void holoAudio.previewCard(card.id)}
                     title={`点击试听：${card.title}（${card.zhTitle}）`}
-                    className="flex-1 rounded-xl bg-[#181820] border-[2.5px] border-[#1A1A1F] p-[3px] flex flex-col overflow-hidden cursor-pointer group hover:brightness-105"
+                    className={`flex-1 rounded-xl bg-[#14151B] border-[2.5px] border-[#17171C] p-[3px] flex flex-col overflow-hidden cursor-pointer group transition-transform duration-100 ${
+                      isRowFiring ? 'scale-[1.02] ring-2 ring-[#FFD426]' : 'hover:brightness-105'
+                    }`}
                   >
-                    {/* Yellow Cartridge Top Label Strip */}
-                    <div className="bg-[#FFD60A] border-b-[2px] border-[#1A1A1F] rounded-t-[7px] px-2 py-[2px] flex items-center justify-between">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#1A1A1F]/60" />
-                      <span className="text-[11px] font-black tracking-wider text-[#1A1A1F] leading-none">
+                    {/* Hardware Category Strip + Live Activity LED */}
+                    <div
+                      className="border-b-[1.5px] border-[#17171C] rounded-t-[6px] px-2 py-[2px] flex items-center justify-between"
+                      style={{ backgroundColor: catMeta.color, color: catMeta.textColor }}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full border border-[#17171C]/50 transition-all ${
+                          isRowFiring
+                            ? 'bg-[#FFFFFF] scale-125 shadow-[0_0_6px_#FFFFFF]'
+                            : 'bg-[#17171C]/35'
+                        }`}
+                      />
+                      <span className="text-[10.5px] font-black tracking-wider leading-none">
                         {track.category}
                       </span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#1A1A1F]/60" />
+                      <span className="font-mono-hw text-[9px] font-black opacity-85 leading-none">
+                        {card.code}
+                      </span>
                     </div>
+
                     {/* Inserted Miniature Holographic Card */}
-                    <div
-                      className="relative flex-1 rounded-b-[7px] overflow-hidden holo-thumb-sheen flex items-center"
-                      style={{
-                        background:
-                          'linear-gradient(120deg, #E9D5FF 0%, #BAE6FD 32%, #FEF08A 62%, #FBCFE8 100%)',
-                      }}
-                    >
-                      <div className="w-14 h-full shrink-0 overflow-hidden border-r-[1.5px] border-[#1A1A1F]">
+                    <div className="relative flex-1 rounded-b-[6px] overflow-hidden holo-thumb-sheen flex items-center bg-[#1E1F28]">
+                      <div className="w-12 h-full shrink-0 overflow-hidden border-r-[1.5px] border-[#17171C]">
                         <CardArtwork artId={card.artId} />
                       </div>
-                      <div className="flex-1 px-1.5 py-0.5 flex flex-col justify-between h-full">
-                        <div className="flex items-center justify-between gap-1">
+                      <div className="flex-1 px-2 py-0.5 flex flex-col justify-center gap-0.5 h-full text-left min-w-0">
+                        <div className="flex items-center gap-1">
                           <span
-                            className="px-1 py-[1px] rounded text-[9px] font-black border border-[#1A1A1F]"
+                            className="px-1 py-[0.5px] rounded text-[8.5px] font-black border border-[#17171C]"
                             style={{ backgroundColor: rarMeta.bg, color: rarMeta.text }}
                           >
                             {rarMeta.label}
                           </span>
-                          <span className="font-mono-hw text-[9px] font-black text-[#1A1A1F] bg-[#FFFDF8]/90 px-1 rounded border border-[#1A1A1F]/40">
-                            {card.code}
+                          <span className="text-[9px] font-bold text-white/60 truncate">
+                            {card.zhTitle}
                           </span>
                         </div>
-                        <div className="text-[12px] font-black italic tracking-tight text-[#1A1A1F] truncate leading-none text-left drop-shadow-[0_1px_0_rgba(255,255,255,0.85)]">
+                        <div className="text-[12px] font-black italic tracking-tight text-[#FBF9F4] truncate leading-none">
                           {card.shortTitle}
                         </div>
                       </div>
                     </div>
                   </button>
 
-                  {/* Eject / Swap Card Button */}
+                  {/* Eject / Swap Cartridge Button */}
                   <button
                     onClick={() => {
                       playSfx('click', 0.7);
                       setSwapTrackIdx(trackIdx);
                     }}
-                    title="更换此轨道插槽声卡"
-                    className="brutal-pad w-7 rounded-xl bg-[#FFFDF8] hover:bg-[#FFD60A] flex flex-col items-center justify-center gap-0.5 shrink-0"
+                    title="弹出更换此轨道插槽声卡"
+                    className="brutal-pad w-7 rounded-xl bg-[#FBF9F4] hover:bg-[#FFD426] flex flex-col items-center justify-center shrink-0"
                   >
-                    <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 fill-[#1A1A1F]">
+                    <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 fill-[#17171C]">
                       <polygon points="8,3 14,10 2,10" />
                       <rect x="2" y="12" width="12" height="2" rx="0.5" />
                     </svg>
                   </button>
                 </div>
 
-                {/* MIDDLE: Compact Track Mixer (M/S + TONE Knob + VOL Slider) */}
-                <div className="flex items-center gap-2 px-1 border-x-[1.5px] border-[#1A1A1F]/15 h-full">
-                  {/* Mute / Solo Vertical Pair */}
+                {/* MIDDLE: Compact Channel Mixer (M/S + Calibrated TONE Knob + Ridged VOL Fader) */}
+                <div className="flex items-center gap-2 px-1.5 border-x-[1.5px] border-[#17171C]/12 h-full">
                   <div className="flex flex-col gap-1 shrink-0">
                     <button
                       onClick={() => {
@@ -475,10 +529,10 @@ export const BeatDeckPage: React.FC = () => {
                         toggleTrackMute(trackIdx);
                       }}
                       title="静音该轨 (Mute)"
-                      className={`w-7 h-6 rounded-md border-[2px] border-[#1A1A1F] font-mono-hw text-[11px] font-black cursor-pointer transition-colors ${
+                      className={`w-6.5 h-6 rounded-md border-[2px] border-[#17171C] font-mono-hw text-[10.5px] font-black cursor-pointer transition-colors ${
                         track.mute
-                          ? 'bg-[#FF5C2B] text-white'
-                          : 'bg-[#FFFDF8] text-[#1A1A1F] hover:bg-[#EDE7D9]'
+                          ? 'bg-[#FF5526] text-white'
+                          : 'bg-[#FBF9F4] text-[#17171C] hover:bg-[#E7E1D3]'
                       }`}
                     >
                       M
@@ -489,42 +543,42 @@ export const BeatDeckPage: React.FC = () => {
                         toggleTrackSolo(trackIdx);
                       }}
                       title="独奏该轨 (Solo)"
-                      className={`w-7 h-6 rounded-md border-[2px] border-[#1A1A1F] font-mono-hw text-[11px] font-black cursor-pointer transition-colors ${
+                      className={`w-6.5 h-6 rounded-md border-[2px] border-[#17171C] font-mono-hw text-[10.5px] font-black cursor-pointer transition-colors ${
                         track.solo
-                          ? 'bg-[#FFD60A] text-[#1A1A1F]'
-                          : 'bg-[#FFFDF8] text-[#1A1A1F] hover:bg-[#EDE7D9]'
+                          ? 'bg-[#FFD426] text-[#17171C]'
+                          : 'bg-[#FBF9F4] text-[#17171C] hover:bg-[#E7E1D3]'
                       }`}
                     >
                       S
                     </button>
                   </div>
 
-                  {/* TONE Rotary Knob */}
                   <BrutalKnob
                     value={track.tone}
                     onChange={(val) => setTrackTone(trackIdx, val)}
                     color={catMeta.color}
-                    size={36}
+                    size={32}
                     label="TONE"
-                    title="上下拖拽调节轨道音色滤波与音高明亮感"
+                    title="上下拖拽或滚轮调节滤波明亮度与音高"
                   />
 
-                  {/* VOL Horizontal Slider */}
                   <BrutalSlider
                     value={track.volume}
                     onChange={(val) => setTrackVolume(trackIdx, val)}
                     color={catMeta.color}
                     label="VOL"
-                    height={13}
-                    className="flex-1 min-w-[52px]"
+                    height={12}
+                    className="flex-1 min-w-[50px]"
                   />
                 </div>
 
-                {/* RIGHT: 16-Step Glowing Pad Matrix */}
+                {/* RIGHT: 16-Step Tactile MPC Pad Matrix (4-Beat Alternating Grouping + Hit Recoil!) */}
                 <div className="grid grid-cols-16 gap-1.5 h-full items-center px-1 relative">
                   {track.steps.map((isOn, stepIdx) => {
-                    const isHead = displayPlayhead === stepIdx;
+                    const isHead = livePlayhead === stepIdx;
+                    const isBeatB = Math.floor(stepIdx / 4) % 2 === 1;
                     const isGroupStart = stepIdx % 4 === 0 && stepIdx > 0;
+                    const offBg = isBeatB ? '#DED7C7' : '#ECE6D8';
                     return (
                       <button
                         key={stepIdx}
@@ -536,12 +590,13 @@ export const BeatDeckPage: React.FC = () => {
                             value: nextVal,
                             trackIdx,
                           };
+                          setActivePreset(null);
                           toggleStep(trackIdx, stepIdx, nextVal);
                           if (nextVal) {
                             void holoAudio.previewCard(card.id, {
                               stepIndex: stepIdx,
                               tone: track.tone,
-                              velocity: 0.65,
+                              velocity: 0.68,
                             });
                           } else {
                             playSfx('click', 0.25);
@@ -556,16 +611,27 @@ export const BeatDeckPage: React.FC = () => {
                           }
                         }}
                         style={{
-                          backgroundColor: isOn ? catMeta.color : '#EDE7D9',
+                          backgroundColor: isOn ? catMeta.color : offBg,
+                          boxShadow:
+                            isOn && isHead
+                              ? `0 0 14px ${catMeta.color}, 2px 2px 0px #17171C`
+                              : undefined,
                         }}
-                        className={`relative h-[46px] w-full rounded-[9px] brutal-pad transition-transform ${
-                          isPlaying && isHead ? 'scale-[1.05] brightness-110 z-10' : ''
+                        className={`relative h-[74%] min-h-[44px] max-h-[78px] w-full rounded-[10px] brutal-pad ${
+                          isHead && isOn
+                            ? 'animate-pad-hit z-10 ring-2 ring-white'
+                            : isHead
+                              ? 'brightness-106 z-10'
+                              : ''
                         } ${isGroupStart ? 'ml-[1px]' : ''}`}
                         aria-label={`${track.category} step ${stepIdx + 1}`}
                       >
-                        {/* Subtle top specular shine on active pads */}
+                        {/* Tactile Hardware Pad Inner Specular Ridge & Mini LED */}
                         {isOn && (
-                          <span className="absolute inset-x-1.5 top-1 h-1.5 rounded-full bg-white/35 pointer-events-none" />
+                          <>
+                            <span className="absolute inset-x-1.5 top-1 h-1 rounded-full bg-white/40 pointer-events-none" />
+                            <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-2 h-[3px] rounded-full bg-[#17171C]/35 pointer-events-none" />
+                          </>
                         )}
                       </button>
                     );
@@ -582,8 +648,8 @@ export const BeatDeckPage: React.FC = () => {
         <div className="flex-1 grid grid-cols-3 gap-3">
           {[
             { key: 'bitcrush' as const, label: 'BITCRUSH', zh: '像素碎音', bg: '#7C3AED', text: '#FFFFFF' },
-            { key: 'echo' as const, label: 'STREET ECHO', zh: '弄堂回声', bg: '#FF5C2B', text: '#FFFFFF' },
-            { key: 'stutter' as const, label: 'STUTTER', zh: '鬼畜切拍', bg: '#00D4AA', text: '#1A1A1F' },
+            { key: 'echo' as const, label: 'STREET ECHO', zh: '弄堂回声', bg: '#FF5526', text: '#FFFFFF' },
+            { key: 'stutter' as const, label: 'STUTTER', zh: '鬼畜切拍', bg: '#00D4AA', text: '#17171C' },
           ].map((fx) => {
             const active = liveFx[fx.key];
             return (
@@ -595,68 +661,68 @@ export const BeatDeckPage: React.FC = () => {
                 }}
                 title={`${fx.zh}（点击开关叠加 DJ 现场特效）`}
                 style={{ backgroundColor: fx.bg, color: fx.text }}
-                className={`brutal-btn-lg h-[50px] px-4 rounded-2xl flex items-center justify-between ${
-                  active ? 'brutal-btn-pressed ring-2 ring-[#FFD60A]' : ''
+                className={`brutal-btn-lg h-[48px] px-4 rounded-2xl flex items-center justify-between ${
+                  active ? 'brutal-btn-pressed ring-2 ring-[#FFD426]' : ''
                 }`}
               >
                 <span
-                  className={`w-4 h-4 rounded-full border-[2.5px] border-[#1A1A1F] transition-all ${
+                  className={`w-3.5 h-3.5 rounded-full border-[2px] border-[#17171C] transition-all ${
                     active
                       ? 'bg-[#A3E635] shadow-[0_0_10px_#A3E635]'
-                      : 'bg-[#FFFDF8]/70'
+                      : 'bg-[#FBF9F4]/70'
                   }`}
                 />
-                <span className="text-[16px] font-black tracking-wider uppercase">{fx.label}</span>
-                <span className="text-[10px] font-bold opacity-80 hidden sm:inline">
-                  {active ? 'ON' : fx.zh}
+                <span className="text-[15px] font-black tracking-wider uppercase">{fx.label}</span>
+                <span className="font-mono-hw text-[10px] font-bold opacity-85 hidden sm:inline">
+                  {active ? 'ACTIVE' : fx.zh}
                 </span>
               </button>
             );
           })}
         </div>
 
-        <div className="h-9 w-[2px] bg-[#1A1A1F]/25 shrink-0" />
+        <div className="h-8 w-[1.5px] bg-[#17171C]/20 shrink-0" />
 
         <button
           onClick={() => {
             playSfx('mintStamp');
             sendBeatToForge();
           }}
-          className="brutal-btn-lg h-[50px] px-6 rounded-2xl bg-[#FFD60A] text-[#1A1A1F] text-[16px] font-black tracking-wide uppercase flex items-center gap-2 shrink-0"
+          className="brutal-btn-lg h-[48px] px-6 rounded-2xl bg-[#FFD426] text-[#17171C] text-[15px] font-black tracking-wide uppercase flex items-center gap-2 shrink-0"
         >
           <span>MINT THIS BEAT</span>
-          <span className="text-xl leading-none">→</span>
+          <span className="text-lg leading-none">→</span>
         </button>
       </section>
 
       {/* ================= CARTRIDGE SWAP MODAL ================= */}
       {swapTrackIdx !== null && (
         <div
-          className="fixed inset-0 z-50 bg-black/45 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/48 backdrop-blur-[2px] flex items-center justify-center p-4"
           onClick={() => setSwapTrackIdx(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="brutal-panel w-[540px] max-w-full max-h-[80vh] flex flex-col overflow-hidden"
+            className="brutal-panel w-[540px] max-w-full max-h-[80vh] flex flex-col overflow-hidden animate-card-pop"
           >
-            <div className="px-4 py-3 bg-[#FFD60A] border-b-[3px] border-[#1A1A1F] flex items-center justify-between">
+            <div className="px-4 py-3 bg-[#FFD426] border-b-[2.5px] border-[#17171C] flex items-center justify-between">
               <div>
-                <h3 className="text-base font-black uppercase text-[#1A1A1F]">
+                <h3 className="text-base font-black uppercase text-[#17171C]">
                   SWAP CARTRIDGE · 更换 {tracks[swapTrackIdx].category} 卡槽声卡
                 </h3>
-                <p className="text-xs font-bold text-[#1A1A1F]/75">
-                  选择已收集的市井声卡插入卡槽（支持跨轨混搭！）
+                <p className="text-xs font-bold text-[#17171C]/75">
+                  选择已收集的市井声卡插入卡槽（支持跨轨混搭实验！）
                 </p>
               </div>
               <button
                 onClick={() => setSwapTrackIdx(null)}
-                className="brutal-btn w-8 h-8 rounded-lg bg-[#FFFDF8] flex items-center justify-center"
+                className="brutal-btn w-8 h-8 rounded-lg bg-[#FBF9F4] flex items-center justify-center"
               >
                 <X className="w-4 h-4" strokeWidth={3} />
               </button>
             </div>
 
-            <div className="p-4 overflow-y-auto holo-scroll grid grid-cols-2 gap-3 bg-[#F7F3E9]">
+            <div className="p-4 overflow-y-auto holo-scroll grid grid-cols-2 gap-3 bg-[#F3EFE6]">
               {SOUND_CARDS.filter((c) => collection.includes(c.id))
                 .sort((a, b) => {
                   const pref = tracks[swapTrackIdx].category;
@@ -674,19 +740,19 @@ export const BeatDeckPage: React.FC = () => {
                         void holoAudio.previewCard(c.id);
                         setSwapTrackIdx(null);
                       }}
-                      className={`p-2 rounded-xl border-[2.5px] border-[#1A1A1F] flex items-center gap-2.5 text-left transition-all cursor-pointer ${
+                      className={`p-2 rounded-xl border-[2.5px] border-[#17171C] flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-[#FFD60A] shadow-[3px_3px_0px_0px_#1A1A1F]'
-                          : 'bg-[#FFFDF8] hover:bg-[#EDE7D9] shadow-[2px_2px_0px_0px_#1A1A1F]'
+                          ? 'bg-[#FFD426] shadow-[3px_3px_0px_0px_#17171C]'
+                          : 'bg-[#FBF9F4] hover:bg-[#E7E1D3] shadow-[2px_2px_0px_0px_#17171C]'
                       }`}
                     >
-                      <div className="w-12 h-14 rounded-lg border-2 border-[#1A1A1F] overflow-hidden holo-thumb-sheen shrink-0">
+                      <div className="w-12 h-14 rounded-lg border-2 border-[#17171C] overflow-hidden holo-thumb-sheen shrink-0">
                         <CardArtwork artId={c.artId} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <span
-                            className="px-1.5 py-0.5 rounded text-[9px] font-black border border-[#1A1A1F]"
+                            className="px-1.5 py-0.5 rounded text-[9px] font-black border border-[#17171C]"
                             style={{ backgroundColor: cat.color, color: cat.textColor }}
                           >
                             {cat.label}
@@ -694,7 +760,7 @@ export const BeatDeckPage: React.FC = () => {
                           <span className="font-mono-hw text-[10px] font-black">{c.code}</span>
                         </div>
                         <div className="text-xs font-black truncate mt-1">{c.title}</div>
-                        <div className="text-[10px] font-bold text-[#5C5C6B] truncate">
+                        <div className="text-[10px] font-bold text-[#626272] truncate">
                           {c.zhTitle}
                         </div>
                       </div>

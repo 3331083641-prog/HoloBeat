@@ -24,14 +24,14 @@ export const QuickDeckDrawer: React.FC = () => {
     >
       <aside
         onClick={(e) => e.stopPropagation()}
-        className="w-[420px] max-w-[92vw] h-full bg-[#FFFDF8] border-l-[3px] border-[#1A1A1F] flex flex-col shadow-[-8px_0_0_#1A1A1F]"
+        className="w-[420px] max-w-[92vw] h-full bg-[#FBF9F4] border-l-[2.5px] border-[#17171C] flex flex-col shadow-[-8px_0_0_#17171C]"
       >
-        <div className="p-4 border-b-[3px] border-[#1A1A1F] flex items-center justify-between bg-[#FFD60A]">
+        <div className="p-4 border-b-[2.5px] border-[#17171C] flex items-center justify-between bg-[#FFD426]">
           <div>
-            <h2 className="text-lg font-black uppercase tracking-wide text-[#1A1A1F]">
+            <h2 className="text-lg font-black uppercase tracking-wide text-[#17171C]">
               SOUND CARD DECK · 声卡图鉴
             </h2>
-            <p className="text-xs font-bold text-[#1A1A1F]/80">
+            <p className="text-xs font-bold text-[#17171C]/80">
               已收集 {collection.length} / {SOUND_CARDS.length} 张市井全息声卡
             </p>
           </div>
@@ -40,13 +40,13 @@ export const QuickDeckDrawer: React.FC = () => {
               playSfx('click');
               setOpen(false);
             }}
-            className="brutal-btn w-9 h-9 rounded-xl bg-[#FFFDF8] flex items-center justify-center"
+            className="brutal-btn w-9 h-9 rounded-xl bg-[#FBF9F4] flex items-center justify-center"
           >
             <X className="w-5 h-5" strokeWidth={2.8} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto holo-scroll p-4 grid grid-cols-2 gap-3 bg-[#F7F3E9]">
+        <div className="flex-1 overflow-y-auto holo-scroll p-4 grid grid-cols-2 gap-3 bg-[#F3EFE6]">
           {SOUND_CARDS.map((card) => {
             const unlocked = collection.includes(card.id);
             const cat = CATEGORY_META[card.category];

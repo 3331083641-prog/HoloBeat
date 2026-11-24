@@ -4,16 +4,17 @@
 @import "./holo.css";
 
 :root {
-  --bg-canvas: #F7F3E9;
-  --bg-panel: #FFFDF8;
-  --bg-tray: #EDE7D9;
-  --bg-oled: #181820;
-  --ink-primary: #1A1A1F;
-  --ink-muted: #5C5C6B;
+  /* Tactile Industrial Toy Palette (Teenage Engineering × Playdate × Street Holo) */
+  --bg-canvas: #F3EFE6;
+  --bg-panel: #FBF9F4;
+  --bg-tray: #E7E1D3;
+  --bg-oled: #14151B;
+  --ink-primary: #17171C;
+  --ink-muted: #626272;
   --accent-purple: #7C3AED;
-  --accent-orange: #FF5C2B;
+  --accent-orange: #FF5526;
   --accent-mint: #00D4AA;
-  --accent-yellow: #FFD60A;
+  --accent-yellow: #FFD426;
   --accent-magenta: #FF3D9A;
 }
 
@@ -30,6 +31,7 @@ body,
   padding: 0;
   font-family: 'Space Grotesk', 'HarmonyOS Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color: var(--ink-primary);
+  -webkit-font-smoothing: antialiased;
 }
 
 .font-mono-hw {
@@ -37,121 +39,266 @@ body,
   font-variant-numeric: tabular-nums;
 }
 
-/* Warm Cream Dot-Grid Toy Canvas */
+/* Warm Architectural Paper Dot-Grid Canvas + Subtle Micro-Grain Tactile Finish */
 .canvas-dot-grid {
   background-color: var(--bg-canvas);
-  background-image: radial-gradient(#D5CEBE 1.35px, transparent 1.35px);
-  background-size: 18px 18px;
+  background-image:
+    radial-gradient(rgba(23, 23, 28, 0.13) 1.15px, transparent 1.15px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='0.042'/%3E%3C/svg%3E");
+  background-size: 18px 18px, 160px 160px;
 }
 
-/* Recessed Oatmeal Blueprint Dot-Grid (Pinball Arena / Trays) */
+/* Recessed Stone Blueprint Dot-Grid (Pinball Arena / Trays) */
 .tray-dot-grid {
   background-color: var(--bg-tray);
-  background-image: radial-gradient(#C8BFAE 1.4px, transparent 1.4px);
+  background-image: radial-gradient(rgba(23, 23, 28, 0.16) 1.2px, transparent 1.2px);
   background-size: 18px 18px;
 }
 
-/* Neo-Brutalist Hardware Panels */
+/* Injection-Molded Tactile Hardware Panels */
 .brutal-panel {
   background-color: var(--bg-panel);
-  border: 3px solid var(--ink-primary);
-  border-radius: 16px;
-  box-shadow: 5px 5px 0px 0px var(--ink-primary);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 28%);
+  border: 2.5px solid var(--ink-primary);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -2px 0 rgba(23, 23, 28, 0.06),
+    4px 4px 0px 0px var(--ink-primary);
 }
 
 .brutal-panel-sm {
   background-color: var(--bg-panel);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 32%);
   border: 2.5px solid var(--ink-primary);
-  border-radius: 14px;
-  box-shadow: 4px 4px 0px 0px var(--ink-primary);
+  border-radius: 15px;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1.5px 0 rgba(23, 23, 28, 0.05),
+    3px 3px 0px 0px var(--ink-primary);
 }
 
+/* Deep Obsidian Recessed OLED Cavity */
 .brutal-oled {
   background-color: var(--bg-oled);
-  border: 3px solid var(--ink-primary);
-  border-radius: 16px;
-  box-shadow: 5px 5px 0px 0px var(--ink-primary);
+  border: 2.5px solid var(--ink-primary);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 3px 14px rgba(0, 0, 0, 0.72),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08),
+    4px 4px 0px 0px var(--ink-primary);
 }
 
-/* Neo-Brutalist Tactile Pressable Buttons (Zero Reflow Transitions) */
+.oled-scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.025) 0px,
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  border-radius: inherit;
+}
+
+/* Chassis Hardware Silkscreen Micro-Label */
+.hw-silkscreen {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  user-select: none;
+}
+
+/* Spring-Loaded Tactile Pressable Buttons (Zero Reflow) */
 .brutal-btn {
   border: 2.5px solid var(--ink-primary);
-  box-shadow: 3px 3px 0px 0px var(--ink-primary);
-  transition: transform 75ms ease-out, box-shadow 75ms ease-out, filter 75ms ease-out;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1.5px 0 rgba(23, 23, 28, 0.12),
+    3px 3px 0px 0px var(--ink-primary);
+  transition:
+    transform 110ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 90ms ease-out,
+    filter 100ms ease-out,
+    background-color 120ms ease-out;
   cursor: pointer;
   user-select: none;
 }
 
 .brutal-btn:hover:not(:disabled) {
-  filter: brightness(1.03);
+  filter: brightness(1.035);
+  transform: translate(-0.5px, -0.5px);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1.5px 0 rgba(23, 23, 28, 0.12),
+    3.5px 3.5px 0px 0px var(--ink-primary);
 }
 
 .brutal-btn:active:not(:disabled),
 .brutal-btn-pressed {
-  transform: translate(3px, 3px);
-  box-shadow: 0px 0px 0px 0px var(--ink-primary);
+  transform: translate(3px, 3px) !important;
+  box-shadow:
+    inset 0 2px 4px rgba(23, 23, 28, 0.18),
+    0px 0px 0px 0px var(--ink-primary) !important;
 }
 
 .brutal-btn-lg {
-  border: 3px solid var(--ink-primary);
-  box-shadow: 4px 4px 0px 0px var(--ink-primary);
-  transition: transform 75ms ease-out, box-shadow 75ms ease-out, filter 75ms ease-out;
+  border: 2.5px solid var(--ink-primary);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.44),
+    inset 0 -2px 0 rgba(23, 23, 28, 0.14),
+    4px 4px 0px 0px var(--ink-primary);
+  transition:
+    transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 95ms ease-out,
+    filter 100ms ease-out;
   cursor: pointer;
   user-select: none;
 }
 
 .brutal-btn-lg:hover:not(:disabled) {
   filter: brightness(1.03);
+  transform: translate(-0.75px, -0.75px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.52),
+    inset 0 -2px 0 rgba(23, 23, 28, 0.14),
+    4.75px 4.75px 0px 0px var(--ink-primary);
 }
 
 .brutal-btn-lg:active:not(:disabled) {
-  transform: translate(4px, 4px);
-  box-shadow: 0px 0px 0px 0px var(--ink-primary);
+  transform: translate(4px, 4px) !important;
+  box-shadow:
+    inset 0 2px 5px rgba(23, 23, 28, 0.22),
+    0px 0px 0px 0px var(--ink-primary) !important;
 }
 
 .brutal-pad {
   border: 2px solid var(--ink-primary);
-  box-shadow: 2px 2px 0px 0px var(--ink-primary);
-  transition: transform 65ms ease-out, box-shadow 65ms ease-out, background-color 65ms ease-out;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.36),
+    inset 0 -1.5px 0 rgba(23, 23, 28, 0.12),
+    2px 2px 0px 0px var(--ink-primary);
+  transition:
+    transform 90ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 75ms ease-out,
+    background-color 75ms ease-out,
+    filter 75ms ease-out;
   cursor: pointer;
   user-select: none;
 }
 
-.brutal-pad:active {
-  transform: translate(2px, 2px);
-  box-shadow: 0px 0px 0px 0px var(--ink-primary);
+.brutal-pad:hover:not(:disabled) {
+  filter: brightness(1.04);
 }
 
-/* Gacha Machine Shake & Capsule Bounce */
+.brutal-pad:active {
+  transform: translate(2px, 2px) scale(0.97);
+  box-shadow:
+    inset 0 1.5px 3px rgba(23, 23, 28, 0.18),
+    0px 0px 0px 0px var(--ink-primary);
+}
+
+/* Seamless Workspace Module Transition */
+@keyframes page-module-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.992);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-page-enter {
+  animation: page-module-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Gacha Machine Tactile Shake & Capsule Bounce */
 @keyframes gacha-shake {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  20% { transform: translate(-4px, 2px) rotate(-1.2deg); }
-  40% { transform: translate(4px, -2px) rotate(1.2deg); }
-  60% { transform: translate(-3px, 1px) rotate(-0.8deg); }
-  80% { transform: translate(3px, 1px) rotate(0.8deg); }
+  15% { transform: translate(-5px, 2px) rotate(-1.5deg); }
+  32% { transform: translate(5px, -3px) rotate(1.5deg); }
+  50% { transform: translate(-4px, 2px) rotate(-1deg); }
+  70% { transform: translate(3px, -1px) rotate(0.9deg); }
+  86% { transform: translate(-2px, 1px) rotate(-0.4deg); }
 }
 
 .animate-gacha-shake {
-  animation: gacha-shake 0.34s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  animation: gacha-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 
+/* Hero Card Ceremonial Spring Unbox Pop */
 @keyframes card-pop-in {
-  0% { transform: scale(0.72) translateY(24px); opacity: 0; }
-  65% { transform: scale(1.04) translateY(-4px); opacity: 1; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
+  0% { transform: scale(0.68) translateY(34px) rotate(-3deg); opacity: 0; }
+  58% { transform: scale(1.055) translateY(-6px) rotate(0.8deg); opacity: 1; }
+  82% { transform: scale(0.985) translateY(2px) rotate(-0.2deg); opacity: 1; }
+  100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
 }
 
 .animate-card-pop {
-  animation: card-pop-in 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: card-pop-in 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Beat Deck Rhythm Pad Impact Recoil */
+@keyframes pad-hit-recoil {
+  0% { transform: scale(1.13) translateY(-1.5px); filter: brightness(1.24); }
+  65% { transform: scale(0.97); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.animate-pad-hit {
+  animation: pad-hit-recoil 190ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Forge Ceremonial Laser Lamination Sweep */
+@keyframes forge-laser-scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateY(520%); opacity: 0; }
+}
+
+.animate-forge-laser {
+  animation: forge-laser-scan 640ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Forge Ceremonial Stamp Slam */
+@keyframes forge-stamp-slam {
+  0% { transform: scale(2.1) rotate(-14deg); opacity: 0; }
+  35% { transform: scale(0.92) rotate(-7deg); opacity: 1; }
+  55% { transform: scale(1.04) rotate(-8deg); opacity: 1; }
+  82% { transform: scale(1) rotate(-8deg); opacity: 1; }
+  100% { transform: scale(1.08) rotate(-8deg); opacity: 0; }
+}
+
+.animate-forge-stamp {
+  animation: forge-stamp-slam 980ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Subtle Hardware LED Pulse */
+@keyframes led-pulse-soft {
+  0%, 100% { opacity: 0.72; transform: scale(0.94); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+.animate-led-soft {
+  animation: led-pulse-soft 1.8s ease-in-out infinite;
 }
 
 @keyframes float-slow {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-5px) rotate(4deg); }
+  50% { transform: translateY(-5px) rotate(3deg); }
 }
 
 .animate-float-slow {
-  animation: float-slow 3.2s ease-in-out infinite;
+  animation: float-slow 3.4s ease-in-out infinite;
 }
 
 /* Custom sleek scrollbar for binder & drawers */
@@ -163,9 +310,9 @@ body,
   background: transparent;
 }
 .holo-scroll::-webkit-scrollbar-thumb {
-  background: rgba(26, 26, 31, 0.25);
+  background: rgba(23, 23, 28, 0.22);
   border-radius: 999px;
 }
 .holo-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(26, 26, 31, 0.45);
+  background: rgba(23, 23, 28, 0.42);
 }

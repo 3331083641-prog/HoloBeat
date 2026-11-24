@@ -11,7 +11,10 @@ export type HoloSfxKind =
   | 'knobTick'
   | 'holoFanfare'
   | 'mintStamp'
-  | 'portalWarp';
+  | 'portalWarp'
+  | 'bootChime'
+  | 'cardFlip'
+  | 'foilPress';
 
 export function useHoloSfx() {
   return useCallback((kind: HoloSfxKind, param = 0.5) => {

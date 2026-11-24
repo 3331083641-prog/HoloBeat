@@ -1,5 +1,6 @@
 import React from 'react';
 import { TopNavbar } from './components/layout/TopNavbar';
+import { AudioBootBanner } from './components/ui/AudioBootBanner';
 import { QuickDeckDrawer } from './components/ui/QuickDeckDrawer';
 import { ToastStack } from './components/ui/ToastStack';
 import { BeatDeckPage } from './pages/BeatDeckPage';
@@ -16,12 +17,15 @@ export const App: React.FC = () => {
       <TopNavbar />
 
       <main className="flex-1 min-h-0 overflow-hidden relative">
-        {activePage === 'gacha' && <GachaPage />}
-        {activePage === 'beat' && <BeatDeckPage />}
-        {activePage === 'pinball' && <PinballPage />}
-        {activePage === 'forge' && <ForgePage />}
+        <div key={activePage} className="w-full h-full animate-page-enter">
+          {activePage === 'gacha' && <GachaPage />}
+          {activePage === 'beat' && <BeatDeckPage />}
+          {activePage === 'pinball' && <PinballPage />}
+          {activePage === 'forge' && <ForgePage />}
+        </div>
       </main>
 
+      <AudioBootBanner />
       <QuickDeckDrawer />
       <ToastStack />
     </div>

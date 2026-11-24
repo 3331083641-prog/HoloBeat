@@ -8,6 +8,7 @@ import {
   getCardById,
 } from '../data/soundCards';
 import type {
+  BeatPresetId,
   BeatSnapshot,
   ForgeRarity,
   HoloFoilType,
@@ -33,8 +34,10 @@ function stepsFromIndices(indices: number[]): boolean[] {
 }
 
 export const BEAT_PRESETS: Record<
-  'MARKET' | 'NIGHT',
+  BeatPresetId,
   {
+    label: string;
+    zhTitle: string;
     bpm: number;
     swing: number;
     scale: ScaleId;
@@ -42,86 +45,135 @@ export const BEAT_PRESETS: Record<
   }
 > = {
   MARKET: {
-    bpm: 120,
-    swing: 0.14,
+    label: 'MARKET',
+    zhTitle: '胡同早市 Funk',
+    bpm: 116,
+    swing: 0.16,
     scale: 'PENTA_C',
     tracks: [
       {
         category: 'BEAT',
         cardId: 'card-01',
-        steps: stepsFromIndices([0, 3, 4, 7, 8, 9, 11, 13, 15]),
-        volume: 0.85,
-        tone: 0.52,
+        steps: stepsFromIndices([0, 6, 8, 14]),
+        volume: 0.88,
+        tone: 0.5,
         mute: false,
         solo: false,
       },
       {
         category: 'PERC',
         cardId: 'card-05',
-        steps: stepsFromIndices([1, 4, 5, 6, 7, 10, 12, 15]),
-        volume: 0.78,
-        tone: 0.62,
+        steps: stepsFromIndices([2, 4, 10, 12, 15]),
+        volume: 0.72,
+        tone: 0.58,
         mute: false,
         solo: false,
       },
       {
         category: 'MELODY',
         cardId: 'card-09',
-        steps: stepsFromIndices([2, 4, 6, 10, 12, 14]),
-        volume: 0.8,
-        tone: 0.56,
+        steps: stepsFromIndices([0, 3, 6, 8, 11, 14]),
+        volume: 0.78,
+        tone: 0.54,
         mute: false,
         solo: false,
       },
       {
         category: 'VIBE',
         cardId: 'card-13',
-        steps: stepsFromIndices([0, 3, 4, 7, 10, 13, 14]),
-        volume: 0.72,
-        tone: 0.48,
+        steps: stepsFromIndices([0, 4, 8, 12]),
+        volume: 0.74,
+        tone: 0.52,
         mute: false,
         solo: false,
       },
     ],
   },
   NIGHT: {
-    bpm: 128,
-    swing: 0.22,
+    label: 'NIGHT',
+    zhTitle: '赛博夜市 Drift',
+    bpm: 126,
+    swing: 0.1,
     scale: 'MINOR_C',
     tracks: [
       {
         category: 'BEAT',
         cardId: 'card-01',
-        steps: stepsFromIndices([0, 4, 6, 8, 12, 14]),
-        volume: 0.9,
-        tone: 0.45,
+        steps: stepsFromIndices([0, 4, 8, 12, 14]),
+        volume: 0.92,
+        tone: 0.44,
         mute: false,
         solo: false,
       },
       {
         category: 'PERC',
         cardId: 'card-05',
-        steps: stepsFromIndices([2, 4, 7, 10, 12, 15]),
-        volume: 0.74,
-        tone: 0.7,
+        steps: stepsFromIndices([2, 6, 10, 12, 15]),
+        volume: 0.72,
+        tone: 0.68,
         mute: false,
         solo: false,
       },
       {
         category: 'MELODY',
         cardId: 'card-09',
-        steps: stepsFromIndices([0, 3, 5, 7, 10, 12, 15]),
-        volume: 0.82,
-        tone: 0.65,
+        steps: stepsFromIndices([0, 2, 5, 7, 10, 12, 15]),
+        volume: 0.8,
+        tone: 0.62,
         mute: false,
         solo: false,
       },
       {
         category: 'VIBE',
         cardId: 'card-13',
-        steps: stepsFromIndices([0, 2, 8, 10, 12]),
+        steps: stepsFromIndices([0, 6, 12]),
         volume: 0.76,
-        tone: 0.55,
+        tone: 0.58,
+        mute: false,
+        solo: false,
+      },
+    ],
+  },
+  LOFI: {
+    label: 'LO-FI',
+    zhTitle: '茶馆爵士 Swing',
+    bpm: 92,
+    swing: 0.34,
+    scale: 'DORIAN_C',
+    tracks: [
+      {
+        category: 'BEAT',
+        cardId: 'card-01',
+        steps: stepsFromIndices([0, 7, 10]),
+        volume: 0.86,
+        tone: 0.38,
+        mute: false,
+        solo: false,
+      },
+      {
+        category: 'PERC',
+        cardId: 'card-05',
+        steps: stepsFromIndices([4, 12, 15]),
+        volume: 0.68,
+        tone: 0.46,
+        mute: false,
+        solo: false,
+      },
+      {
+        category: 'MELODY',
+        cardId: 'card-09',
+        steps: stepsFromIndices([0, 3, 6, 11, 14]),
+        volume: 0.76,
+        tone: 0.48,
+        mute: false,
+        solo: false,
+      },
+      {
+        category: 'VIBE',
+        cardId: 'card-13',
+        steps: stepsFromIndices([0, 8]),
+        volume: 0.8,
+        tone: 0.42,
         mute: false,
         solo: false,
       },
@@ -131,24 +183,24 @@ export const BEAT_PRESETS: Record<
 
 export const PINBALL_PRESETS: Record<'LOOP' | 'CASCADE', PinballToy[]> = {
   LOOP: [
-    { id: 'pb-1', type: 'block', x: 215, y: 175, angle: 0.22, cardId: 'card-01', note: 'C5' },
-    { id: 'pb-2', type: 'block', x: 585, y: 215, angle: -0.24, cardId: 'card-05', note: 'D5' },
-    { id: 'pb-3', type: 'bumper', x: 165, y: 295, angle: 0, cardId: 'card-05', note: 'E5' },
-    { id: 'pb-4', type: 'spinner', x: 400, y: 310, angle: 0, cardId: 'card-09', note: 'G5' },
-    { id: 'pb-5', type: 'bumper', x: 640, y: 315, angle: 0, cardId: 'card-01', note: 'A5' },
-    { id: 'pb-6', type: 'block', x: 230, y: 420, angle: -0.2, cardId: 'card-09', note: 'G5' },
-    { id: 'pb-7', type: 'block', x: 575, y: 425, angle: 0.22, cardId: 'card-13', note: 'A5' },
-    { id: 'pb-8', type: 'portal', x: 400, y: 482, angle: 0, cardId: 'card-09', note: 'C5' },
+    { id: 'pb-1', type: 'block', x: 220, y: 185, angle: 0.24, cardId: 'card-01', note: 'C5' },
+    { id: 'pb-2', type: 'block', x: 580, y: 230, angle: -0.24, cardId: 'card-05', note: 'D5' },
+    { id: 'pb-3', type: 'bumper', x: 165, y: 365, angle: 0, cardId: 'card-05', note: 'E5' },
+    { id: 'pb-4', type: 'spinner', x: 400, y: 380, angle: 0, cardId: 'card-09', note: 'G5' },
+    { id: 'pb-5', type: 'bumper', x: 640, y: 375, angle: 0, cardId: 'card-01', note: 'A5' },
+    { id: 'pb-6', type: 'block', x: 235, y: 535, angle: 0.22, cardId: 'card-09', note: 'G5' },
+    { id: 'pb-7', type: 'block', x: 565, y: 535, angle: -0.22, cardId: 'card-13', note: 'A5' },
+    { id: 'pb-8', type: 'portal', x: 400, y: 632, angle: 0, cardId: 'card-09', note: 'C5' },
   ],
   CASCADE: [
-    { id: 'pc-1', type: 'block', x: 355, y: 145, angle: 0.28, cardId: 'card-09', note: 'C5' },
-    { id: 'pc-2', type: 'block', x: 520, y: 225, angle: -0.28, cardId: 'card-05', note: 'D5' },
-    { id: 'pc-3', type: 'block', x: 300, y: 305, angle: 0.26, cardId: 'card-01', note: 'E5' },
-    { id: 'pc-4', type: 'bumper', x: 175, y: 230, angle: 0, cardId: 'card-13', note: 'G5' },
-    { id: 'pc-5', type: 'spinner', x: 480, y: 350, angle: 0, cardId: 'card-09', note: 'A5' },
-    { id: 'pc-6', type: 'block', x: 560, y: 430, angle: -0.26, cardId: 'card-13', note: 'G5' },
-    { id: 'pc-7', type: 'bumper', x: 245, y: 425, angle: 0, cardId: 'card-05', note: 'D5' },
-    { id: 'pc-8', type: 'portal', x: 400, y: 485, angle: 0, cardId: 'card-01', note: 'C5' },
+    { id: 'pc-1', type: 'block', x: 355, y: 170, angle: 0.28, cardId: 'card-09', note: 'C5' },
+    { id: 'pc-2', type: 'block', x: 530, y: 270, angle: -0.28, cardId: 'card-05', note: 'D5' },
+    { id: 'pc-3', type: 'block', x: 295, y: 375, angle: 0.26, cardId: 'card-01', note: 'E5' },
+    { id: 'pc-4', type: 'bumper', x: 175, y: 270, angle: 0, cardId: 'card-13', note: 'G5' },
+    { id: 'pc-5', type: 'spinner', x: 485, y: 445, angle: 0, cardId: 'card-09', note: 'A5' },
+    { id: 'pc-6', type: 'block', x: 565, y: 555, angle: -0.26, cardId: 'card-13', note: 'G5' },
+    { id: 'pc-7', type: 'bumper', x: 235, y: 545, angle: 0, cardId: 'card-05', note: 'D5' },
+    { id: 'pc-8', type: 'portal', x: 400, y: 632, angle: 0, cardId: 'card-01', note: 'C5' },
   ],
 };
 
@@ -219,6 +271,7 @@ const INITIAL_MINTED_CARD: MintedCard = {
 interface HoloState {
   // Navigation & Global Audio
   activePage: PageId;
+  audioUnlocked: boolean;
   muted: boolean;
   bpm: number;
   swing: number;
@@ -269,6 +322,7 @@ interface HoloState {
 
   // Actions
   setActivePage: (page: PageId) => void;
+  setAudioUnlocked: (unlocked: boolean) => void;
   setDrawerOpen: (open: boolean) => void;
   toggleMute: () => void;
   setBpm: (bpm: number) => void;
@@ -290,7 +344,7 @@ interface HoloState {
   setTrackTone: (trackIndex: number, tone: number) => void;
   toggleTrackMute: (trackIndex: number) => void;
   toggleTrackSolo: (trackIndex: number) => void;
-  applyBeatPreset: (preset: 'MARKET' | 'NIGHT') => void;
+  applyBeatPreset: (preset: BeatPresetId) => void;
   randomizeBeat: () => void;
   clearBeat: () => void;
   setLiveFx: (fx: keyof HoloState['liveFx'], active: boolean) => void;
@@ -334,9 +388,10 @@ export const useHoloStore = create<HoloState>()(
   persist(
     (set, get) => ({
       activePage: 'gacha',
+      audioUnlocked: false,
       muted: false,
-      bpm: 120,
-      swing: 0.14,
+      bpm: 116,
+      swing: 0.16,
       scale: 'PENTA_C',
       isPlaying: false,
       drawerOpen: false,
@@ -374,6 +429,7 @@ export const useHoloStore = create<HoloState>()(
       toasts: [],
 
       setActivePage: (page) => set({ activePage: page }),
+      setAudioUnlocked: (audioUnlocked) => set({ audioUnlocked }),
       setDrawerOpen: (open) => set({ drawerOpen: open }),
       toggleMute: () => set((s) => ({ muted: !s.muted })),
       setBpm: (bpm) => set({ bpm: Math.min(180, Math.max(60, Math.round(bpm))) }),
@@ -768,7 +824,7 @@ export const useHoloStore = create<HoloState>()(
         set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
     }),
     {
-      name: 'holobeat-studio-v1',
+      name: 'holobeat-studio-v2',
       partialize: (state) => ({
         bpm: state.bpm,
         swing: state.swing,

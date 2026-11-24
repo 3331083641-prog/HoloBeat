@@ -333,41 +333,65 @@ export const ARTWORK_LAYERS: Record<string, ArtLayers> = {
     `,
   },
 
-  // #07 MAHJONG FOX — Kitsune Mask with Folding Fan & Tile
+  // #07 MAHJONG FOX — Street Kitsune Mask with Folding Fan, Robe & Jade Mahjong Tile
   'mahjong-fox': {
     bg: `
       <defs>
         <linearGradient id="mf-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#FF3D9A"/>
-          <stop offset="50%" stop-color="#7C3AED"/>
-          <stop offset="100%" stop-color="#FFD60A"/>
+          <stop offset="0%" stop-color="#3B0764"/>
+          <stop offset="50%" stop-color="#BE185D"/>
+          <stop offset="100%" stop-color="#F59E0B"/>
         </linearGradient>
       </defs>
       <rect width="260" height="320" fill="url(#mf-bg)"/>
-      <circle cx="130" cy="150" r="95" fill="#FFFDF8" opacity="0.22"/>
+      <!-- Radial Sunburst & Comic Dots -->
+      <circle cx="130" cy="146" r="98" fill="#FFD426" opacity="0.22"/>
+      <circle cx="130" cy="146" r="68" fill="#FFFDF8" opacity="0.16"/>
+      <g fill="#17171C" opacity="0.18">
+        <circle cx="28" cy="240" r="4"/><circle cx="42" cy="240" r="4"/><circle cx="35" cy="252" r="4"/>
+        <circle cx="222" cy="70" r="4"/><circle cx="236" cy="70" r="4"/><circle cx="229" cy="82" r="4"/>
+      </g>
     `,
     mid: `
-      <!-- Folding Fan Behind -->
-      <path d="M130 220 L238 148 A120 120 0 0 1 232 238 Z" fill="#FFD60A" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-      <line x1="130" y1="220" x2="236" y2="178" stroke="#FF5C2B" stroke-width="3"/>
-      <line x1="130" y1="220" x2="235" y2="208" stroke="#FF5C2B" stroke-width="3"/>
+      <!-- Twin Folding Fans Behind -->
+      <path d="M130 206 L246 128 A128 128 0 0 1 240 232 Z" fill="#FFD426" stroke="#17171C" stroke-width="4" stroke-linejoin="round"/>
+      <line x1="130" y1="206" x2="244" y2="158" stroke="#FF5526" stroke-width="3"/>
+      <line x1="130" y1="206" x2="243" y2="194" stroke="#FF5526" stroke-width="3"/>
+      <path d="M130 206 L16 140 A110 110 0 0 0 24 230 Z" fill="#00D4AA" stroke="#17171C" stroke-width="4" stroke-linejoin="round"/>
+      <line x1="130" y1="206" x2="19" y2="180" stroke="#17171C" stroke-width="2.5"/>
+      <polygon points="36,78 41,88 52,90 43,96 46,106 36,100 26,106 29,96 20,90 31,88" fill="#FFD426" stroke="#17171C" stroke-width="2.5"/>
     `,
     hero: `
-      <!-- Fox Ears -->
-      <polygon points="72,112 62,48 114,88" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4.5" stroke-linejoin="round"/>
-      <polygon points="78,100 72,66 102,90" fill="#FF3B30"/>
-      <polygon points="188,112 198,48 146,88" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4.5" stroke-linejoin="round"/>
-      <polygon points="182,100 188,66 158,90" fill="#FF3B30"/>
+      <!-- Street Haori Jacket Shoulders -->
+      <path d="M54 218 C60 184, 200 184, 206 218 L216 284 L44 284 Z" fill="#181820" stroke="#17171C" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M84 196 L130 232 L176 196" fill="none" stroke="#FF3D9A" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Fox Ears with Inner Shadow -->
+      <polygon points="72,110 56,42 114,84" fill="#FFFDF8" stroke="#17171C" stroke-width="4.5" stroke-linejoin="round"/>
+      <polygon points="78,98 70,62 102,86" fill="#FF3B30" stroke="#17171C" stroke-width="2"/>
+      <polygon points="188,110 204,42 146,84" fill="#FFFDF8" stroke="#17171C" stroke-width="4.5" stroke-linejoin="round"/>
+      <polygon points="182,98 190,62 158,86" fill="#FF3B30" stroke="#17171C" stroke-width="2"/>
+      <!-- Red Rope Tassels -->
+      <circle cx="58" cy="144" r="9" fill="#FF3B30" stroke="#17171C" stroke-width="3"/>
+      <circle cx="202" cy="144" r="9" fill="#FF3B30" stroke="#17171C" stroke-width="3"/>
       <!-- Kitsune Mask Face -->
-      <path d="M62 122 C62 82, 198 82, 198 122 C198 164, 156 196, 130 204 C104 196, 62 164, 62 122 Z" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4.5" stroke-linejoin="round"/>
-      <!-- Red Markings -->
-      <path d="M84 128 L114 140 L84 146 Z" fill="#FF3B30" stroke="#1A1A1F" stroke-width="3"/>
-      <path d="M176 128 L146 140 L176 146 Z" fill="#FF3B30" stroke="#1A1A1F" stroke-width="3"/>
-      <path d="M122 104 L130 92 L138 104 L130 116 Z" fill="#FF3B30"/>
-      <!-- Mahjong Tile 中 -->
-      <g transform="translate(88, 200)">
-        <rect x="0" y="0" width="84" height="72" rx="12" fill="#00D4AA" stroke="#1A1A1F" stroke-width="4"/>
-        <rect x="6" y="6" width="72" height="58" rx="8" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3"/>
+      <path d="M58 118 C58 76, 202 76, 202 118 C202 162, 160 196, 130 204 C100 196, 58 162, 58 118 Z" fill="#FFFDF8" stroke="#17171C" stroke-width="4.5" stroke-linejoin="round"/>
+      <!-- Cheek Shading -->
+      <path d="M64 134 C72 164, 102 188, 130 198 C158 188, 188 164, 196 134 C180 156, 152 174, 130 180 C108 174, 80 156, 64 134 Z" fill="#E2E8F0" opacity="0.55"/>
+      <!-- Sharp Expressive Kitsune Eyes & Crimson Markings -->
+      <path d="M78 122 L114 136 L82 144 Z" fill="#17171C"/>
+      <path d="M84 127 L106 135 L86 140 Z" fill="#FFD426"/>
+      <path d="M182 122 L146 136 L178 144 Z" fill="#17171C"/>
+      <path d="M176 127 L154 135 L174 140 Z" fill="#FFD426"/>
+      <path d="M74 150 Q88 158 102 154" fill="none" stroke="#FF3B30" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M186 150 Q172 158 158 154" fill="none" stroke="#FF3B30" stroke-width="3.5" stroke-linecap="round"/>
+      <polygon points="130,86 140,104 130,118 120,104" fill="#FF3B30" stroke="#17171C" stroke-width="2.5"/>
+      <!-- Smirk -->
+      <path d="M116 168 Q130 178 144 168" fill="none" stroke="#17171C" stroke-width="4" stroke-linecap="round"/>
+      <!-- 3D Chunky Jade-Back Mahjong Tile 中 -->
+      <g transform="translate(84, 198) rotate(-4 46 38)">
+        <rect x="4" y="6" width="84" height="72" rx="12" fill="#059669" stroke="#17171C" stroke-width="4"/>
+        <rect x="0" y="0" width="84" height="72" rx="12" fill="#00D4AA" stroke="#17171C" stroke-width="4"/>
+        <rect x="7" y="6" width="70" height="58" rx="8" fill="#FFFDF8" stroke="#17171C" stroke-width="3"/>
         <text x="42" y="48" text-anchor="middle" font-size="34" font-weight="900" fill="#FF3B30" font-family="sans-serif">中</text>
       </g>
     `,
@@ -525,74 +549,111 @@ export const ARTWORK_LAYERS: Record<string, ArtLayers> = {
     bg: `
       <defs>
         <linearGradient id="fb-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#312E81"/>
-          <stop offset="50%" stop-color="#FF3D9A"/>
-          <stop offset="100%" stop-color="#00D4AA"/>
+          <stop offset="0%" stop-color="#0F172A"/>
+          <stop offset="48%" stop-color="#4C1D95"/>
+          <stop offset="82%" stop-color="#DB2777"/>
+          <stop offset="100%" stop-color="#0D9488"/>
         </linearGradient>
       </defs>
       <rect width="260" height="320" fill="url(#fb-bg)"/>
-      <circle cx="62" cy="66" r="6" fill="#FFD60A"/>
-      <circle cx="204" cy="78" r="8" fill="#00D4AA"/>
-      <circle cx="192" cy="242" r="6" fill="#FFFDF8"/>
+      <!-- Dreamy Starry Night Sky & Glowing City Silhouettes -->
+      <circle cx="130" cy="146" r="106" fill="#FF3D9A" opacity="0.18"/>
+      <rect x="8" y="222" width="44" height="98" fill="#1E1B4B" stroke="#17171C" stroke-width="3"/>
+      <rect x="208" y="210" width="46" height="110" fill="#1E1B4B" stroke="#17171C" stroke-width="3"/>
+      <circle cx="52" cy="64" r="5" fill="#FFD426"/>
+      <circle cx="206" cy="72" r="7" fill="#00D4AA"/>
+      <circle cx="192" cy="242" r="4" fill="#FFFDF8"/>
     `,
     mid: `
-      <path d="M88 268 L130 148 L172 268" fill="none" stroke="#1A1A1F" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M88 268 L130 148 L172 268" fill="none" stroke="#FFFDF8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M84 276 L130 146 L176 276" fill="none" stroke="#17171C" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M84 276 L130 146 L176 276" fill="none" stroke="#FFFDF8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Glowing Spokes -->
+      <g stroke="#FFFDF8" stroke-width="2.2" opacity="0.65">
+        <line x1="130" y1="68" x2="130" y2="224"/>
+        <line x1="52" y1="146" x2="208" y2="146"/>
+        <line x1="75" y1="91" x2="185" y2="201"/>
+        <line x1="185" y1="91" x2="75" y2="201"/>
+      </g>
     `,
     hero: `
       <!-- Ferris Rim -->
-      <circle cx="130" cy="148" r="76" fill="none" stroke="#1A1A1F" stroke-width="12"/>
-      <circle cx="130" cy="148" r="76" fill="none" stroke="#FFD60A" stroke-width="5"/>
-      <circle cx="130" cy="148" r="46" fill="none" stroke="#00D4AA" stroke-width="3.5" stroke-dasharray="10 8"/>
-      <!-- Gondolas -->
-      <circle cx="130" cy="72" r="15" fill="#FF3D9A" stroke="#1A1A1F" stroke-width="3.5"/>
-      <circle cx="206" cy="148" r="15" fill="#00D4AA" stroke="#1A1A1F" stroke-width="3.5"/>
-      <circle cx="130" cy="224" r="15" fill="#7C3AED" stroke="#1A1A1F" stroke-width="3.5"/>
-      <circle cx="54" cy="148" r="15" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="3.5"/>
+      <circle cx="130" cy="146" r="78" fill="none" stroke="#17171C" stroke-width="13"/>
+      <circle cx="130" cy="146" r="78" fill="none" stroke="#FFD426" stroke-width="5.5"/>
+      <circle cx="130" cy="146" r="48" fill="none" stroke="#00D4AA" stroke-width="3.5" stroke-dasharray="10 8"/>
+      <!-- 8 Glowing Gondolas -->
+      <circle cx="130" cy="68" r="15" fill="#FF3D9A" stroke="#17171C" stroke-width="3.5"/>
+      <circle cx="208" cy="146" r="15" fill="#00D4AA" stroke="#17171C" stroke-width="3.5"/>
+      <circle cx="130" cy="224" r="15" fill="#7C3AED" stroke="#17171C" stroke-width="3.5"/>
+      <circle cx="52" cy="146" r="15" fill="#FF5526" stroke="#17171C" stroke-width="3.5"/>
+      <circle cx="185" cy="91" r="11" fill="#38BDF8" stroke="#17171C" stroke-width="3"/>
+      <circle cx="75" cy="91" r="11" fill="#FFD426" stroke="#17171C" stroke-width="3"/>
+      <circle cx="185" cy="201" r="11" fill="#FFD426" stroke="#17171C" stroke-width="3"/>
+      <circle cx="75" cy="201" r="11" fill="#38BDF8" stroke="#17171C" stroke-width="3"/>
+      <!-- Music Box Wind-Up Base -->
+      <rect x="64" y="254" width="132" height="28" rx="10" fill="#181820" stroke="#17171C" stroke-width="4"/>
+      <rect x="78" y="262" width="104" height="10" rx="5" fill="#FFD426"/>
       <!-- Center Star Hub -->
-      <circle cx="130" cy="148" r="26" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4"/>
-      <polygon points="130,130 136,142 149,144 139,153 142,165 130,159 118,165 121,153 111,144 124,142" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5"/>
+      <circle cx="130" cy="146" r="28" fill="#FFFDF8" stroke="#17171C" stroke-width="4.5"/>
+      <polygon points="130,126 136,140 151,142 140,152 143,166 130,159 117,166 120,152 109,142 124,140" fill="#FFD426" stroke="#17171C" stroke-width="2.5"/>
     `,
   },
 
-  // #13 NIGHT SIZZLE — Night Market Blazing Dragon Chef
+  // #13 NIGHT SIZZLE — Blazing Night Market Dragon Chef with Sizzle Grill & Flame Crest
   'night-sizzle': {
     bg: `
       <defs>
         <linearGradient id="ns-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#FF5C2B"/>
-          <stop offset="50%" stop-color="#FFD60A"/>
+          <stop offset="0%" stop-color="#450A0A"/>
+          <stop offset="48%" stop-color="#EA580C"/>
           <stop offset="100%" stop-color="#7C3AED"/>
         </linearGradient>
       </defs>
       <rect width="260" height="320" fill="url(#ns-bg)"/>
-      <circle cx="130" cy="150" r="95" fill="#FFFBEB" opacity="0.24"/>
+      <!-- Night Market Canopy Stripes -->
+      <g opacity="0.22" fill="#FFD426">
+        <rect x="0" y="0" width="32" height="44"/>
+        <rect x="64" y="0" width="32" height="44"/>
+        <rect x="128" y="0" width="32" height="44"/>
+        <rect x="192" y="0" width="32" height="44"/>
+      </g>
+      <circle cx="130" cy="148" r="96" fill="#FFD426" opacity="0.22"/>
     `,
     mid: `
-      <!-- Flame Halo -->
-      <path d="M40 220 C24 140, 68 88, 130 52 C192 88, 236 140, 220 220 Z" fill="#FF3B30" stroke="#1A1A1F" stroke-width="4"/>
+      <!-- Dramatic Blazing Flame Halo -->
+      <path d="M32 232 C16 146, 56 98, 86 78 C78 106, 94 114, 102 90 C112 66, 124 44, 130 36 C138 46, 148 66, 158 90 C166 114, 182 106, 174 78 C204 98, 244 146, 228 232 Z" fill="#FF3B30" stroke="#17171C" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M54 224 C44 156, 86 106, 130 68 C174 106, 216 156, 206 224 Z" fill="#FF7A00" opacity="0.85"/>
+      <polygon points="34,74 39,84 50,86 41,92 44,102 34,96 24,102 27,92 18,86 29,84" fill="#FFD426" stroke="#17171C" stroke-width="2.2"/>
+      <polygon points="226,86 230,94 239,96 232,101 234,110 226,105 218,110 220,101 213,96 222,94" fill="#00D4AA" stroke="#17171C" stroke-width="2.2"/>
     `,
     hero: `
-      <!-- Dragon Mane / Horns -->
-      <path d="M84 96 L64 56 L108 82 Z" fill="#00D4AA" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M176 96 L196 56 L152 82 Z" fill="#00D4AA" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
+      <!-- Dragon Teal Horns with Highlights -->
+      <path d="M84 98 L58 50 L110 82 Z" fill="#00D4AA" stroke="#17171C" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M176 98 L202 50 L150 82 Z" fill="#00D4AA" stroke="#17171C" stroke-width="4.5" stroke-linejoin="round"/>
+      <!-- Chef Street Headband -->
+      <path d="M68 112 C94 94, 166 94, 192 112" fill="none" stroke="#FF3B30" stroke-width="14" stroke-linecap="round"/>
       <!-- Dragon Head -->
-      <path d="M68 128 C68 82, 192 82, 192 128 C192 184, 168 212, 130 212 C92 212, 68 184, 68 128 Z" fill="#FFD60A" stroke="#1A1A1F" stroke-width="4.5"/>
-      <!-- Cool Street Goggles -->
-      <circle cx="102" cy="134" r="22" fill="#00D4AA" stroke="#1A1A1F" stroke-width="4.5"/>
-      <circle cx="158" cy="134" r="22" fill="#00D4AA" stroke="#1A1A1F" stroke-width="4.5"/>
-      <circle cx="102" cy="134" r="10" fill="#181820"/>
-      <circle cx="158" cy="134" r="10" fill="#181820"/>
-      <line x1="124" y1="134" x2="136" y2="134" stroke="#1A1A1F" stroke-width="5"/>
-      <!-- Snout & Grin -->
-      <path d="M90 174 Q130 202 170 174 Z" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4"/>
-      <line x1="112" y1="176" x2="112" y2="188" stroke="#1A1A1F" stroke-width="3"/>
-      <line x1="148" y1="176" x2="148" y2="188" stroke="#1A1A1F" stroke-width="3"/>
-      <!-- Sizzle Skewer Base -->
-      <rect x="52" y="226" width="156" height="36" rx="14" fill="#181820" stroke="#1A1A1F" stroke-width="4"/>
-      <circle cx="88" cy="244" r="9" fill="#FF5C2B"/>
-      <circle cx="130" cy="244" r="9" fill="#FFD60A"/>
-      <circle cx="172" cy="244" r="9" fill="#00D4AA"/>
+      <path d="M66 128 C66 80, 194 80, 194 128 C194 186, 168 214, 130 214 C92 214, 66 186, 66 128 Z" fill="#FFD426" stroke="#17171C" stroke-width="4.5"/>
+      <!-- Inner Warm Shading -->
+      <path d="M74 158 C84 192, 108 208, 130 208 C152 208, 176 192, 186 158" fill="none" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+      <!-- Street Aviator Goggles -->
+      <rect x="64" y="122" width="132" height="14" rx="6" fill="#17171C"/>
+      <circle cx="99" cy="130" r="24" fill="#00D4AA" stroke="#17171C" stroke-width="4.5"/>
+      <circle cx="161" cy="130" r="24" fill="#00D4AA" stroke="#17171C" stroke-width="4.5"/>
+      <circle cx="99" cy="130" r="13" fill="#14151B"/>
+      <circle cx="161" cy="130" r="13" fill="#14151B"/>
+      <circle cx="94" cy="125" r="4" fill="#FFFDF8"/>
+      <circle cx="156" cy="125" r="4" fill="#FFFDF8"/>
+      <!-- Fierce Grin with Fangs -->
+      <path d="M88 172 Q130 206 172 172 Z" fill="#14151B" stroke="#17171C" stroke-width="4"/>
+      <polygon points="98,173 108,173 103,186" fill="#FFFDF8"/>
+      <polygon points="152,173 162,173 157,186" fill="#FFFDF8"/>
+      <path d="M114 188 Q130 181 146 188 Q138 197 122 197 Z" fill="#FF3D9A"/>
+      <!-- Street Sizzle Iron Grill Deck -->
+      <rect x="44" y="222" width="172" height="44" rx="14" fill="#181820" stroke="#17171C" stroke-width="4.5"/>
+      <line x1="56" y1="234" x2="204" y2="234" stroke="#52525B" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="82" cy="248" r="10" fill="#FF5526" stroke="#17171C" stroke-width="2.5"/>
+      <circle cx="130" cy="248" r="10" fill="#FFD426" stroke="#17171C" stroke-width="2.5"/>
+      <circle cx="178" cy="248" r="10" fill="#00D4AA" stroke="#17171C" stroke-width="2.5"/>
     `,
   },
 
@@ -671,34 +732,52 @@ export const ARTWORK_LAYERS: Record<string, ArtLayers> = {
     bg: `
       <defs>
         <linearGradient id="cm-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#0F172A"/>
-          <stop offset="50%" stop-color="#312E81"/>
-          <stop offset="100%" stop-color="#00D4AA"/>
+          <stop offset="0%" stop-color="#090D1E"/>
+          <stop offset="48%" stop-color="#2E1065"/>
+          <stop offset="100%" stop-color="#0D9488"/>
         </linearGradient>
       </defs>
       <rect width="260" height="320" fill="url(#cm-bg)"/>
-      <circle cx="190" cy="84" r="34" fill="#FFD60A"/>
-      <circle cx="176" cy="76" r="28" fill="#1E1B4B"/>
+      <!-- Glowing Crescent Moon + Halos -->
+      <circle cx="192" cy="82" r="52" fill="#FFD426" opacity="0.14"/>
+      <circle cx="192" cy="82" r="34" fill="#FFD426"/>
+      <circle cx="177" cy="73" r="28" fill="#1E1548"/>
+      <!-- Traditional Alley Eaves Silhouette -->
+      <path d="M0 248 Q68 232 130 256 Q192 232 260 248 L260 320 L0 320 Z" fill="#0F172A" stroke="#17171C" stroke-width="3"/>
     `,
     mid: `
-      <circle cx="52" cy="76" r="4" fill="#FFFDF8"/>
-      <circle cx="88" cy="54" r="3" fill="#FFD60A"/>
-      <circle cx="220" cy="156" r="4" fill="#00D4AA"/>
+      <!-- Firefly Sparks & Musical Wave Rings -->
+      <circle cx="130" cy="168" r="78" fill="none" stroke="#00D4AA" stroke-width="2.5" stroke-dasharray="8 8" opacity="0.55"/>
+      <circle cx="52" cy="76" r="5" fill="#FFFDF8"/>
+      <circle cx="88" cy="54" r="4" fill="#FFD426"/>
+      <circle cx="222" cy="156" r="5" fill="#00D4AA"/>
+      <circle cx="42" cy="212" r="4" fill="#FFD426"/>
     `,
     hero: `
-      <!-- Iridescent Wings -->
-      <ellipse cx="80" cy="170" rx="54" ry="26" transform="rotate(-30 80 170)" fill="#00D4AA" fill-opacity="0.82" stroke="#1A1A1F" stroke-width="4"/>
-      <ellipse cx="180" cy="170" rx="54" ry="26" transform="rotate(30 180 170)" fill="#C084FC" fill-opacity="0.82" stroke="#1A1A1F" stroke-width="4"/>
-      <!-- Golden Cicada Body -->
-      <ellipse cx="130" cy="174" rx="38" ry="62" fill="#FFD60A" stroke="#1A1A1F" stroke-width="4.5"/>
-      <ellipse cx="130" cy="126" rx="44" ry="28" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="4.5"/>
-      <!-- Glowing Big Eyes -->
-      <circle cx="94" cy="120" r="14" fill="#00D4AA" stroke="#1A1A1F" stroke-width="3.5"/>
-      <circle cx="166" cy="120" r="14" fill="#00D4AA" stroke="#1A1A1F" stroke-width="3.5"/>
-      <circle cx="94" cy="120" r="5" fill="#1A1A1F"/>
-      <circle cx="166" cy="120" r="5" fill="#1A1A1F"/>
-      <!-- Glowing Sound Waves -->
-      <path d="M96 206 Q130 222 164 206" fill="none" stroke="#1A1A1F" stroke-width="4" stroke-linecap="round"/>
+      <!-- Iridescent Translucent Wings with Vein Detail -->
+      <g>
+        <ellipse cx="76" cy="168" rx="56" ry="26" transform="rotate(-28 76 168)" fill="#00D4AA" fill-opacity="0.86" stroke="#17171C" stroke-width="4.5"/>
+        <path d="M36 184 Q74 166 114 156" fill="none" stroke="#FFFDF8" stroke-width="2.5" opacity="0.7"/>
+        <ellipse cx="184" cy="168" rx="56" ry="26" transform="rotate(28 184 168)" fill="#C084FC" fill-opacity="0.86" stroke="#17171C" stroke-width="4.5"/>
+        <path d="M224 184 Q186 166 146 156" fill="none" stroke="#FFFDF8" stroke-width="2.5" opacity="0.7"/>
+      </g>
+      <!-- Golden Jade-Trimmed Cicada Body -->
+      <ellipse cx="130" cy="180" rx="40" ry="64" fill="#FFD426" stroke="#17171C" stroke-width="4.5"/>
+      <path d="M98 168 H162 M96 186 H164 M102 204 H158" stroke="#D97706" stroke-width="4" stroke-linecap="round"/>
+      <ellipse cx="130" cy="126" rx="46" ry="30" fill="#FF5526" stroke="#17171C" stroke-width="4.5"/>
+      <!-- Mini Crown & Headphones -->
+      <polygon points="116,102 120,88 130,96 140,88 144,102" fill="#FFD426" stroke="#17171C" stroke-width="2.8" stroke-linejoin="round"/>
+      <!-- Glowing Cyan Eyes -->
+      <circle cx="92" cy="122" r="15" fill="#00D4AA" stroke="#17171C" stroke-width="4"/>
+      <circle cx="168" cy="122" r="15" fill="#00D4AA" stroke="#17171C" stroke-width="4"/>
+      <circle cx="94" cy="122" r="6" fill="#17171C"/>
+      <circle cx="166" cy="122" r="6" fill="#17171C"/>
+      <circle cx="90" cy="118" r="3" fill="#FFFDF8"/>
+      <circle cx="162" cy="118" r="3" fill="#FFFDF8"/>
+      <!-- Happy Sound Wave Smile -->
+      <path d="M114 138 Q130 148 146 138" fill="none" stroke="#17171C" stroke-width="3.8" stroke-linecap="round"/>
+      <!-- Glowing Sound Ripples Below -->
+      <path d="M94 224 Q130 242 166 224" fill="none" stroke="#00D4AA" stroke-width="4.5" stroke-linecap="round"/>
     `,
   },
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Layers, Volume2, VolumeX } from 'lucide-react';
 import { holoAudio } from '../../audio/HoloAudioEngine';
 import { useHoloSfx } from '../../audio/useHoloSfx';
 import { SOUND_CARDS } from '../../data/soundCards';
@@ -8,22 +8,25 @@ import type { PageId } from '../../types/holo';
 
 const NAV_TABS: {
   id: PageId;
+  num: string;
   label: string;
   zhLabel: string;
   activeBg: string;
   activeText: string;
+  dotColor: string;
 }[] = [
-  { id: 'gacha', label: '01 GACHA', zhLabel: '盲盒抽卡', activeBg: '#7C3AED', activeText: '#FFFFFF' },
-  { id: 'beat', label: '02 BEAT', zhLabel: '插卡节拍', activeBg: '#FF5C2B', activeText: '#FFFFFF' },
-  { id: 'pinball', label: '03 PINBALL', zhLabel: '物理弹珠', activeBg: '#00D4AA', activeText: '#1A1A1F' },
-  { id: 'forge', label: '04 FORGE', zhLabel: '闪卡铸造', activeBg: '#FFD60A', activeText: '#1A1A1F' },
+  { id: 'gacha', num: '01', label: 'GACHA', zhLabel: '盲盒抽卡', activeBg: '#7C3AED', activeText: '#FFFFFF', dotColor: '#FFD426' },
+  { id: 'beat', num: '02', label: 'BEAT', zhLabel: '插卡节拍', activeBg: '#FF5526', activeText: '#FFFFFF', dotColor: '#FFD426' },
+  { id: 'pinball', num: '03', label: 'PINBALL', zhLabel: '物理弹珠', activeBg: '#00D4AA', activeText: '#17171C', dotColor: '#17171C' },
+  { id: 'forge', num: '04', label: 'FORGE', zhLabel: '闪卡铸造', activeBg: '#FFD426', activeText: '#17171C', dotColor: '#FF5526' },
 ];
 
-const QUICK_BPMS = [90, 110, 120, 140];
+const QUICK_BPMS = [92, 116, 126, 140];
 
 export const TopNavbar: React.FC = () => {
   const activePage = useHoloStore((s) => s.activePage);
   const setActivePage = useHoloStore((s) => s.setActivePage);
+  const audioUnlocked = useHoloStore((s) => s.audioUnlocked);
   const collectionCount = useHoloStore((s) => s.collection.length);
   const bpm = useHoloStore((s) => s.bpm);
   const setBpm = useHoloStore((s) => s.setBpm);
@@ -38,7 +41,7 @@ export const TopNavbar: React.FC = () => {
   // Live 5-bar Mint Cyan OLED equalizer synced to real Tone.js output
   useEffect(() => {
     let raf = 0;
-    const heights = [0.25, 0.4, 0.55, 0.72, 0.9];
+    const heights = [0.24, 0.42, 0.58, 0.74, 0.92];
     const render = (t: number) => {
       const level = holoAudio.getMeterLevel();
       const playing = useHoloStore.getState().isPlaying;
@@ -48,15 +51,14 @@ export const TopNavbar: React.FC = () => {
         if (!bar) return;
         let h = heights[idx];
         if (isMuted) {
-          h = 0.16;
+          h = 0.14;
         } else if (level > 0.03) {
           const jitter = Math.abs(Math.sin(t * 0.015 + idx * 1.4));
-          h = Math.min(1, Math.max(0.22, level * 0.95 + jitter * 0.35));
+          h = Math.min(1, Math.max(0.22, level * 0.96 + jitter * 0.34));
         } else if (playing) {
           h = 0.25 + Math.abs(Math.sin(t * 0.01 + idx * 0.9)) * 0.72;
         } else {
-          // Gentle idle OLED heartbeat matching mockup aesthetic
-          h = heights[idx] * (0.78 + Math.sin(t * 0.003 + idx * 0.7) * 0.16);
+          h = heights[idx] * (0.72 + Math.sin(t * 0.0028 + idx * 0.75) * 0.18);
         }
         bar.style.transform = `scaleY(${h.toFixed(2)})`;
       });
@@ -68,15 +70,15 @@ export const TopNavbar: React.FC = () => {
 
   const cycleQuickBpm = () => {
     const nextIdx = (QUICK_BPMS.indexOf(bpm) + 1) % QUICK_BPMS.length;
-    const nextBpm = QUICK_BPMS[nextIdx] ?? 120;
+    const nextBpm = QUICK_BPMS[nextIdx] ?? 116;
     setBpm(nextBpm);
     holoAudio.syncFromStore();
     playSfx('click', 0.7);
   };
 
   return (
-    <header className="h-[64px] w-full bg-[#FFFDF8] border-b-[3px] border-[#1A1A1F] px-4 flex items-center justify-between gap-3 shrink-0 z-40 select-none">
-      {/* Left: Tilted Mini Holographic Card Logo + HOLOBEAT */}
+    <header className="h-[60px] w-full bg-[#FBF9F4] border-b-[2.5px] border-[#17171C] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_2px_0_rgba(23,23,28,0.06)] px-4 flex items-center justify-between gap-3 shrink-0 z-40 select-none">
+      {/* Left: Tilted Mini Holographic Card Logo + HOLOBEAT Hardware Silkscreen */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => {
@@ -86,31 +88,33 @@ export const TopNavbar: React.FC = () => {
           className="flex items-center gap-2.5 group cursor-pointer"
           title="回到 01 盲盒抽卡机 · 声卡造物局"
         >
-          {/* Mini Tilted Iridescent Holo Card Icon */}
-          <div className="relative w-7 h-9 rounded-[6px] border-[2.5px] border-[#1A1A1F] shadow-[2px_2px_0px_0px_#1A1A1F] rotate-[10deg] group-hover:rotate-[4deg] transition-transform overflow-hidden holo-shine-border flex items-center justify-center">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
+          <div className="relative w-7 h-9 rounded-[6px] border-[2.5px] border-[#17171C] shadow-[2px_2px_0px_0px_#17171C] rotate-[10deg] group-hover:rotate-[3deg] group-hover:scale-105 transition-transform duration-200 overflow-hidden holo-shine-border flex items-center justify-center">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]">
               <path
                 d="M12 2 L14.4 9.6 L22 12 L14.4 14.4 L12 22 L9.6 14.4 L2 12 L9.6 9.6 Z"
-                fill="#FFFDF8"
-                stroke="#1A1A1F"
+                fill="#FBF9F4"
+                stroke="#17171C"
                 strokeWidth="1.4"
               />
             </svg>
           </div>
           <div className="flex flex-col items-start">
-            <span className="text-[22px] font-black tracking-tight leading-none text-[#1A1A1F]">
+            <span className="text-[20px] font-black tracking-tight leading-none text-[#17171C]">
               HOLOBEAT
+            </span>
+            <span className="hw-silkscreen !text-[8.5px] mt-0.5 leading-none">
+              HB-04 · 声卡造物局
             </span>
           </div>
         </button>
 
-        <div className="h-7 w-[2px] bg-[#1A1A1F]/25 hidden sm:block" />
+        <div className="h-6 w-[1.5px] bg-[#17171C]/18 hidden lg:block" />
       </div>
 
-      {/* Center: Recessed 4-Page Segmented Switcher */}
+      {/* Center: Recessed Hardware 4-Module Segmented Rail */}
       <nav
         aria-label="主工作台切换"
-        className="flex items-center gap-1.5 bg-[#EDE7D9] border-[2.5px] border-[#1A1A1F] rounded-2xl p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]"
+        className="flex items-center gap-1.5 bg-[#E7E1D3] border-[2.5px] border-[#17171C] rounded-2xl p-1 shadow-[inset_0_2px_4px_rgba(23,23,28,0.12)]"
       >
         {NAV_TABS.map((tab) => {
           const isActive = activePage === tab.id;
@@ -121,26 +125,36 @@ export const TopNavbar: React.FC = () => {
                 playSfx('tab');
                 setActivePage(tab.id);
               }}
-              title={tab.zhLabel}
+              title={`${tab.num} ${tab.zhLabel}`}
               style={{
-                backgroundColor: isActive ? tab.activeBg : '#FFFDF8',
-                color: isActive ? tab.activeText : '#1A1A1F',
+                backgroundColor: isActive ? tab.activeBg : '#FBF9F4',
+                color: isActive ? tab.activeText : '#17171C',
               }}
-              className={`px-3.5 py-1.5 rounded-xl border-[2px] border-[#1A1A1F] text-[13px] font-black tracking-wide transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-xl border-[2px] border-[#17171C] text-[12.5px] font-black tracking-wide transition-all duration-150 cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                 isActive
-                  ? 'shadow-[2px_2px_0px_0px_#1A1A1F] -translate-y-[0.5px]'
-                  : 'hover:bg-[#F7F3E9]'
+                  ? 'shadow-[2px_2px_0px_0px_#17171C] -translate-y-[1px]'
+                  : 'hover:bg-[#F3EFE6] shadow-[1px_1px_0px_0px_rgba(23,23,28,0.2)]'
               }`}
             >
-              {tab.label}
+              {isActive && (
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0 animate-led-soft"
+                  style={{ backgroundColor: tab.dotColor }}
+                />
+              )}
+              <span className="font-mono-hw text-[11px] opacity-75">{tab.num}</span>
+              <span>{tab.label}</span>
+              <span className="hidden xl:inline text-[10px] font-bold opacity-75 ml-0.5">
+                {tab.zhLabel}
+              </span>
             </button>
           );
         })}
       </nav>
 
-      {/* Right: Collection Badge + OLED BPM/EQ Pill + Mute Button */}
-      <div className="flex items-center gap-2.5">
-        <div className="h-7 w-[2px] bg-[#1A1A1F]/25 hidden sm:block" />
+      {/* Right: Deck Drawer Pill + OLED BPM/DSP Status + Mute Button */}
+      <div className="flex items-center gap-2">
+        <div className="h-6 w-[1.5px] bg-[#17171C]/18 hidden lg:block" />
 
         {/* Collection Counter Pill */}
         <button
@@ -149,22 +163,33 @@ export const TopNavbar: React.FC = () => {
             setDrawerOpen(true);
           }}
           title="展开全局声卡图鉴抽屉"
-          className="brutal-btn h-[38px] px-3 rounded-xl bg-[#FFFDF8] flex items-center gap-1 font-mono-hw text-sm font-black text-[#1A1A1F]"
+          className="brutal-btn h-[36px] px-2.5 rounded-xl bg-[#FBF9F4] flex items-center gap-1.5 font-mono-hw text-[13px] font-black text-[#17171C]"
         >
+          <Layers className="w-3.5 h-3.5 text-[#7C3AED]" strokeWidth={2.6} />
           <span>{String(collectionCount).padStart(2, '0')}</span>
-          <span className="text-[#5C5C6B]">/{SOUND_CARDS.length}</span>
+          <span className="text-[#626272]">/{SOUND_CARDS.length}</span>
         </button>
 
-        {/* Dark Charcoal OLED BPM + 5 Live Mint Cyan EQ Bars */}
+        {/* Recessed Obsidian OLED BPM + Audio DSP LED + 5 Mint EQ Bars */}
         <button
           onClick={cycleQuickBpm}
-          title="点击快速切换全局 BPM (90 / 110 / 120 / 140)"
-          className="h-[38px] px-3 rounded-xl bg-[#181820] border-[2.5px] border-[#1A1A1F] shadow-[2px_2px_0px_0px_#1A1A1F] flex items-center gap-2.5 cursor-pointer hover:brightness-110 transition-all"
+          title="点击快速切换全局 BPM (92 / 116 / 126 / 140)"
+          className="h-[36px] px-3 rounded-xl bg-[#14151B] border-[2.5px] border-[#17171C] shadow-[inset_0_2px_5px_rgba(0,0,0,0.6),2px_2px_0px_0px_#17171C] flex items-center gap-2 cursor-pointer hover:brightness-115 transition-all"
         >
-          <span className="font-mono-hw text-[13px] font-bold text-[#FFFDF8] tracking-wide whitespace-nowrap">
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              muted
+                ? 'bg-[#FF5526]'
+                : audioUnlocked
+                  ? 'bg-[#00D4AA] shadow-[0_0_6px_#00D4AA]'
+                  : 'bg-[#FFD426] animate-led-soft'
+            }`}
+            title={muted ? '已静音' : audioUnlocked ? 'DSP 音频引擎在线' : '音频引擎待机'}
+          />
+          <span className="font-mono-hw text-[12.5px] font-bold text-[#FBF9F4] tracking-wide whitespace-nowrap">
             BPM {bpm}
           </span>
-          <div className="flex items-end gap-[3px] h-[18px]">
+          <div className="flex items-end gap-[2.5px] h-[16px]">
             {[0, 1, 2, 3, 4].map((idx) => (
               <span
                 key={idx}
@@ -172,15 +197,19 @@ export const TopNavbar: React.FC = () => {
                   barsRef.current[idx] = el;
                 }}
                 style={{ transformOrigin: 'bottom center' }}
-                className={`w-[5px] h-full rounded-[2px] transition-transform duration-75 ${
-                  isPlaying ? 'bg-[#00D4AA] shadow-[0_0_6px_#00D4AA]' : 'bg-[#00D4AA]'
+                className={`w-[4.5px] h-full rounded-[1.5px] transition-transform duration-75 ${
+                  muted
+                    ? 'bg-white/25'
+                    : isPlaying
+                      ? 'bg-[#00D4AA] shadow-[0_0_6px_#00D4AA]'
+                      : 'bg-[#00D4AA]/90'
                 }`}
               />
             ))}
           </div>
         </button>
 
-        {/* Square Tactile Speaker Mute Button */}
+        {/* Tactile Speaker Mute Switch */}
         <button
           onClick={() => {
             toggleMute();
@@ -189,14 +218,14 @@ export const TopNavbar: React.FC = () => {
           }}
           aria-label={muted ? '取消静音' : '全局静音'}
           title={muted ? '当前已静音，点击恢复声音' : '点击一键全局静音'}
-          className={`brutal-btn w-[38px] h-[38px] rounded-xl flex items-center justify-center ${
-            muted ? 'bg-[#FF5C2B] text-white' : 'bg-[#FFFDF8] text-[#1A1A1F]'
+          className={`brutal-btn w-[36px] h-[36px] rounded-xl flex items-center justify-center ${
+            muted ? 'bg-[#FF5526] text-white' : 'bg-[#FBF9F4] text-[#17171C]'
           }`}
         >
           {muted ? (
-            <VolumeX className="w-5 h-5" strokeWidth={2.75} />
+            <VolumeX className="w-4.5 h-4.5" strokeWidth={2.75} />
           ) : (
-            <Volume2 className="w-5 h-5" strokeWidth={2.75} />
+            <Volume2 className="w-4.5 h-4.5" strokeWidth={2.75} />
           )}
         </button>
       </div>

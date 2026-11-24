@@ -56,6 +56,7 @@ export async function renderBeatMixToWav(snapshot: BeatSnapshot, bars = 2): Prom
 
   const toneBuffer = await Tone.Offline(({ destination }) => {
     const limiter = new Tone.Limiter(-1).connect(destination);
+    const reverb = new Tone.Freeverb({ roomSize: 0.28, dampening: 4200, wet: 0.12 }).connect(limiter);
     const anySolo = snapshot.tracks.some((t) => t.solo);
 
     snapshot.tracks.forEach((track) => {
@@ -65,7 +66,7 @@ export async function renderBeatMixToWav(snapshot: BeatSnapshot, bars = 2): Prom
       const ch = new Tone.Channel(
         track.volume <= 0.01 ? -60 : Tone.gainToDb(track.volume),
         0
-      ).connect(limiter);
+      ).connect(reverb);
       const filt = new Tone.Filter(650 * Math.pow(21.5, track.tone), 'lowpass').connect(ch);
       const rack = createVoiceRack(filt);
 
@@ -74,9 +75,10 @@ export async function renderBeatMixToWav(snapshot: BeatSnapshot, bars = 2): Prom
         if (!track.steps[step]) continue;
         const swingOffset = step % 2 === 1 ? snapshot.swing * stepSec * 0.5 : 0;
         const time = 0.04 + i * stepSec + swingOffset;
+        const grooveVel = step % 4 === 0 ? 0.92 : step % 2 === 0 ? 0.8 : 0.72;
         triggerCardOnRack(rack, track.cardId, {
           time,
-          velocity: 0.86,
+          velocity: grooveVel,
           tone: track.tone,
           stepIndex: step,
           scale: snapshot.scale,
@@ -97,7 +99,8 @@ export async function renderPinballToWav(
 
   const toneBuffer = await Tone.Offline(({ destination }) => {
     const limiter = new Tone.Limiter(-1).connect(destination);
-    const rack = createVoiceRack(limiter);
+    const reverb = new Tone.Freeverb({ roomSize: 0.3, dampening: 4400, wet: 0.14 }).connect(limiter);
+    const rack = createVoiceRack(reverb);
 
     events.forEach((ev) => {
       const time = 0.05 + ev.timeOffsetMs / 1000;

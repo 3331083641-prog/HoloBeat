@@ -10,6 +10,8 @@ export type HoloFoilType = 'prism' | 'spark' | 'cyber' | 'chrome' | 'gold';
 
 export type ScaleId = 'PENTA_C' | 'MINOR_C' | 'DORIAN_C';
 
+export type BeatPresetId = 'MARKET' | 'NIGHT' | 'LOFI';
+
 export interface SoundCardDef {
   id: string;
   code: string;
