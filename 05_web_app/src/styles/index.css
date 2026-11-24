@@ -1,0 +1,171 @@
+@import "tailwindcss";
+@import "@fontsource/space-grotesk/700.css";
+@import "@fontsource/jetbrains-mono/700.css";
+@import "./holo.css";
+
+:root {
+  --bg-canvas: #F7F3E9;
+  --bg-panel: #FFFDF8;
+  --bg-tray: #EDE7D9;
+  --bg-oled: #181820;
+  --ink-primary: #1A1A1F;
+  --ink-muted: #5C5C6B;
+  --accent-purple: #7C3AED;
+  --accent-orange: #FF5C2B;
+  --accent-mint: #00D4AA;
+  --accent-yellow: #FFD60A;
+  --accent-magenta: #FF3D9A;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Space Grotesk', 'HarmonyOS Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: var(--ink-primary);
+}
+
+.font-mono-hw {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Warm Cream Dot-Grid Toy Canvas */
+.canvas-dot-grid {
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(#D5CEBE 1.35px, transparent 1.35px);
+  background-size: 18px 18px;
+}
+
+/* Recessed Oatmeal Blueprint Dot-Grid (Pinball Arena / Trays) */
+.tray-dot-grid {
+  background-color: var(--bg-tray);
+  background-image: radial-gradient(#C8BFAE 1.4px, transparent 1.4px);
+  background-size: 18px 18px;
+}
+
+/* Neo-Brutalist Hardware Panels */
+.brutal-panel {
+  background-color: var(--bg-panel);
+  border: 3px solid var(--ink-primary);
+  border-radius: 16px;
+  box-shadow: 5px 5px 0px 0px var(--ink-primary);
+}
+
+.brutal-panel-sm {
+  background-color: var(--bg-panel);
+  border: 2.5px solid var(--ink-primary);
+  border-radius: 14px;
+  box-shadow: 4px 4px 0px 0px var(--ink-primary);
+}
+
+.brutal-oled {
+  background-color: var(--bg-oled);
+  border: 3px solid var(--ink-primary);
+  border-radius: 16px;
+  box-shadow: 5px 5px 0px 0px var(--ink-primary);
+}
+
+/* Neo-Brutalist Tactile Pressable Buttons (Zero Reflow Transitions) */
+.brutal-btn {
+  border: 2.5px solid var(--ink-primary);
+  box-shadow: 3px 3px 0px 0px var(--ink-primary);
+  transition: transform 75ms ease-out, box-shadow 75ms ease-out, filter 75ms ease-out;
+  cursor: pointer;
+  user-select: none;
+}
+
+.brutal-btn:hover:not(:disabled) {
+  filter: brightness(1.03);
+}
+
+.brutal-btn:active:not(:disabled),
+.brutal-btn-pressed {
+  transform: translate(3px, 3px);
+  box-shadow: 0px 0px 0px 0px var(--ink-primary);
+}
+
+.brutal-btn-lg {
+  border: 3px solid var(--ink-primary);
+  box-shadow: 4px 4px 0px 0px var(--ink-primary);
+  transition: transform 75ms ease-out, box-shadow 75ms ease-out, filter 75ms ease-out;
+  cursor: pointer;
+  user-select: none;
+}
+
+.brutal-btn-lg:hover:not(:disabled) {
+  filter: brightness(1.03);
+}
+
+.brutal-btn-lg:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px 0px var(--ink-primary);
+}
+
+.brutal-pad {
+  border: 2px solid var(--ink-primary);
+  box-shadow: 2px 2px 0px 0px var(--ink-primary);
+  transition: transform 65ms ease-out, box-shadow 65ms ease-out, background-color 65ms ease-out;
+  cursor: pointer;
+  user-select: none;
+}
+
+.brutal-pad:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px 0px var(--ink-primary);
+}
+
+/* Gacha Machine Shake & Capsule Bounce */
+@keyframes gacha-shake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-4px, 2px) rotate(-1.2deg); }
+  40% { transform: translate(4px, -2px) rotate(1.2deg); }
+  60% { transform: translate(-3px, 1px) rotate(-0.8deg); }
+  80% { transform: translate(3px, 1px) rotate(0.8deg); }
+}
+
+.animate-gacha-shake {
+  animation: gacha-shake 0.34s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes card-pop-in {
+  0% { transform: scale(0.72) translateY(24px); opacity: 0; }
+  65% { transform: scale(1.04) translateY(-4px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.animate-card-pop {
+  animation: card-pop-in 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(4deg); }
+}
+
+.animate-float-slow {
+  animation: float-slow 3.2s ease-in-out infinite;
+}
+
+/* Custom sleek scrollbar for binder & drawers */
+.holo-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.holo-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.holo-scroll::-webkit-scrollbar-thumb {
+  background: rgba(26, 26, 31, 0.25);
+  border-radius: 999px;
+}
+.holo-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 26, 31, 0.45);
+}

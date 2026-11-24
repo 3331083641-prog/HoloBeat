@@ -1,0 +1,300 @@
+/* ============================================================================
+   HOLOBEAT 3D Iridescent Holographic Card Engine
+   100% Offline Zero-Remote-Assets CSS Pipeline (5 Switchable Foil Finishes)
+   ============================================================================ */
+
+.holo-scene {
+  perspective: 1100px;
+}
+
+.holo-card-shell {
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --px: 0;
+  --py: 0;
+  --rotate-x: 0deg;
+  --rotate-y: 0deg;
+  --bg-x: 50%;
+  --bg-y: 50%;
+  --holo-opacity: 0.72;
+
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
+  transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 16px;
+}
+
+.holo-card-shell.holo-active {
+  will-change: transform;
+  transition: none;
+}
+
+.holo-card-shell.holo-flipped {
+  transform: rotateX(var(--rotate-x)) rotateY(calc(180deg + var(--rotate-y)));
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.holo-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 3px solid #1A1A1F;
+}
+
+.holo-face-back {
+  transform: rotateY(180deg);
+}
+
+/* Prismatic Rainbow Metallic Outer Trim */
+.holo-rainbow-frame {
+  padding: 7px;
+  background: linear-gradient(
+    125deg,
+    #FF3D9A 0%,
+    #FFD60A 20%,
+    #00D4AA 42%,
+    #38BDF8 62%,
+    #7C3AED 82%,
+    #FF3D9A 100%
+  );
+  background-size: 240% 240%;
+  background-position: var(--bg-x) var(--bg-y);
+}
+
+.holo-rainbow-frame[data-foil="gold"] {
+  background: linear-gradient(130deg, #FEF08A 0%, #F59E0B 32%, #FFFBEB 54%, #EA580C 80%, #FEF08A 100%);
+  background-size: 240% 240%;
+  background-position: var(--bg-x) var(--bg-y);
+}
+
+.holo-rainbow-frame[data-foil="cyber"] {
+  background: linear-gradient(125deg, #00F5D4 0%, #7C3AED 35%, #38BDF8 68%, #FF3D9A 100%);
+  background-size: 240% 240%;
+  background-position: var(--bg-x) var(--bg-y);
+}
+
+.holo-rainbow-frame[data-foil="chrome"] {
+  background: linear-gradient(130deg, #F8FAFC 0%, #7DD3FC 28%, #334155 52%, #C084FC 76%, #F8FAFC 100%);
+  background-size: 240% 240%;
+  background-position: var(--bg-x) var(--bg-y);
+}
+
+.holo-rainbow-frame[data-foil="spark"] {
+  background: linear-gradient(135deg, #E2E8F0 0%, #BAE6FD 30%, #F5D0FE 60%, #FEF9C3 100%);
+  background-size: 240% 240%;
+  background-position: var(--bg-x) var(--bg-y);
+}
+
+/* 3-Layer SVG Z-Depth Parallax */
+.holo-layer-bg {
+  transform: translate3d(calc(var(--px) * 4px), calc(var(--py) * 4px), 0) scale(1.06);
+  transition: transform 90ms linear;
+}
+.holo-layer-mid {
+  transform: translate3d(calc(var(--px) * -4px), calc(var(--py) * -4px), 0) scale(1.03);
+  transition: transform 90ms linear;
+}
+.holo-layer-hero {
+  transform: translate3d(calc(var(--px) * -10px), calc(var(--py) * -10px), 0) scale(1.02);
+  transition: transform 90ms linear;
+}
+
+/* Layer 2: Foil Spectrum Layer (5 distinct offline optical recipes) */
+.holo-foil-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  opacity: 0.44;
+  mix-blend-mode: color-dodge;
+}
+
+/* 1. PRISM RAINBOW */
+.holo-foil-prism {
+  background-image:
+    repeating-linear-gradient(
+      115deg,
+      rgba(255, 61, 154, 0.72) 0%,
+      rgba(255, 214, 10, 0.72) 16%,
+      rgba(0, 212, 170, 0.72) 32%,
+      rgba(56, 189, 248, 0.72) 48%,
+      rgba(124, 58, 237, 0.72) 64%,
+      rgba(255, 61, 154, 0.72) 80%
+    ),
+    radial-gradient(
+      farthest-corner circle at var(--pointer-x) var(--pointer-y),
+      rgba(255, 255, 255, 0.75) 0%,
+      rgba(255, 255, 255, 0.15) 45%,
+      transparent 78%
+    );
+  background-size: 280% 280%, 100% 100%;
+  background-position: var(--bg-x) var(--bg-y), center;
+  filter: brightness(0.88) contrast(1.32) saturate(1.25);
+}
+
+/* 2. STARDUST SPARKLE */
+.holo-foil-spark {
+  background-image:
+    radial-gradient(circle at 18% 22%, #FFFFFF 0%, transparent 6%),
+    radial-gradient(circle at 76% 18%, #BAE6FD 0%, transparent 7%),
+    radial-gradient(circle at 34% 64%, #FEF08A 0%, transparent 6%),
+    radial-gradient(circle at 82% 72%, #FFFFFF 0%, transparent 7%),
+    radial-gradient(circle at 52% 40%, #F5D0FE 0%, transparent 8%),
+    radial-gradient(circle at 22% 86%, #FFFFFF 0%, transparent 6%),
+    linear-gradient(
+      125deg,
+      rgba(226, 232, 240, 0.55) 0%,
+      rgba(186, 230, 253, 0.7) 35%,
+      rgba(245, 208, 254, 0.65) 68%,
+      rgba(254, 249, 195, 0.7) 100%
+    );
+  background-size: 90px 90px, 110px 110px, 80px 80px, 100px 100px, 130px 130px, 95px 95px, 260% 260%;
+  background-position:
+    calc(var(--bg-x) * 0.5) calc(var(--bg-y) * 0.5),
+    calc(var(--bg-x) * -0.4) calc(var(--bg-y) * 0.4),
+    calc(var(--bg-x) * 0.3) calc(var(--bg-y) * -0.3),
+    var(--bg-x) var(--bg-y),
+    center,
+    var(--bg-x) var(--bg-y),
+    var(--bg-x) var(--bg-y);
+  filter: brightness(0.95) contrast(1.45);
+}
+
+/* 3. CYBER SCANLINE */
+.holo-foil-cyber {
+  background-image:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(0, 245, 212, 0.55) 0px,
+      rgba(0, 245, 212, 0.55) 3px,
+      rgba(124, 58, 237, 0.45) 3px,
+      rgba(124, 58, 237, 0.45) 8px,
+      transparent 8px,
+      transparent 12px
+    ),
+    linear-gradient(
+      115deg,
+      rgba(0, 245, 212, 0.65) 0%,
+      rgba(56, 189, 248, 0.55) 35%,
+      rgba(155, 93, 229, 0.72) 70%,
+      rgba(255, 61, 154, 0.65) 100%
+    );
+  background-size: 160% 160%, 280% 280%;
+  background-position: var(--bg-x) var(--bg-y), var(--bg-x) var(--bg-y);
+  filter: brightness(0.92) contrast(1.38);
+}
+
+/* 4. LIQUID CHROME */
+.holo-foil-chrome {
+  background-image:
+    conic-gradient(
+      from 45deg at var(--pointer-x) var(--pointer-y),
+      rgba(248, 250, 252, 0.85),
+      rgba(125, 211, 252, 0.65),
+      rgba(30, 41, 59, 0.55),
+      rgba(192, 132, 252, 0.75),
+      rgba(248, 250, 252, 0.9),
+      rgba(56, 189, 248, 0.7),
+      rgba(248, 250, 252, 0.85)
+    );
+  background-size: 200% 200%;
+  background-position: var(--bg-x) var(--bg-y);
+  filter: brightness(0.94) contrast(1.45);
+}
+
+/* 5. GILDED GOLD */
+.holo-foil-gold {
+  background-image:
+    repeating-linear-gradient(
+      125deg,
+      rgba(254, 240, 138, 0.78) 0%,
+      rgba(245, 158, 11, 0.62) 22%,
+      rgba(255, 251, 235, 0.88) 42%,
+      rgba(234, 88, 12, 0.58) 64%,
+      rgba(254, 240, 138, 0.78) 86%
+    );
+  background-size: 280% 280%;
+  background-position: var(--bg-x) var(--bg-y);
+  filter: brightness(0.92) contrast(1.32) saturate(1.2);
+}
+
+/* Layer 3: Inline SVG Fractal Noise Micro-Texture (100% Offline Data URI) */
+.holo-noise-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 13;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.9'/%3E%3C/svg%3E");
+}
+
+/* Layer 4: Specular Glare Hotspot */
+.holo-glare-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 14;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+  background: radial-gradient(
+    circle at var(--pointer-x) var(--pointer-y),
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.34) 26%,
+    rgba(255, 255, 255, 0) 64%
+  );
+}
+
+/* Lightweight static + hover diagonal holo shimmer for thumbnails (60fps safe!) */
+.holo-thumb-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.holo-thumb-sheen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    118deg,
+    transparent 16%,
+    rgba(255, 61, 154, 0.28) 32%,
+    rgba(255, 214, 10, 0.34) 44%,
+    rgba(0, 212, 170, 0.34) 56%,
+    rgba(56, 189, 248, 0.3) 68%,
+    transparent 84%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.72;
+  transition: transform 280ms ease-out, opacity 200ms ease-out;
+}
+
+.holo-thumb-sheen:hover::after {
+  opacity: 1;
+  transform: translateX(10%);
+}
+
+/* SSR / UR Animated Rainbow Shine Border */
+@keyframes shine-sweep {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.holo-shine-border {
+  background: linear-gradient(
+    90deg,
+    #FF3D9A,
+    #FFD60A,
+    #00D4AA,
+    #38BDF8,
+    #7C3AED,
+    #FF3D9A
+  );
+  background-size: 300% 300%;
+  animation: shine-sweep 4s linear infinite;
+}

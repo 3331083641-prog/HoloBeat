@@ -1,0 +1,33 @@
+{
+  "name": "holobeat-studio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5173 --strictPort",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.2.5",
+    "@fontsource/space-grotesk": "^5.2.5",
+    "canvas-confetti": "^1.9.3",
+    "lucide-react": "^0.487.0",
+    "matter-js": "^0.20.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tone": "^15.1.22",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/matter-js": "^0.19.6",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.0"
+  }
+}
