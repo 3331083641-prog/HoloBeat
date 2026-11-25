@@ -1,131 +1,172 @@
-# HoloBeat · 声卡造物局
+<div align="center">
 
-> **实体工业潮玩掌机 × 3D 光学全息闪卡 × 100% 纯前端离线互动声音玩具**
+# ✦ HoloBeat · 声卡造物局 ✦
 
-**HoloBeat（声卡造物局）** 是一款把东方市井烟火气与街头声音装进 **3D 光学全息可交互闪卡** 的纯前端 Web 互动声音产品。项目构建了 **「抽卡收集 → 插卡编曲 → 物理弹珠谱曲 → 闪卡铸造与展板级海报导出」** 的完整创作闭环，全程 **零后端、零外部音频/图片/字体外链**，断网环境亦可 60 FPS 流畅演奏与离线导出作品。
+### **让声音拥有形状，让节奏拥有生命，让创作成为可以收藏的记忆。**
+**Collect Sound. Play Rhythm. Forge Memories.**
 
----
+![Version](https://img.shields.io/badge/Version-V2.0_Exhibition_Edition-FF5526?style=for-the-badge)
+![Offline](https://img.shields.io/badge/Offline_Web_Audio-100%25_Zero_CDN-00D4AA?style=for-the-badge)
+![Stack](https://img.shields.io/badge/React_19_+_Tone.js_+_Matter.js-14151B?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Unit_+_E2E_+_API-Verified_0_Errors-7C3AED?style=for-the-badge)
 
-## ✨ 产品质感与四大交互工作台
+*一座融合 **Neo-Brutalism × Teenage Engineering × 设计师潮玩 × 全息收藏卡 × 东方市井声景** 的交互式数字声音造物工坊。*
 
-| 工作台 | 核心体验与工艺亮点 |
-| :--- | :--- |
-| **`01 GACHA` 盲盒抽卡机** | Playdate / Teenage Engineering 风格注塑质感扭蛋机 + 重力堆叠透明橱窗 + 弹簧回弹棘轮大摇杆；Canvas 拉丝银膜全息刮刮乐（带实时刮开进度与飘落银屑物理粒子，刮开 ≥38% 自动破膜）；5 抽保底 `SSR/UR`；**胡克定律真弹簧 3D 倾斜**、六阶稀有度材质阶级（`N` 哑光纸感 → `R` 拉丝钛银 → `SR` 棱镜紫青 → `SSR` 烫金衍射 → `UR` 碎钻双层反向星芒 → `LTD` 碳黑蚀刻 24K 金）与 180° 翻卡查看瑞士网格声景档案。 |
-| **`02 BEAT` 插卡节拍台** | 4 轨暗黑实体卡带插槽（带实时轨道触发 LED 与跨轨换卡混搭）、`M/S` 静音独奏、**270° 刻度环阻尼旋钮（支持滚轮与实时读数）**、带阻尼凹槽的硬件推子；4×16 交替四拍分组 MPC 打击垫（按住拖涂 + 节拍同步弹簧微震动）、视网膜高分屏彩虹 FFT/示波器 OLED；内建 3 组抓耳街头预置（`MARKET` 胡同早市 Funk / `NIGHT` 赛博夜市 Drift / `LO-FI` 茶馆爵士 Swing）与调式锁定和声进行，叠加三大现场 DJ 特效（`BITCRUSH` / `STREET ECHO` / `STUTTER`）。 |
-| **`03 PINBALL` 物理弹珠琴** | 基于 `Matter.js` 刚体引擎 + `800×680` 等比高分屏全画幅弹珠台自绘渲染；自由摆放并拖拽 `BLOCK`（全息斜板）、`BUMPER`（带压缩弹簧回弹的蘑菇桩）、`SPINNER`（旋转风车）与 `PORTAL`（循环传送门），绑定任意已收集声卡；碰撞触发彗星流光拖尾、弹珠挤压形变、多层扩散波纹与漂浮音高徽章，支持 `COMBO` 升温等级与 8 秒滚动旋律录制直送铸造屋。 |
-| **`04 FORGE` 闪卡铸造屋** | 将节拍混音或弹珠录轨封印为专属 `SSR / UR / LTD` 藏品闪卡；点击 **`MINT TO BINDER`** 触发激光热压覆膜扫描 + 收藏钢印砸落与礼花仪式；支持 5 种离线光学箔面（`PRISM` / `SPARK` / `CYBER` / `CHROME` / `GOLD`）、8 枚可拖拽缩放旋转的潮玩贴纸、原生离屏 Canvas 2D 导出 **展板级 3× 超清藏品海报 PNG（`1200×1600`）**、`Tone.Offline` 离线渲染导出 **16-bit PCM WAV**，以及基于 `localStorage` 的透明卡膜个人收藏册。 |
-
----
-
-## 🎯 交互与音频引擎亮点
-
-- **非侵入式硬件开机破冰**：首次打开页面顶部悬浮 `DSP STANDBY` 硬件开机条，点击 `POWER ON` 解锁浏览器音频并触发 4 音模拟掌机开机和弦，或点击 `一键听 Demo` 直达节拍台秒播「胡同早市 Funk」律动。
-- **黑谷零泛白光学全息管线**：采用纯黑谷底彩虹衍射光栅（`color-dodge` 不洗白原画）+ 双层反向视差碎钻星芒（`UR / SPARK`）+ 边缘 3D 倒角流光，兼顾高对比度插画观感与真实实体闪卡折光手感。
-- **带空间感与音乐性的程序化合成**：16 张原创市井声卡全部由 Tone.js 程序化合成，总线集成 `Freeverb` 轻度空间润色 + 动态压缩 + 限幅器，旋律与氛围轨内置三套调式和弦进行与律动轮廓，随手涂抹即成抓耳片段。
+</div>
 
 ---
 
-## 🖼️ 界面设计概念参考
+## 1. 作品主视觉与核心界面一览（1920×1080 实机实拍）
 
-| 01 盲盒抽卡机 (`GACHA`) | 02 插卡节拍台 (`BEAT DECK`) |
+| 01 GACHA · 发现市井声音 | 02 BEAT · 组织节奏与生命音符 |
 | :---: | :---: |
-| ![01 Gacha](04_ui_mockups/01_gacha.jpg) | ![02 Beat Deck](04_ui_mockups/02_beat_deck.jpg) |
+| ![01 GACHA](./07_showcase/screenshots/01_gacha.png) | ![02 BEAT](./07_showcase/screenshots/02_beat_deck.png) |
+| **物理出球舱门 × 3D 光学折射闪卡 × 16 张东方市井原声** | **4 轨 16 步编曲 × Holo Motion 抛物线跳跃音符 × 5 组街头预置** |
 
-| 03 物理弹珠琴 (`PINBALL SYNTH`) | 04 闪卡铸造屋 (`CARD FORGE`) |
+| 03 PINBALL · 编曲剧场音画演出 | 04 FORGE · 声纹封印与藏品鉴赏 |
 | :---: | :---: |
-| ![03 Pinball Synth](04_ui_mockups/03_pinball_synth.jpg) | ![04 Card Forge](04_ui_mockups/04_card_forge.jpg) |
+| ![03 SHOW](./07_showcase/screenshots/05_pinball_performance.png) | ![04 FORGE](./07_showcase/screenshots/06_card_binder.png) |
+| **Choreographed Show 确定性乐谱剧场 × 4 轨光球 × 终场纹章** | **声音纹章 × 真实 PCM 声纹 × 7 阶段压印 × 拆封重混血统** |
 
 ---
 
-## 📂 项目目录结构
+## 2. 艺术概念与创意闭环
+
+**HoloBeat** 不是四个割裂的小游戏，而是同一台掌上潮玩造物机中的四道完整工艺：
 
 ```text
-HoloBeat/
-├── README.md                                 # 项目总览与运行说明
-├── .gitignore                                # Git 忽略规则（排除 node_modules / dist / 缓存等）
-├── 01_github_research/
-│   └── github_benchmark.md                   # 高星标杆项目技术拆解与纯前端离线架构报告
-├── 02_product_design/
-│   └── design_system.md                      # 4 页交互闭环架构与全站视觉交互设计规范
-├── 03_gpt_ui_prompts/
-│   └── ui_prompts.md                         # 逐页高保真视觉提示词与可交互控件清单
-├── 04_ui_mockups/                            # 4 大工作台初始视觉概念参考稿
-└── 05_web_app/                               # 前端核心工程（Vite + React 19 + TypeScript + Tailwind v4）
-    ├── index.html
-    ├── package.json
-    ├── tsconfig.json
-    ├── vite.config.ts
-    └── src/
-        ├── App.tsx                           # 应用主壳、无缝模块转场与全局开机破冰
-        ├── main.tsx                          # React 入口
-        ├── types/holo.ts                     # 全站数据结构与 TypeScript 类型定义
-        ├── data/
-        │   ├── soundCards.ts                 # 16 张原创市井全息声卡图鉴、5 种箔面与调式元数据
-        │   └── stickers.ts                   # 8 枚原创潮玩矢量贴纸库
-        ├── store/
-        │   └── useHoloStore.ts               # Zustand + localStorage 跨页持久化状态总线与 3 组示范预置
-        ├── audio/
-        │   ├── HoloAudioEngine.ts            # Tone.js 程序化 16 声卡合成、和弦轮廓、空间总线与分析器
-        │   ├── useHoloSfx.ts                 # 零素材硬件微触觉音效 Hook（含开机和弦/翻卡/热压印）
-        │   └── wavExporter.ts                # Tone.Offline 离屏 16-bit PCM WAV 导出器
-        ├── components/
-        │   ├── artwork/CardArtwork.tsx       # 17 套原创三层视差街头潮玩矢量 SVG 角色资产
-        │   ├── holo/HoloCard.tsx             # 真弹簧 3D 倾斜 × 6 阶稀有度 × 5 箔面全息闪卡组件
-        │   ├── holo/ScratchOverlay.tsx       # 带实时刮开进度与飘落银屑粒子的拉丝全息刮刮乐
-        │   ├── layout/TopNavbar.tsx          # 硬件丝印顶部导航、DSP 状态灯与实时 OLED 电平表
-        │   └── ui/                           # AudioBootBanner / BrutalKnob / BrutalSlider / QuickDeckDrawer / ToastStack
-        ├── pages/
-        │   ├── GachaPage.tsx                 # 01 盲盒抽卡机工作台
-        │   ├── BeatDeckPage.tsx              # 02 插卡节拍台工作台
-        │   ├── PinballPage.tsx               # 03 物理弹珠琴工作台
-        │   └── ForgePage.tsx                 # 04 闪卡铸造屋与个人收藏卡册工作台
-        ├── styles/
-        │   ├── index.css                     # 局部打包字体、微纸纹噪点、注塑面板与弹簧动效 Token
-        │   └── holo.css                      # 黑谷零泛白衍射管线、碎钻反向星芒与六阶稀有度箔面系统
-        └── utils/
-            ├── confetti.ts                   # 预缓存自定义矢量路径礼花特效
-            └── exportHoloPng.ts              # 离屏 Canvas 2D 展板级 3× 超清藏品海报 PNG（1200×1600）
+01 GACHA (发现声音) ──▶ 02 BEAT (组织节奏 + Holo Motion) ──▶ 03 PINBALL (自由实验 / 编曲剧场)
+       ▲                                  ▲                               │
+       │                                  └──── 8s 录音幽灵量化回流 ───────┘
+       │                                                                  ▼
+   图鉴收藏 ◀──── UNSEAL & REMIX (拆封重混 · 衍生谱系) ◀──── 04 FORGE (声音纹章 + 真实 PCM 封印)
 ```
+
+- **东方市井文化转译**：将弄堂竹板、二八大杠车铃、街机投币、夜市铁板滋啦、老式风扇、茶壶汽笛、雨打芭蕉、晚风胡同蝉鸣等 **16 种生活烟火声景**，全部转化为 100% 程序化离线合成的可演奏音色卡与原创矢量潮玩 IP 角色。
+- **可触摸的器物美学**：在 Neo-Brutalism 硬朗轮廓之上注入 Teenage Engineering 与 Playdate 式的温润米白底盘、丝印参数标号、凹陷式 OLED 仪表盘与物理阻尼旋钮；全息闪卡在静止时保持高级印刷品的克制优雅，仅在鼠标倾角扫过时爆发多层黑谷折射光栅与碎钻星芒。
 
 ---
 
-## 🚀 本地安装与运行
+## 3. 核心交互亮点实拍
 
-### 环境要求
-- Node.js >= 18（推荐 20+）
-- npm >= 9
+### 3.1 Holo Motion · 声音生命运动系统（节拍台 & 剧场演出）
+受开源项目 **[Dancing Notes](https://github.com/SyanChen7/dancing-notes)**（MIT）的抛物线音乐时钟原理启发，我们在 `05_web_app/src/motion/holoMotion.ts` 中原创构建了面向 4 轨多声部编曲的实时运动学系统：
+- 每颗音符光球的位置完全由 `Tone.Transport` 真实音频时钟解析计算：$y(p) = y_{\text{lerp}}(p) - 4 \cdot h \cdot p \cdot (1 - p)$，在 $p=0$ 与 $p=1$ 时精确落点于打击垫与舞台音高平台，**零漂移、支持实时调速、静音、独奏与循环回绕**。
+- 四轨拥有独立物理性格：`BEAT`（厚重低频下砸）、`PERC`（清脆短弧快跳）、`MELODY`（高弧流体跃动）、`VIBE`（悬浮柔和辉光）。
 
-### 快速启动
+### 3.2 物理弹珠双模式 & 8 秒录音幽灵量化回流
+| 03 FREE JAM · 自由物理实验 + 8 秒彩点时间轴 | 02 QUANTIZE · 弹珠录音量化幽灵预览 |
+| :---: | :---: |
+| ![FREE JAM](./07_showcase/screenshots/03_pinball_free_jam.png) | ![QUANTIZE](./07_showcase/screenshots/08_beat_quantize_preview.png) |
+| **固定步长物理引擎 × 增量单刚体拖拽 × 分音色碰撞粒子 × 可见 8s 录音轨** | **保留原始弹珠录音可试听对比 × 虚线幽灵格预览 × 一键合并 / 替换 / 取消** |
+
+### 3.3 声音纹章、真实 PCM 声纹与拆封重混（Unseal & Remix）
+| 04 FORGE · 铸造草稿工作台（实时 PCM 声纹校验） | 02 REMIX · 拆封旧藏品衍生第 N 代变奏 |
+| :---: | :---: |
+| ![FORGE DRAFT](./07_showcase/screenshots/04_card_forge.png) | ![UNSEAL REMIX](./07_showcase/screenshots/07_unseal_remix.png) |
+| **草稿与卡册只读鉴赏彻底隔离 × 5 种全息箔面 × 中心吸附贴纸撤销重做** | **拆封 `#MY-01` 进入编曲并标注 `REMIX #MY-01·G1`，原版藏品保持 100% 完好** |
+
+---
+
+## 4. 真实导出成品展示（100% 离线生成）
+
+从 `04 FORGE` 可一键导出四种完整创作交付物（真实实测样品已全部收录于 [`07_showcase/exports/`](./07_showcase/exports/)）：
+
+<div align="center">
+  <img src="./07_showcase/exports/hutong-groove-gallery-poster.png" alt="HoloBeat 1200x1600 展板级全息海报" width="420" />
+  <br />
+  <sub><em>真实导出的 1200×1600 3× 展板级海报样品（含确定性声音纹章、真实 PCM 声纹条与藏品档案铭牌）</em></sub>
+</div>
+
+1. **展板级 3× 超清全息海报 PNG**（`1200×1600`）：自带暗黑展陈底板、十字定位丝印、5 种黑谷折射全息光层、确定性几何「声音纹章」与真实声纹铭牌。
+2. **16-bit PCM 音频 WAV**（`48 kHz` 立体声）：通过 `Tone.Offline` 离线渲染，完整保留 `BitCrusher`、`Street Echo`（按 BPM 同步附点八分延迟）、`Stutter`、`Swing` 与重音力度，与网页试听 **100% 听感一致**。
+3. **可重混工程文件 `.holobeat.json`**（`schema: holobeat.project.v2`）：完整保存作品快照、贴纸排版、箔面与衍生谱系，支持任意设备导入再创作。
+4. **含原声全息动态卡 `.webm`**：基于原生 `Canvas.captureStream` + Web Audio `MediaStreamDestination` + `MediaRecorder` 实时录制含原声全息动态收藏卡。
+
+---
+
+## 5. V2.0 技术架构与数据闭环
+
+```text
+D:\HoloBeat
+├── 01_github_research/     # 开源竞品与视觉交互调研基准
+├── 02_product_design/      # 设计系统规范与产品架构文档
+├── 03_gpt_ui_prompts/      # 概念视觉提示词探索记录
+├── 04_ui_mockups/          # 早期概念原型设计稿（仅作演进溯源参考）
+├── 05_web_app/             # 主交互 Web 工程（React 19 + TypeScript + Vite 6 + Tailwind v4）
+│   ├── src/audio/          # Tone.js 离线程序化合成引擎、确定性编曲编译器、高一致 WAV 渲染器
+│   ├── src/motion/         # Holo Motion 抛物线音画同步运动学引擎
+│   ├── src/storage/        # IndexedDB (HoloBeatStudioDB) 持久化与旧数据安全备份层
+│   ├── src/components/     # 3D 光学全息卡、声音纹章、刮刮乐、飞卡转场、机械旋钮与控件库
+│   ├── src/pages/          # GachaPage / BeatDeckPage / PinballPage / ForgePage 四大工作台
+│   ├── src/utils/          # 1200×1600 PNG 海报渲染、WebM 动态卡录制、可选后端客户端
+│   ├── tests/              # Node 原生单元测试（核心音频编译 / 不可变快照 / 运动学 / 纹章）
+│   └── scripts/            # Playwright 跨浏览器 E2E 验收与展示素材自动采集脚本
+├── 06_backend/             # 可选轻量本地归档与只读分享后端（Fastify 5 + Zod + node:sqlite）
+└── 07_showcase/            # V1/V2 真实对比截图、实导 PNG/WAV/JSON 样品、性能与测试实测报告
+```
+
+### 核心工程可靠性保障
+- **不可变作品快照 (`CompositionSnapshot`)**：送往铸造或剧场的音乐立即深度冻结，后续清空或修改节拍台不会破坏草稿或已铸藏品。
+- **单调编号与幂等铸造**：独立持久化 `nextMintSerial` + `mintInFlight` 锁 + 确定性 `idempotencyKey`，杜绝删卡后编号冲突与双击重复铸卡。
+- **分层本地持久化**：轻量交互状态存 `localStorage`，作品档案、草稿与规范 WAV/PCM 声纹缓存存 `IndexedDB`，升级前自动留存 `holobeat-backup-pre-v3` 备份。
+- **离线优先（Offline-First）**：所有字体（`@fontsource`）、矢量插画、程序化音色与导出渲染均 100% 本地闭环，零外部 CDN 依赖；即使不启动 `06_backend`，核心创作与收藏体验依然 100% 完整且控制台零报错。
+
+---
+
+## 6. 快速运行与本地开发
+
+### 6.1 启动主交互应用（100% 纯前端离线运行）
+> 环境要求：Node.js `>= 20`（运行原生 TypeScript 测试推荐 Node.js `24+`）
 
 ```bash
-# 1. 进入前端工程目录
 cd 05_web_app
-
-# 2. 安装依赖
 npm install
-
-# 3. 启动本地开发服务器（默认 http://localhost:5173）
 npm run dev
 ```
+打开浏览器访问 `http://localhost:5173`，点击顶部待机条 `POWER ON` 或「一键听 Demo」即可体验完整 4 大工作台！
 
-### 生产构建与本地预览
-
+### 6.2 生产构建与核心单元测试
 ```bash
 cd 05_web_app
+npm test        # 运行核心音频编译 / 不可变快照 / Holo Motion / 纹章单元测试
+npm run build   # TypeScript 严格检查 + Vite 分包生产构建
+```
 
-# TypeScript 类型检查 + Vite 离线生产打包
-npm run build
-
-# 预览打包产物
-npm run preview
+### 6.3 可选：启动本地归档与分享后端（非必需）
+```bash
+cd 06_backend
+npm install
+npm test        # 运行 Fastify + SQLite 幂等存证、血统溯源与分享吊销测试
+npm start       # 监听 http://127.0.0.1:3789
 ```
 
 ---
 
-## 🛠️ 核心技术栈
+## 7. 设计演进溯源（概念稿 → V1.0 → V2.0 实机）
 
-- **框架与样式**：React 19 · TypeScript · Vite 6 · Tailwind CSS v4
-- **音频合成与离线导出**：Tone.js（Web Audio API 程序化多音色合成 + `Freeverb` / `Compressor` 总线 + `Tone.Transport` + `Tone.Offline` WAV 导出）
-- **物理引擎与图形渲染**：Matter.js · HTML5 Canvas 2D（等比高分屏渲染 & 1200×1600 展板级藏品海报 PNG 合成）
-- **状态管理与交互动效**：Zustand（`persist` 本地持久化）· 胡克定律弹簧物理 rAF · `canvas-confetti` · `lucide-react`
-- **100% 离线字体**：`@fontsource/space-grotesk` · `@fontsource/jetbrains-mono`
+从早期视觉概念探索到 V2.0 完整工程落地，项目经历了「概念稿定调 (`04_ui_mockups/`) → V1.0 功能跑通 (`07_showcase/before/`) → V2.0 艺术与闭环深度重塑 (`07_showcase/screenshots/`)」三阶段演进：
+
+| 阶段 | 早期概念视觉稿 (`04_ui_mockups`) | V1.0 实机基准 (`07_showcase/before`) | V2.0 终版实机 (`07_showcase/screenshots`) |
+| :---: | :---: | :---: | :---: |
+| **盲盒抽卡** | ![Concept Gacha](./04_ui_mockups/01_gacha.jpg) | ![V1 Gacha](./07_showcase/before/01_gacha_before.png) | ![V2 Gacha](./07_showcase/screenshots/01_gacha.png) |
+| **闪卡铸造** | ![Concept Forge](./04_ui_mockups/04_card_forge.jpg) | ![V1 Forge](./07_showcase/before/04_forge_before.png) | ![V2 Forge](./07_showcase/screenshots/04_card_forge.png) |
+
+---
+
+## 8. 质量验收与实测数据摘要
+
+完整测试记录详见 **[《自动化测试、兼容性与性能验收报告》](./07_showcase/reports/test_and_perf_report.md)** 与 **[《V2.0 升级日志》](./07_showcase/reports/v2_upgrade_log.md)**：
+
+- **自动化测试**：前端核心单测 **5 / 5 PASS**；可选后端 API 集成测试 **1 / 1 PASS**；Playwright 全闭环 E2E 验收 **全部通过**。
+- **跨浏览器零报错**：**Google Chrome** 与 **Microsoft Edge** 实测均保持 **0 Console Errors / 0 Page Errors**。
+- **多分辨率零溢出**：在 `1920×1080`、`1440×900`、`1366×768`、`1280×720` 四档屏幕 × 四大工作台（共 16 组视口组合）全部实测零水平/垂直溢出。
+- **实测帧率**：`02 BEAT`（含 Holo Motion 4 轨跳跃音符与频谱示波器）实测 **`123.1 FPS`**；`03 PINBALL` Free Jam 物理碰撞实测 **`132.1 FPS`**。
+
+---
+
+## 9. 开源灵感致谢与竞赛匿名声明
+
+- **Holo Motion 音画同步灵感致谢**：本项目中的 4 轨抛物线跳跃音符与编曲剧场演出运动机制，受开源项目 **[Dancing Notes (`SyanChen7/dancing-notes`)](https://github.com/SyanChen7/dancing-notes)**（MIT License）的音乐时钟抛物线轨迹原理启发，并针对多轨实时电子合成器、Mute/Solo、Swing 与物理剧场进行了独立原创架构重构。
+- **光学全息卡层参考**：CSS 多层 `color-dodge` / `overlay` 全息光栅材质工艺参考了社区经典全息卡牌光学分层思路，并在静止克制态、倾角折射响应与 5 种材质分级上做了独立视觉定制。
+- **竞赛规范声明**：本仓库所有源码、界面文案、导出海报、音频文件与说明文档均严格遵循竞赛匿名评审要求，不包含任何个人姓名或院校标识信息。

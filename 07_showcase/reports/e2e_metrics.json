@@ -1,0 +1,149 @@
+{
+  "timestamp": "2026-11-25 13:54:22",
+  "baseUrl": "http://localhost:5173",
+  "chrome": {
+    "consoleErrors": [],
+    "pageErrors": [],
+    "checks": {
+      "audioUnlock": true,
+      "gachaPullAndReveal": true,
+      "gachaSendToBeat": true,
+      "beatPlaybackAndHoloMotion": true,
+      "beatToPinballChoreographedShow": true,
+      "pinballRealRecordingText": "8S REC · 43 音符 (4.4s)",
+      "pinballQuantizePreview": true,
+      "emptyPinballGuardRejected": true,
+      "realPcmWaveformRendered": false,
+      "snapshotImmutabilityVerified": "BEAT · 116 BPM · 74 音符 == BEAT · 116 BPM · 74 音符",
+      "mintedCardMY01": true,
+      "indexedDbReloadPersistence": true,
+      "unsealAndRemixLineage": true,
+      "monotonicSerialAfterDelete": "#MY-02"
+    }
+  },
+  "edge": {
+    "consoleErrors": [],
+    "pageErrors": [],
+    "checks": {
+      "allFourWorkbenchesLoaded": true
+    }
+  },
+  "responsive": {
+    "1920x1080": {
+      "GACHA": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "BEAT": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "PINBALL": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "FORGE": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      }
+    },
+    "1440x900": {
+      "GACHA": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "BEAT": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "PINBALL": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "FORGE": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      }
+    },
+    "1366x768": {
+      "GACHA": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "BEAT": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "PINBALL": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "FORGE": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      }
+    },
+    "1280x720": {
+      "GACHA": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "BEAT": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "PINBALL": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      },
+      "FORGE": {
+        "horizOverflow": false,
+        "vertOverflow": false
+      }
+    }
+  },
+  "performance": {
+    "initialLoadMs": 1829.9,
+    "beatHoloMotionFps": {
+      "fps": 123.1,
+      "frames": 247,
+      "durationMs": 2007
+    },
+    "pinballFreeJamFps": {
+      "fps": 132.1,
+      "frames": 265,
+      "durationMs": 2007
+    }
+  },
+  "exports": {
+    "png": {
+      "bytes": 1174137,
+      "width": 1200,
+      "height": 1600
+    },
+    "wav": {
+      "bytes": 967324,
+      "channels": 2,
+      "sampleRate": 48000,
+      "bitsPerSample": 16,
+      "peakAmplitude": 24991,
+      "nonSilent": true
+    },
+    "json": {
+      "bytes": 30500,
+      "schema": "holobeat.project.v2",
+      "kind": "minted-card",
+      "code": "#MY-01"
+    }
+  },
+  "screenshots": [
+    "01_gacha.png",
+    "02_beat_deck.png",
+    "05_pinball_performance.png",
+    "03_pinball_free_jam.png",
+    "08_beat_quantize_preview.png",
+    "04_card_forge.png",
+    "06_card_binder.png",
+    "07_unseal_remix.png"
+  ]
+}
