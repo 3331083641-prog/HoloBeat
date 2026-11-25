@@ -12,6 +12,7 @@ export interface BackendHealth {
 export interface ShareLinkResult {
   token: string;
   shareUrl: string;
+  apiUrl?: string;
   createdAt: number;
 }
 
