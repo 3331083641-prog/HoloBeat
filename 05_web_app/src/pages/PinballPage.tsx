@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Matter from 'matter-js';
 import {
   ChevronDown,
+  Grid2x2,
   Maximize2,
   Minimize2,
   Music,
@@ -13,6 +14,8 @@ import {
   Square,
   Trash2,
   Undo2,
+  Volume2,
+  VolumeX,
   Wand2,
 } from 'lucide-react';
 import { holoAudio } from '../audio/HoloAudioEngine';
@@ -20,6 +23,7 @@ import { buildSoundSigilData } from '../audio/compositionEngine';
 import { useHoloSfx } from '../audio/useHoloSfx';
 import { CardArtwork } from '../components/artwork/CardArtwork';
 import { SoundSigil } from '../components/holo/SoundSigil';
+import { SoundSourceIcon } from '../components/icons/SoundSourceIcon';
 import { BrutalKnob } from '../components/ui/BrutalKnob';
 import { BrutalSlider } from '../components/ui/BrutalSlider';
 import {
@@ -31,6 +35,7 @@ import {
 } from '../data/soundCards';
 import {
   TRACK_MOTION_PROFILES,
+  drawTrackMotifShape,
   evaluateChoreographedLaneOrb,
   type TimedAnchor,
 } from '../motion/holoMotion';
@@ -45,11 +50,14 @@ import type {
 
 const ARENA_W = 800;
 const ARENA_H = 680;
-const MAX_BALLS = 24;
+const MAX_BALLS = 20;
 const FIXED_DT = 1000 / 60;
 const RECORDING_WINDOW_MS = 8000;
-const MARBLE_COLORS = ['#FF5526', '#7C3AED', '#00D4AA', '#FFD426', '#FF3D9A'];
+const SNAP_GRID_PX = 20;
+const MARBLE_COLORS = ['#FF5C2B', '#7C3AED', '#00D4AA', '#FFD60A', '#FF3D9A'];
 const TRACK_CATEGORIES: TrackCategory[] = ['BEAT', 'PERC', 'MELODY', 'VIBE'];
+const ZH_SANS = '"Noto Sans SC", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
+const HW_MONO = '"JetBrains Mono", "Noto Sans SC", monospace';
 
 interface VfxSlot {
   active: boolean;
@@ -104,7 +112,6 @@ function pitchToHeightFactor(note: string): number {
   const semi = NOTE_PITCH_MAP[m[1]] ?? 0;
   const oct = parseInt(m[2], 10);
   const midi = oct * 12 + semi;
-  // Map typical C4(60) .. E6(88) cleanly into 0..1
   return Math.min(1, Math.max(0, (midi - 58) / 28));
 }
 
@@ -124,21 +131,21 @@ function buildChoreographyData(snapshot: CompositionSnapshot | null): {
 
   const dur = Math.max(1200, snapshot.durationMs);
   const bandRanges: Record<TrackCategory, [number, number]> = {
-    VIBE: [130, 215],
-    MELODY: [230, 365],
-    PERC: [390, 485],
-    BEAT: [525, 585],
+    VIBE: [132, 212],
+    MELODY: [232, 362],
+    PERC: [392, 482],
+    BEAT: [522, 582],
   };
 
   const platforms: ShowPlatform[] = snapshot.events.map((ev, i) => {
-    const frac = Math.min(0.98, Math.max(0.02, ev.timeOffsetMs / dur));
-    const x = 76 + frac * (ARENA_W - 152);
+    const frac = Math.min(0.97, Math.max(0.03, ev.timeOffsetMs / dur));
+    const x = 84 + frac * (ARENA_W - 168);
     const [yTop, yBot] = bandRanges[ev.trackCategory];
     const pf = pitchToHeightFactor(ev.pitch);
     const y =
       ev.trackCategory === 'MELODY'
         ? yBot - pf * (yBot - yTop)
-        : yTop + ((i * 37) % 100) / 100 * (yBot - yTop) * 0.65 + (yBot - yTop) * 0.18;
+        : yTop + (((i * 37) % 100) / 100) * (yBot - yTop) * 0.65 + (yBot - yTop) * 0.18;
 
     const anchor: ShowPlatform = {
       id: ev.id,
@@ -165,6 +172,29 @@ function buildChoreographyData(snapshot: CompositionSnapshot | null): {
   return { platforms, laneAnchors };
 }
 
+/** Draw a tiny iconic street motif badge inside Free Jam physics toys */
+function drawCanvasToyBadge(
+  ctx: CanvasRenderingContext2D,
+  category: TrackCategory,
+  x: number,
+  y: number,
+  color: string
+) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = '#1A1A1F';
+  ctx.beginPath();
+  ctx.arc(0, 0, 9.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#FFFDF8';
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+
+  const prof = TRACK_MOTION_PROFILES[category];
+  drawTrackMotifShape(ctx, prof.shape, 4.4, color, '#FFFDF8', 0);
+  ctx.restore();
+}
+
 export const PinballPage: React.FC = () => {
   const pinballMode = useHoloStore((s) => s.pinballMode);
   const pinballShowSnapshot = useHoloStore((s) => s.pinballShowSnapshot);
@@ -182,6 +212,8 @@ export const PinballPage: React.FC = () => {
   const collection = useHoloStore((s) => s.collection);
   const storedPinballEvents = useHoloStore((s) => s.pinballRecordedEvents);
   const pinballRemixOrigin = useHoloStore((s) => s.pinballRemixOrigin);
+  const muted = useHoloStore((s) => s.muted);
+  const reducedMotion = useHoloStore((s) => s.reducedMotion);
 
   const setPinballMode = useHoloStore((s) => s.setPinballMode);
   const setPinballTool = useHoloStore((s) => s.setPinballTool);
@@ -194,15 +226,16 @@ export const PinballPage: React.FC = () => {
   const undoPinball = useHoloStore((s) => s.undoPinball);
   const redoPinball = useHoloStore((s) => s.redoPinball);
   const cycleScale = useHoloStore((s) => s.cycleScale);
+  const toggleMute = useHoloStore((s) => s.toggleMute);
   const addPinballToy = useHoloStore((s) => s.addPinballToy);
   const updatePinballToy = useHoloStore((s) => s.updatePinballToy);
   const removePinballToy = useHoloStore((s) => s.removePinballToy);
   const applyPinballPreset = useHoloStore((s) => s.applyPinballPreset);
   const setPinballRecordedEvents = useHoloStore((s) => s.setPinballRecordedEvents);
   const sendPinballToForge = useHoloStore((s) => s.sendPinballToForge);
+  const sendPinballShowToForge = useHoloStore((s) => s.sendPinballShowToForge);
   const sendPinballToBeatQuantize = useHoloStore((s) => s.sendPinballToBeatQuantize);
   const performBeatInPinball = useHoloStore((s) => s.performBeatInPinball);
-  const sendBeatToForge = useHoloStore((s) => s.sendBeatToForge);
 
   const playSfx = useHoloSfx();
 
@@ -212,16 +245,18 @@ export const PinballPage: React.FC = () => {
   const ballsRef = useRef<MarbleRecord[]>([]);
   const dropperRecoilRef = useRef(0);
   const stagePulseRef = useRef(0);
+  const peakBallsRef = useRef(0);
+  const peakParticlesRef = useRef(0);
   const toyBodyMapRef = useRef<
     Map<string, { body: Matter.Body; constraint?: Matter.Constraint; hitFlash: number; type: PinballToyType }>
   >(new Map());
   const cooldownMapRef = useRef<Map<string, number>>(new Map());
   const vfxPoolRef = useRef<VfxSlot[]>(
-    Array.from({ length: 72 }, () => ({
+    Array.from({ length: 64 }, () => ({
       active: false,
       x: 0,
       y: 0,
-      color: '#FFD426',
+      color: '#FFD60A',
       age: 0,
       maxAge: 30,
       note: 'C5',
@@ -232,6 +267,7 @@ export const PinballPage: React.FC = () => {
   const recordedBufferRef = useRef<(PinballRecordedEvent & { absTime: number })[]>([]);
 
   const [selectedToyId, setSelectedToyId] = useState<string | null>(null);
+  const [gridSnap, setGridSnap] = useState(true);
   const [combo, setCombo] = useState(0);
   const comboRef = useRef(0);
   const [hitDots, setHitDots] = useState<HitDot[]>([]);
@@ -264,7 +300,6 @@ export const PinballPage: React.FC = () => {
   const showSigilRef = useRef(showSigil);
   showSigilRef.current = showSigil;
 
-  // Hydrate recordedBufferRef when unsealing a Pinball card with restored events
   useEffect(() => {
     if (storedPinballEvents.length > 0 && recordedBufferRef.current.length === 0) {
       const now = performance.now();
@@ -304,7 +339,7 @@ export const PinballPage: React.FC = () => {
           pool[i].y = y;
           pool[i].color = color;
           pool[i].age = 0;
-          pool[i].maxAge = kind === 'warp' ? 24 : kind === 'chord' ? 38 : 30;
+          pool[i].maxAge = kind === 'warp' ? 24 : kind === 'chord' ? 36 : 28;
           pool[i].note = note;
           pool[i].kind = kind;
           pool[i].category = category;
@@ -340,7 +375,7 @@ export const PinballPage: React.FC = () => {
     }
 
     const jitterX = (Math.random() - 0.5) * 14;
-    const ball = Matter.Bodies.circle(state.pinballDropperX + jitterX, 82, 14, {
+    const ball = Matter.Bodies.circle(state.pinballDropperX + jitterX, 82, 13.5, {
       restitution: state.pinballBounce,
       friction: 0.008,
       frictionAir: 0.002,
@@ -352,16 +387,13 @@ export const PinballPage: React.FC = () => {
 
     const color = MARBLE_COLORS[Math.floor(Math.random() * MARBLE_COLORS.length)];
     ballsRef.current.push({ body: ball, color, lastWarp: 0, trail: [], squash: 0.35 });
+    peakBallsRef.current = Math.max(peakBallsRef.current, ballsRef.current.length);
     dropperRecoilRef.current = 1;
     if (!silent) {
       void holoAudio.playSfx('click', 0.78);
     }
   }, []);
 
-  /**
-   * Incremental body sync: only adds/removes changed toys or rebuilds when bounce changes.
-   * Dragging or rotating a toy updates Matter.Body in-place with ZERO world teardown!
-   */
   const syncToyBodies = useCallback((forceRebuild = false) => {
     const engine = engineRef.current;
     if (!engine) return;
@@ -377,7 +409,6 @@ export const PinballPage: React.FC = () => {
     }
 
     const currentIds = new Set(state.pinballToys.map((t) => t.id));
-    // Remove deleted toys
     map.forEach((entry, id) => {
       if (!currentIds.has(id)) {
         Matter.Composite.remove(engine.world, entry.body);
@@ -386,7 +417,6 @@ export const PinballPage: React.FC = () => {
       }
     });
 
-    // Add new or update existing toys incrementally
     state.pinballToys.forEach((toy) => {
       const existing = map.get(toy.id);
       if (existing && existing.type === toy.type) {
@@ -429,12 +459,8 @@ export const PinballPage: React.FC = () => {
         Matter.Composite.add(engine.world, body);
         map.set(toy.id, { body, hitFlash: 0, type: 'bumper' });
       } else if (toy.type === 'spinner') {
-        const bladeA = Matter.Bodies.rectangle(toy.x, toy.y, 120, 20, {
-          chamfer: { radius: 9 },
-        });
-        const bladeB = Matter.Bodies.rectangle(toy.x, toy.y, 20, 120, {
-          chamfer: { radius: 9 },
-        });
+        const bladeA = Matter.Bodies.rectangle(toy.x, toy.y, 120, 20, { chamfer: { radius: 9 } });
+        const bladeB = Matter.Bodies.rectangle(toy.x, toy.y, 20, 120, { chamfer: { radius: 9 } });
         const body = Matter.Body.create({
           parts: [bladeA, bladeB],
           frictionAir: 0.015,
@@ -462,7 +488,6 @@ export const PinballPage: React.FC = () => {
     });
   }, []);
 
-  // Choreographed Show playback starter
   const startChoreographedShow = useCallback(async () => {
     const snap = useHoloStore.getState().pinballShowSnapshot;
     if (!snap || snap.events.length === 0) return;
@@ -482,7 +507,7 @@ export const PinballPage: React.FC = () => {
         const plat = choreographyRef.current.platforms.find((p) => p.id === ev.id);
         if (plat) {
           plat.flash = 1;
-          stagePulseRef.current = ev.trackCategory === 'BEAT' ? 0.85 : 0.32;
+          stagePulseRef.current = ev.trackCategory === 'BEAT' ? 0.85 : 0.34;
           spawnVfx(
             plat.x,
             plat.y,
@@ -506,23 +531,20 @@ export const PinballPage: React.FC = () => {
     setShowPlaying(false);
   }, []);
 
-  // Stop show playback when leaving show mode
   useEffect(() => {
     if (pinballMode !== 'show') {
       holoAudio.stopSnapshotPlayback();
       setShowPlaying(false);
       setTheaterMode(false);
-    } else {
-      // Auto-launch show seamlessly when arriving from BeatDeck if audio is already unlocked!
-      if (useHoloStore.getState().audioUnlocked && pinballShowSnapshot) {
-        void startChoreographedShow();
-      }
+    } else if (useHoloStore.getState().audioUnlocked && pinballShowSnapshot) {
+      void startChoreographedShow();
     }
   }, [pinballMode, pinballShowSnapshot, startChoreographedShow]);
 
-  // Keyboard shortcuts for Undo/Redo in Free Jam
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
         e.preventDefault();
         undoPinball();
@@ -538,7 +560,6 @@ export const PinballPage: React.FC = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [undoPinball, redoPinball]);
 
-  // Main Engine + Unified Dual-Mode Canvas Loop
   useEffect(() => {
     const engine = Matter.Engine.create({
       gravity: { x: 0, y: useHoloStore.getState().pinballGravity, scale: 0.001 },
@@ -561,7 +582,6 @@ export const PinballPage: React.FC = () => {
 
     Matter.Events.on(engine, 'collisionStart', (event) => {
       const state = useHoloStore.getState();
-      // STRICT GUARD: never fire Matter.js physics sounds during Choreographed Show mode!
       if (state.pinballMode !== 'free') return;
 
       const nowMs = performance.now();
@@ -590,7 +610,7 @@ export const PinballPage: React.FC = () => {
             ballRec.lastWarp = nowMs;
             ballRec.trail = [];
             if (entry) entry.hitFlash = 1;
-            spawnVfx(marble.position.x, marble.position.y, '#7C3AED', 'WARP', 'warp', 'VIBE');
+            spawnVfx(marble.position.x, marble.position.y, '#7C3AED', '传送', 'warp', 'VIBE');
             Matter.Body.setPosition(marble, {
               x: state.pinballDropperX + (Math.random() - 0.5) * 16,
               y: 82,
@@ -699,7 +719,6 @@ export const PinballPage: React.FC = () => {
       stagePulseRef.current = Math.max(0, stagePulseRef.current * 0.9 - 0.01);
       showFinaleRef.current = Math.max(0, showFinaleRef.current * 0.985 - 0.002);
 
-      // Fixed-timestep physics strictly in FREE JAM when tab is visible
       if (state.pinballMode === 'free' && !hidden) {
         engine.gravity.y = state.pinballGravity;
         accumulator += rawDt;
@@ -716,13 +735,30 @@ export const PinballPage: React.FC = () => {
           const b = ballsRef.current[i];
           b.squash = Math.max(0, b.squash * 0.84 - 0.01);
           b.trail.push({ x: b.body.position.x, y: b.body.position.y });
-          if (b.trail.length > 9) b.trail.shift();
+          if (b.trail.length > (state.reducedMotion ? 3 : 8)) b.trail.shift();
 
           if (b.body.position.y > ARENA_H + 55) {
             Matter.Composite.remove(engine.world, b.body);
             ballsRef.current.splice(i, 1);
           }
         }
+      }
+
+      // Track active particles & publish clean telemetry for verification harness
+      let activeVfx = 0;
+      for (let i = 0; i < vfxPoolRef.current.length; i++) {
+        if (vfxPoolRef.current[i].active) activeVfx++;
+      }
+      peakParticlesRef.current = Math.max(peakParticlesRef.current, activeVfx);
+      if (typeof window !== 'undefined') {
+        (window as unknown as Record<string, unknown>).__HOLOBEAT_PERF__ = {
+          activeBalls: ballsRef.current.length,
+          peakBalls: peakBallsRef.current,
+          activeParticles: activeVfx,
+          peakParticles: peakParticlesRef.current,
+          mode: state.pinballMode,
+          maxBallsCap: MAX_BALLS,
+        };
       }
 
       const canvas = canvasRef.current;
@@ -750,7 +786,7 @@ export const PinballPage: React.FC = () => {
             drawShowBackdrop(ctx, cssW, cssH);
             ctx.translate(offsetX, offsetY);
             ctx.scale(scaleFit, scaleFit);
-            drawChoreographedStage(ctx, ts, state.pinballShowSnapshot);
+            drawChoreographedStage(ctx, ts, state.pinballShowSnapshot, state.reducedMotion);
           } else {
             drawFreeJamBackdrop(ctx, cssW, cssH);
             ctx.translate(offsetX, offsetY);
@@ -767,30 +803,30 @@ export const PinballPage: React.FC = () => {
     };
 
     const drawFreeJamBackdrop = (ctx: CanvasRenderingContext2D, cssW: number, cssH: number) => {
-      ctx.fillStyle = '#E7E1D3';
+      ctx.fillStyle = '#EDE7D9';
       ctx.fillRect(0, 0, cssW, cssH);
-      ctx.fillStyle = 'rgba(23, 23, 28, 0.13)';
-      for (let gx = 16; gx < cssW; gx += 20) {
-        for (let gy = 16; gy < cssH; gy += 20) {
+      ctx.fillStyle = 'rgba(26, 26, 31, 0.12)';
+      for (let gx = 20; gx < cssW; gx += SNAP_GRID_PX) {
+        for (let gy = 20; gy < cssH; gy += SNAP_GRID_PX) {
           ctx.beginPath();
-          ctx.arc(gx, gy, 1.15, 0, Math.PI * 2);
+          ctx.arc(gx, gy, 1.1, 0, Math.PI * 2);
           ctx.fill();
         }
       }
     };
 
     const drawShowBackdrop = (ctx: CanvasRenderingContext2D, cssW: number, cssH: number) => {
-      ctx.fillStyle = '#121319';
+      ctx.fillStyle = '#14151B';
       ctx.fillRect(0, 0, cssW, cssH);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.045)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.038)';
       ctx.lineWidth = 1;
-      for (let gx = 24; gx < cssW; gx += 28) {
+      for (let gx = 28; gx < cssW; gx += 32) {
         ctx.beginPath();
         ctx.moveTo(gx, 0);
         ctx.lineTo(gx, cssH);
         ctx.stroke();
       }
-      for (let gy = 24; gy < cssH; gy += 28) {
+      for (let gy = 28; gy < cssH; gy += 32) {
         ctx.beginPath();
         ctx.moveTo(0, gy);
         ctx.lineTo(cssW, gy);
@@ -798,10 +834,65 @@ export const PinballPage: React.FC = () => {
       }
     };
 
+    /**
+     * Planar micro-street musical apparatus framing ONLY edges & bottom so >=60% central stage stays open & calm!
+     */
+    const drawMicroStreetFrame = (ctx: CanvasRenderingContext2D, beatPulse: number, prog: number) => {
+      ctx.save();
+
+      // 1) Top tin-awning rain canopy motif (VIBE edge band y=72..98)
+      ctx.strokeStyle = 'rgba(255, 214, 10, 0.22)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      for (let x = 56; x <= ARENA_W - 56; x += 28) {
+        ctx.moveTo(x, 72);
+        ctx.lineTo(x + 14, 86);
+        ctx.lineTo(x + 28, 72);
+      }
+      ctx.stroke();
+
+      // 2) Left & Right street arch brackets (bicycle-bell silhouette + neon tube edge pillars)
+      ctx.strokeStyle = 'rgba(0, 212, 170, 0.24)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(14, 68, 22, ARENA_H - 136, 11);
+      ctx.roundRect(ARENA_W - 36, 68, 22, ARENA_H - 136, 11);
+      ctx.stroke();
+
+      // Side bell-dome ornament accents
+      ctx.fillStyle = 'rgba(255, 92, 43, 0.28)';
+      ctx.beginPath();
+      ctx.arc(25, 110, 6, Math.PI, 0);
+      ctx.arc(ARENA_W - 25, 110, 6, Math.PI, 0);
+      ctx.fill();
+
+      // 3) Bottom bamboo-slat rhythm boardwalk (y=608..636) reacting gently to BEAT hits
+      const tileCount = 16;
+      const startX = 68;
+      const tileSpan = (ARENA_W - 136) / tileCount;
+      for (let i = 0; i < tileCount; i++) {
+        const tx = startX + i * tileSpan;
+        const activeTile = Math.floor(prog * tileCount) === i;
+        ctx.fillStyle = activeTile
+          ? `rgba(124, 58, 237, ${0.42 + beatPulse * 0.35})`
+          : i % 4 === 0
+            ? 'rgba(255, 214, 10, 0.14)'
+            : 'rgba(255, 255, 255, 0.05)';
+        ctx.strokeStyle = activeTile ? '#FFD60A' : 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = activeTile ? 1.8 : 1;
+        ctx.beginPath();
+        ctx.roundRect(tx + 2, 608, tileSpan - 4, 18, 4);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+
     const drawChoreographedStage = (
       ctx: CanvasRenderingContext2D,
       t: number,
-      snap: CompositionSnapshot | null
+      snap: CompositionSnapshot | null,
+      isReduced: boolean
     ) => {
       const currMs = holoAudio.getSnapshotPlaybackMs();
       const isLive = holoAudio.isSnapshotPlaying();
@@ -809,28 +900,31 @@ export const PinballPage: React.FC = () => {
       const dur = Math.max(1200, snap?.durationMs ?? 4000);
       const prog = isLive && currMs >= 0 ? Math.min(1, currMs / dur) : 0;
 
-      // Ambient Stage Spotlight Pulse synced to Beat impact + progress crescendo
-      const glowAlpha = 0.08 + stagePulseRef.current * 0.18 + prog * 0.1;
+      // Subtle edge-framed micro-street architectural apparatus
+      drawMicroStreetFrame(ctx, isReduced ? 0 : stagePulseRef.current, prog);
+
+      // Calm ambient spotlight pulse
+      const glowAlpha = isReduced ? 0.08 : 0.07 + stagePulseRef.current * 0.14 + prog * 0.08;
       const rad = ctx.createRadialGradient(
         ARENA_W / 2,
         ARENA_H * 0.5,
         40,
         ARENA_W / 2,
         ARENA_H * 0.5,
-        390
+        380
       );
       rad.addColorStop(0, `rgba(124, 58, 237, ${glowAlpha})`);
-      rad.addColorStop(0.5, `rgba(0, 212, 170, ${glowAlpha * 0.65})`);
-      rad.addColorStop(1, 'rgba(18, 19, 25, 0)');
+      rad.addColorStop(0.55, `rgba(0, 212, 170, ${glowAlpha * 0.55})`);
+      rad.addColorStop(1, 'rgba(20, 21, 27, 0)');
       ctx.fillStyle = rad;
       ctx.fillRect(0, 0, ARENA_W, ARENA_H);
 
-      // Architectural Concert Track Lanes
+      // Architectural Concert Track Lanes (keeping central 60% clean & spacious)
       const laneLabels: { cat: TrackCategory; y: number; name: string }[] = [
         { cat: 'VIBE', y: 175, name: '烟火氛围' },
         { cat: 'MELODY', y: 300, name: '霓虹旋律' },
         { cat: 'PERC', y: 440, name: '市井脆响' },
-        { cat: 'BEAT', y: 558, name: '街头律动' },
+        { cat: 'BEAT', y: 556, name: '街头律动' },
       ];
 
       laneLabels.forEach((l) => {
@@ -839,36 +933,36 @@ export const PinballPage: React.FC = () => {
         ctx.lineWidth = 1.2;
         ctx.setLineDash([4, 8]);
         ctx.beginPath();
-        ctx.moveTo(46, l.y);
-        ctx.lineTo(ARENA_W - 46, l.y);
+        ctx.moveTo(54, l.y);
+        ctx.lineTo(ARENA_W - 54, l.y);
         ctx.stroke();
         ctx.setLineDash([]);
 
         ctx.fillStyle = prof.color;
-        ctx.font = '800 11px "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
+        ctx.font = `800 11px ${ZH_SANS}`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'bottom';
-        ctx.fillText(l.name, 22, l.y - 6);
+        ctx.fillText(l.name, 54, l.y - 6);
       });
 
       // Vertical Audio-Clock Playhead Scanline
       if (isLive && currMs >= 0) {
-        const px = 76 + prog * (ARENA_W - 152);
+        const px = 84 + prog * (ARENA_W - 168);
         const scanGrad = ctx.createLinearGradient(px - 22, 0, px + 6, 0);
         scanGrad.addColorStop(0, 'rgba(0, 212, 170, 0)');
-        scanGrad.addColorStop(1, 'rgba(0, 212, 170, 0.25)');
+        scanGrad.addColorStop(1, 'rgba(0, 212, 170, 0.22)');
         ctx.fillStyle = scanGrad;
-        ctx.fillRect(px - 22, 74, 28, ARENA_H - 130);
+        ctx.fillRect(px - 22, 92, 28, ARENA_H - 156);
 
         ctx.strokeStyle = '#00D4AA';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(px, 74);
-        ctx.lineTo(px, ARENA_H - 56);
+        ctx.moveTo(px, 92);
+        ctx.lineTo(px, ARENA_H - 64);
         ctx.stroke();
       }
 
-      // Draw Faint Parabolic Preview Arcs between consecutive anchors in each lane
+      // Faint Parabolic Preview Arcs between consecutive anchors
       TRACK_CATEGORIES.forEach((cat) => {
         const anchors = laneAnchors[cat];
         if (anchors.length < 2) return;
@@ -882,7 +976,7 @@ export const PinballPage: React.FC = () => {
           const a = anchors[i];
           const b = anchors[i + 1];
           const midX = (a.x + b.x) / 2;
-          const midY = (a.y + b.y) / 2 - 48 * prof.arcMultiplier;
+          const midY = (a.y + b.y) / 2 - 46 * prof.arcMultiplier;
           ctx.moveTo(a.x, a.y);
           ctx.quadraticCurveTo(midX, midY, b.x, b.y);
         }
@@ -890,7 +984,7 @@ export const PinballPage: React.FC = () => {
         ctx.restore();
       });
 
-      // Draw Deterministic Musical Platforms
+      // Deterministic Musical Platforms
       platforms.forEach((plat) => {
         plat.flash = Math.max(0, plat.flash - 0.045);
         const passed = isLive && currMs >= plat.timeMs;
@@ -901,9 +995,9 @@ export const PinballPage: React.FC = () => {
 
         if (f > 0.05) {
           ctx.fillStyle = plat.color;
-          ctx.globalAlpha = f * 0.42;
+          ctx.globalAlpha = f * 0.4;
           ctx.beginPath();
-          ctx.roundRect(-plat.width / 2 - 8, -14, plat.width + 16, 28, 12);
+          ctx.roundRect(-plat.width / 2 - 8, -13, plat.width + 16, 26, 11);
           ctx.fill();
           ctx.globalAlpha = 1;
         }
@@ -916,10 +1010,9 @@ export const PinballPage: React.FC = () => {
         ctx.fill();
         ctx.stroke();
 
-        // Tiny pitch caption on Melody & Beat platforms
         if (plat.category === 'MELODY' || f > 0.25) {
-          ctx.fillStyle = f > 0.35 ? '#17171C' : '#FBF9F4';
-          ctx.font = '800 9px "JetBrains Mono", monospace';
+          ctx.fillStyle = f > 0.35 ? '#1A1A1F' : '#FFFDF8';
+          ctx.font = `800 9px ${HW_MONO}`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(plat.pitch, 0, 0.5);
@@ -927,24 +1020,21 @@ export const PinballPage: React.FC = () => {
         ctx.restore();
       });
 
-      // Evaluate & Render the 4 Holo Motion Choreographed Sound Orbs!
+      // Evaluate & Render the 4 Shape-Coded Holo Motion Orbs!
       TRACK_CATEGORIES.forEach((cat) => {
         const anchors = laneAnchors[cat];
         const prof = TRACK_MOTION_PROFILES[cat];
         const trail = showTrailsRef.current[cat];
 
         if (!isLive || anchors.length === 0) {
-          // Idle resting orb hovering softly above first platform
           if (anchors.length > 0) {
             const first = anchors[0];
-            const hoverY = first.y - 20 + Math.sin(t * 0.004 + first.x) * 4;
+            const hoverY = first.y - 20 + (isReduced ? 0 : Math.sin(t * 0.004 + first.x) * 4);
             ctx.save();
-            ctx.fillStyle = prof.color;
+            ctx.translate(first.x, hoverY);
             ctx.shadowColor = prof.color;
-            ctx.shadowBlur = 14;
-            ctx.beginPath();
-            ctx.arc(first.x, hoverY, prof.radius + 1, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.shadowBlur = 12;
+            drawTrackMotifShape(ctx, prof.shape, prof.radius + 1.5, prof.color, '#FFFDF8', 0);
             ctx.restore();
           }
           return;
@@ -955,23 +1045,23 @@ export const PinballPage: React.FC = () => {
           category: cat,
           currentTimeMs: currMs,
           leadInMs: 420,
-          baseArcHeight: 68,
+          baseArcHeight: 66,
         });
 
         if (!pose) return;
 
         trail.push({ x: pose.x, y: pose.y });
-        if (trail.length > prof.trailLength + 5) trail.shift();
+        const maxTrail = isReduced ? 3 : prof.trailLength + 4;
+        while (trail.length > maxTrail) trail.shift();
 
-        // Luminous Comet Ribbon
         for (let ti = 1; ti < trail.length; ti++) {
           const p0 = trail[ti - 1];
           const p1 = trail[ti];
           const frac = ti / trail.length;
           ctx.save();
-          ctx.globalAlpha = frac * 0.52;
+          ctx.globalAlpha = frac * 0.46;
           ctx.strokeStyle = prof.color;
-          ctx.lineWidth = 2 + frac * (prof.radius * 1.4);
+          ctx.lineWidth = 2 + frac * (prof.radius * 1.25);
           ctx.lineCap = 'round';
           ctx.beginPath();
           ctx.moveTo(p0.x, p0.y);
@@ -983,46 +1073,33 @@ export const PinballPage: React.FC = () => {
         ctx.save();
         ctx.translate(pose.x, pose.y);
         ctx.scale(pose.scaleX, pose.scaleY);
-
         ctx.shadowColor = prof.color;
-        ctx.shadowBlur = 16 + pose.impact * 16;
-        ctx.fillStyle = prof.color;
-        ctx.strokeStyle = '#FFFDF8';
-        ctx.lineWidth = 2.4;
-        ctx.beginPath();
-        ctx.arc(0, 0, prof.radius + 2.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.beginPath();
-        ctx.arc(-2.5, -2.5, 3, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.shadowBlur = isReduced ? 8 : 14 + pose.impact * 16;
+        drawTrackMotifShape(ctx, prof.shape, prof.radius + 2.2, prof.color, '#FFFDF8', pose.impact);
         ctx.restore();
       });
 
-      // Finale Generative Sound Sigil Bloom when the Show Completes!
+      // Finale Generative Sound Sigil Convergence!
       if (showFinaleRef.current > 0.04 && showSigilRef.current) {
         const alpha = Math.min(1, showFinaleRef.current);
         const sigil = showSigilRef.current;
         ctx.save();
-        ctx.translate(ARENA_W / 2, ARENA_H / 2 - 10);
-        ctx.globalAlpha = alpha * 0.92;
-        const scaleB = 0.85 + (1 - alpha) * 0.35;
+        ctx.translate(ARENA_W / 2, ARENA_H / 2 - 8);
+        ctx.globalAlpha = alpha * 0.94;
+        const scaleB = isReduced ? 1 : 0.88 + (1 - alpha) * 0.25;
         ctx.scale(scaleB, scaleB);
 
-        ctx.fillStyle = 'rgba(20, 21, 27, 0.82)';
-        ctx.strokeStyle = '#FFD426';
+        ctx.fillStyle = 'rgba(20, 21, 27, 0.86)';
+        ctx.strokeStyle = '#FFD60A';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(0, 0, 124, 0, Math.PI * 2);
+        ctx.arc(0, 0, 122, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
         sigil.spokes.forEach((sp) => {
           const r1 = 26;
-          const r2 = r1 + sp.length * 86;
+          const r2 = r1 + sp.length * 84;
           ctx.strokeStyle = sp.color;
           ctx.lineWidth = sp.dot ? 3.5 : 1.5;
           ctx.beginPath();
@@ -1031,11 +1108,11 @@ export const PinballPage: React.FC = () => {
           ctx.stroke();
         });
 
-        ctx.fillStyle = '#FFD426';
-        ctx.font = '900 15px "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
+        ctx.fillStyle = '#FFD60A';
+        ctx.font = `900 15px ${ZH_SANS}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('✦ 演出终场 · 声音纹章 ✦', 0, 148);
+        ctx.fillText('✦ 演出终场 · 声音纹章 ✦', 0, 146);
         ctx.restore();
       }
     };
@@ -1047,14 +1124,14 @@ export const PinballPage: React.FC = () => {
       currDropperX: number
     ) => {
       ctx.save();
-      ctx.strokeStyle = 'rgba(23, 23, 28, 0.08)';
+      ctx.strokeStyle = 'rgba(26, 26, 31, 0.09)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.roundRect(14, 12, ARENA_W - 28, ARENA_H - 24, 16);
       ctx.stroke();
 
       ctx.setLineDash([4, 10]);
-      ctx.strokeStyle = 'rgba(23, 23, 28, 0.07)';
+      ctx.strokeStyle = 'rgba(26, 26, 31, 0.07)';
       [185, 365, 535].forEach((ly) => {
         ctx.beginPath();
         ctx.moveTo(28, ly);
@@ -1065,8 +1142,8 @@ export const PinballPage: React.FC = () => {
 
       if (comboRef.current >= 8 || stagePulseRef.current > 0.1) {
         const heatAlpha = Math.min(
-          0.18,
-          Math.max(0, (comboRef.current - 6) * 0.007) + stagePulseRef.current * 0.12
+          0.16,
+          Math.max(0, (comboRef.current - 6) * 0.006) + stagePulseRef.current * 0.11
         );
         const rad = ctx.createRadialGradient(
           ARENA_W / 2,
@@ -1077,7 +1154,7 @@ export const PinballPage: React.FC = () => {
           340
         );
         rad.addColorStop(0, `rgba(0, 212, 170, ${heatAlpha})`);
-        rad.addColorStop(0.55, `rgba(124, 58, 237, ${heatAlpha * 0.7})`);
+        rad.addColorStop(0.55, `rgba(124, 58, 237, ${heatAlpha * 0.65})`);
         rad.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = rad;
         ctx.fillRect(0, 0, ARENA_W, ARENA_H);
@@ -1086,7 +1163,7 @@ export const PinballPage: React.FC = () => {
       // Aim Dashed Guide
       ctx.save();
       ctx.setLineDash([6, 6]);
-      ctx.strokeStyle = 'rgba(23, 23, 28, 0.18)';
+      ctx.strokeStyle = 'rgba(26, 26, 31, 0.18)';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(currDropperX, 80);
@@ -1096,7 +1173,7 @@ export const PinballPage: React.FC = () => {
 
       // Top Horizontal Rail
       ctx.fillStyle = '#94A3B8';
-      ctx.strokeStyle = '#17171C';
+      ctx.strokeStyle = '#1A1A1F';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.roundRect(38, 34, ARENA_W - 76, 14, 6);
@@ -1104,12 +1181,12 @@ export const PinballPage: React.FC = () => {
       ctx.stroke();
 
       [26, ARENA_W - 56].forEach((ex) => {
-        ctx.fillStyle = '#FFD426';
+        ctx.fillStyle = '#FFD60A';
         ctx.beginPath();
         ctx.roundRect(ex, 20, 30, 42, 8);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = '#17171C';
+        ctx.fillStyle = '#1A1A1F';
         ctx.beginPath();
         ctx.arc(ex + 15, 32, 2.5, 0, Math.PI * 2);
         ctx.arc(ex + 15, 50, 2.5, 0, Math.PI * 2);
@@ -1122,14 +1199,14 @@ export const PinballPage: React.FC = () => {
       ctx.translate(currDropperX, 42 + recoilY);
 
       if (dropperRecoilRef.current > 0.2) {
-        ctx.fillStyle = `rgba(0, 212, 170, ${dropperRecoilRef.current * 0.55})`;
+        ctx.fillStyle = `rgba(0, 212, 170, ${dropperRecoilRef.current * 0.5})`;
         ctx.beginPath();
         ctx.arc(0, 36, 16 + (1 - dropperRecoilRef.current) * 14, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      ctx.fillStyle = '#FFD426';
-      ctx.strokeStyle = '#17171C';
+      ctx.fillStyle = '#FFD60A';
+      ctx.strokeStyle = '#1A1A1F';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.roundRect(-20, 14, 40, 22, 6);
@@ -1140,12 +1217,12 @@ export const PinballPage: React.FC = () => {
       ctx.ellipse(0, 34, 15, 5, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#17171C';
+      ctx.fillStyle = '#1A1A1F';
       ctx.beginPath();
       ctx.roundRect(-59, -22, 124, 44, 12);
       ctx.fill();
 
-      ctx.fillStyle = '#FFD426';
+      ctx.fillStyle = '#FFD60A';
       ctx.beginPath();
       ctx.roundRect(-62, -26, 124, 44, 12);
       ctx.fill();
@@ -1156,20 +1233,20 @@ export const PinballPage: React.FC = () => {
       ctx.roundRect(-54, -21, 108, 7, 4);
       ctx.fill();
 
-      ctx.fillStyle = '#17171C';
-      ctx.font = '900 15px "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
+      ctx.fillStyle = '#1A1A1F';
+      ctx.font = `900 15px ${ZH_SANS}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('发球器', 0, -2);
       ctx.restore();
 
-      // Draw All Placed Musical Physics Toys
+      // Placed Musical Physics Toys with bound sound-card motif badges!
       currentToys.forEach((toy) => {
         const entry = toyBodyMapRef.current.get(toy.id);
         if (!entry) return;
         entry.hitFlash = Math.max(0, entry.hitFlash - 0.055);
         const flash = entry.hitFlash;
-        const scalePop = 1 + flash * 0.13;
+        const scalePop = 1 + flash * 0.12;
         const card = getCardById(toy.cardId);
 
         ctx.save();
@@ -1178,21 +1255,20 @@ export const PinballPage: React.FC = () => {
         ctx.scale(scalePop, scalePop);
 
         if (toy.type === 'block') {
-          ctx.fillStyle = '#17171C';
+          ctx.fillStyle = '#1A1A1F';
           ctx.beginPath();
           ctx.roundRect(-66, -12, 138, 34, 10);
           ctx.fill();
 
-          const shift = Math.sin(t * 0.0022 + toy.x * 0.01) * 28;
+          const shift = Math.sin(t * 0.002 + toy.x * 0.01) * 24;
           const holoGrad = ctx.createLinearGradient(-72 + shift, -22, 72 + shift, 22);
           holoGrad.addColorStop(0, card.accentColor);
-          holoGrad.addColorStop(0.45, '#FFD426');
-          holoGrad.addColorStop(0.75, '#00D4AA');
+          holoGrad.addColorStop(0.5, '#FFD60A');
           holoGrad.addColorStop(1, card.accentColor);
 
-          ctx.fillStyle = flash > 0.35 ? '#FBF9F4' : holoGrad;
-          ctx.strokeStyle = '#17171C';
-          ctx.lineWidth = 3.2;
+          ctx.fillStyle = flash > 0.35 ? '#FFFDF8' : holoGrad;
+          ctx.strokeStyle = '#1A1A1F';
+          ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.roundRect(-69, -17, 138, 34, 10);
           ctx.fill();
@@ -1200,33 +1276,36 @@ export const PinballPage: React.FC = () => {
 
           ctx.fillStyle = 'rgba(255,255,255,0.42)';
           ctx.beginPath();
-          ctx.roundRect(-63, -13, 126, 7, 4);
+          ctx.roundRect(-63, -13, 126, 6, 3);
           ctx.fill();
 
-          ctx.fillStyle = '#17171C';
-          [-58, 58].forEach((sx) => {
-            ctx.beginPath();
-            ctx.arc(sx, 0, 2.5, 0, Math.PI * 2);
-            ctx.fill();
-          });
+          // Bound sound-source motif badge on left end
+          drawCanvasToyBadge(ctx, card.category, -50, 0, card.accentColor);
 
-          ctx.fillStyle = '#FBF9F4';
-          ctx.strokeStyle = '#17171C';
-          ctx.lineWidth = 2.4;
+          // Note capsule
+          ctx.fillStyle = '#FFFDF8';
+          ctx.strokeStyle = '#1A1A1F';
+          ctx.lineWidth = 2.2;
           ctx.beginPath();
-          ctx.roundRect(-25, -12, 50, 24, 6);
+          ctx.roundRect(-22, -12, 48, 24, 6);
           ctx.fill();
           ctx.stroke();
 
-          ctx.fillStyle = '#17171C';
-          ctx.font = '900 13.5px "JetBrains Mono", monospace';
+          ctx.fillStyle = '#1A1A1F';
+          ctx.font = `900 13px ${HW_MONO}`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(toy.note, 0, 1);
+          ctx.fillText(toy.note, 2, 1);
+
+          // Short bound card name tag on right
+          ctx.fillStyle = '#1A1A1F';
+          ctx.font = `900 9px ${ZH_SANS}`;
+          ctx.textAlign = 'center';
+          ctx.fillText(card.zhTitle.slice(0, 2), 48, 1);
         } else if (toy.type === 'bumper') {
           const compress = flash * 6;
           ctx.fillStyle = card.accentColor;
-          ctx.strokeStyle = '#17171C';
+          ctx.strokeStyle = '#1A1A1F';
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.ellipse(0, 26, 25, 10, 0, 0, Math.PI * 2);
@@ -1239,43 +1318,33 @@ export const PinballPage: React.FC = () => {
           ctx.fill();
           ctx.stroke();
 
-          ctx.fillStyle = flash > 0.3 ? '#FBF9F4' : card.accentColor;
+          ctx.fillStyle = flash > 0.3 ? '#FFFDF8' : card.accentColor;
           ctx.beginPath();
           ctx.arc(0, -4 + compress, 31, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
 
-          ctx.strokeStyle = '#FBF9F4';
-          ctx.lineWidth = 3.5;
+          ctx.strokeStyle = '#FFFDF8';
+          ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.arc(0, -4 + compress, 19, 0, Math.PI * 2);
           ctx.stroke();
-          ctx.fillStyle = '#FBF9F4';
-          ctx.beginPath();
-          ctx.arc(0, -4 + compress, 8, 0, Math.PI * 2);
-          ctx.fill();
+
+          drawCanvasToyBadge(ctx, card.category, 0, -4 + compress, card.accentColor);
         } else if (toy.type === 'spinner') {
-          ctx.fillStyle = flash > 0.3 ? '#FFD426' : card.accentColor;
-          ctx.strokeStyle = '#17171C';
-          ctx.lineWidth = 3.2;
+          ctx.fillStyle = flash > 0.3 ? '#FFD60A' : card.accentColor;
+          ctx.strokeStyle = '#1A1A1F';
+          ctx.lineWidth = 3;
           for (let b = 0; b < 4; b++) {
             ctx.save();
             ctx.rotate((b * Math.PI) / 2);
             ctx.beginPath();
-            ctx.roundRect(-11, -59, 22, 50, 11);
+            ctx.roundRect(-11, -58, 22, 48, 11);
             ctx.fill();
             ctx.stroke();
             ctx.restore();
           }
-          ctx.fillStyle = '#FBF9F4';
-          ctx.beginPath();
-          ctx.arc(0, 0, 13, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-          ctx.fillStyle = '#17171C';
-          ctx.beginPath();
-          ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
-          ctx.fill();
+          drawCanvasToyBadge(ctx, card.category, 0, 0, card.accentColor);
         } else if (toy.type === 'portal') {
           const pulse = 0.55 + Math.sin(t * 0.008) * 0.35;
           ctx.strokeStyle = `rgba(0, 212, 170, ${pulse})`;
@@ -1290,8 +1359,8 @@ export const PinballPage: React.FC = () => {
           });
 
           ctx.fillStyle = '#7C3AED';
-          ctx.strokeStyle = '#17171C';
-          ctx.lineWidth = 3.2;
+          ctx.strokeStyle = '#1A1A1F';
+          ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.ellipse(0, 4, 60, 18, 0, 0, Math.PI * 2);
           ctx.fill();
@@ -1302,7 +1371,7 @@ export const PinballPage: React.FC = () => {
           ctx.ellipse(0, 0, 46, 12, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = '#00D4AA';
-          ctx.lineWidth = 2.8;
+          ctx.lineWidth = 2.6;
           ctx.stroke();
         }
 
@@ -1320,9 +1389,9 @@ export const PinballPage: React.FC = () => {
             const p1 = trail[ti];
             const frac = ti / trail.length;
             ctx.save();
-            ctx.globalAlpha = frac * 0.36;
+            ctx.globalAlpha = frac * 0.34;
             ctx.strokeStyle = color;
-            ctx.lineWidth = 3 + frac * 14;
+            ctx.lineWidth = 3 + frac * 13;
             ctx.lineCap = 'round';
             ctx.beginPath();
             ctx.moveTo(p0.x, p0.y);
@@ -1341,16 +1410,16 @@ export const PinballPage: React.FC = () => {
         ctx.scale(stretch, squish);
 
         ctx.fillStyle = color;
-        ctx.strokeStyle = '#17171C';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#1A1A1F';
+        ctx.lineWidth = 2.8;
         ctx.beginPath();
-        ctx.arc(0, 0, 14, 0, Math.PI * 2);
+        ctx.arc(0, 0, 13.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
         ctx.fillStyle = 'rgba(255,255,255,0.82)';
         ctx.beginPath();
-        ctx.ellipse(-4.5, -5, 4.8, 3, -0.5, 0, Math.PI * 2);
+        ctx.ellipse(-4.5, -5, 4.6, 2.8, -0.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       });
@@ -1374,62 +1443,51 @@ export const PinballPage: React.FC = () => {
         ctx.globalAlpha = alpha;
         ctx.translate(v.x, v.y);
 
-        // Sound-family differentiated visual collision expressions!
         if (v.category === 'BEAT') {
-          // Heavy Bass Dual Seismic Shockwave
-          const r = 16 + easeOut * 66;
+          const r = 16 + easeOut * 62;
           ctx.strokeStyle = v.color;
-          ctx.lineWidth = 6 * (1 - p * 0.6);
+          ctx.lineWidth = 5.5 * (1 - p * 0.6);
           ctx.beginPath();
           ctx.arc(0, 0, r, 0, Math.PI * 2);
           ctx.stroke();
 
-          ctx.strokeStyle = '#FFD426';
-          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = '#FFD60A';
+          ctx.lineWidth = 2.2;
           ctx.beginPath();
           ctx.arc(0, 0, r * 0.68, 0, Math.PI * 2);
           ctx.stroke();
         } else if (v.category === 'VIBE' || v.kind === 'chord') {
-          // Luminous Atmospheric Prism Halo Bloom
-          const rad = ctx.createRadialGradient(0, 0, 4, 0, 0, 26 + easeOut * 58);
+          const rad = ctx.createRadialGradient(0, 0, 4, 0, 0, 24 + easeOut * 54);
           rad.addColorStop(0, v.color);
           rad.addColorStop(1, 'rgba(0,0,0,0)');
           ctx.fillStyle = rad;
-          ctx.globalAlpha = alpha * 0.58;
+          ctx.globalAlpha = alpha * 0.54;
           ctx.beginPath();
-          ctx.arc(0, 0, 26 + easeOut * 58, 0, Math.PI * 2);
+          ctx.arc(0, 0, 24 + easeOut * 54, 0, Math.PI * 2);
           ctx.fill();
           ctx.globalAlpha = alpha;
         } else if (v.category === 'PERC') {
-          // Crisp Geometric Spark Shards
           ctx.strokeStyle = v.color;
-          ctx.lineWidth = 3;
+          ctx.lineWidth = 2.8;
           for (let ray = 0; ray < 8; ray++) {
             const ang = (ray * Math.PI) / 4 + p * 0.35;
-            const r1 = 12 + easeOut * 22;
-            const r2 = 24 + easeOut * 36;
+            const r1 = 11 + easeOut * 20;
+            const r2 = 22 + easeOut * 34;
             ctx.beginPath();
             ctx.moveTo(Math.cos(ang) * r1, Math.sin(ang) * r1);
             ctx.lineTo(Math.cos(ang) * r2, Math.sin(ang) * r2);
             ctx.stroke();
           }
         } else {
-          // Melody Concentric Bell Ripples
-          const r = 12 + easeOut * 52;
+          const r = 12 + easeOut * 48;
           ctx.strokeStyle = v.color;
-          ctx.lineWidth = 3.5 * (1 - p * 0.5);
+          ctx.lineWidth = 3.2 * (1 - p * 0.5);
           ctx.beginPath();
           ctx.arc(0, 0, r, 0, Math.PI * 2);
           ctx.stroke();
-          ctx.globalAlpha = alpha * 0.5;
-          ctx.beginPath();
-          ctx.arc(0, 0, r * 0.62, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.globalAlpha = alpha;
         }
 
-        // Floating Pitch Badge Pill
-        const floatY = -20 - easeOut * 30;
+        const floatY = -20 - easeOut * 28;
         ctx.fillStyle = '#14151B';
         ctx.strokeStyle = v.color;
         ctx.lineWidth = 2;
@@ -1438,8 +1496,8 @@ export const PinballPage: React.FC = () => {
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = '#FBF9F4';
-        ctx.font = '900 10.5px "JetBrains Mono", "HarmonyOS Sans SC", "PingFang SC", sans-serif';
+        ctx.fillStyle = '#FFFDF8';
+        ctx.font = `900 10px ${HW_MONO}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(v.kind === 'warp' ? '✦ 传送' : `♪ ${v.note}`, 0, floatY + 0.5);
@@ -1462,17 +1520,14 @@ export const PinballPage: React.FC = () => {
     };
   }, [syncToyBodies, spawnVfx, dropSingleBall]);
 
-  // Incremental toy body sync when toys change (fast single-body transform, zero jitter!)
   useEffect(() => {
     syncToyBodies(false);
   }, [toys, syncToyBodies]);
 
-  // Full restitution sync only when bounce knob changes
   useEffect(() => {
     syncToyBodies(true);
   }, [bounce, syncToyBodies]);
 
-  // Auto-Dropper strictly in FREE JAM mode
   useEffect(() => {
     if (!autoDrop || pinballMode !== 'free') return;
     const intervalMs = Math.round(1600 - dropRate * 1260);
@@ -1492,6 +1547,8 @@ export const PinballPage: React.FC = () => {
       y: (clientY - rect.top - offsetY) / s,
     };
   };
+
+  const snapCoord = (v: number) => (gridSnap ? Math.round(v / SNAP_GRID_PX) * SNAP_GRID_PX : Math.round(v));
 
   const hitTestToy = (x: number, y: number): PinballToy | null => {
     for (let i = toys.length - 1; i >= 0; i--) {
@@ -1542,8 +1599,8 @@ export const PinballPage: React.FC = () => {
       const angle = selectedTool === 'block' ? (x < ARENA_W / 2 ? 0.22 : -0.22) : 0;
       const newId = addPinballToy({
         type: selectedTool,
-        x: Math.round(x),
-        y: Math.round(y),
+        x: Math.min(ARENA_W - 60, Math.max(60, snapCoord(x))),
+        y: Math.min(ARENA_H - 64, Math.max(100, snapCoord(y))),
         angle,
         cardId: bindCardId,
         note,
@@ -1571,8 +1628,8 @@ export const PinballPage: React.FC = () => {
         updatePinballToy(
           drag.toyId,
           {
-            x: Math.round(Math.min(ARENA_W - 55, Math.max(55, x))),
-            y: Math.round(Math.min(ARENA_H - 64, Math.max(96, y))),
+            x: Math.min(ARENA_W - 55, Math.max(55, snapCoord(x))),
+            y: Math.min(ARENA_H - 64, Math.max(96, snapCoord(y))),
           },
           shouldRecord
         );
@@ -1629,6 +1686,13 @@ export const PinballPage: React.FC = () => {
     if (ok) playSfx('cartridgeLock');
   };
 
+  /** FIX #3: Strictly sends the exact frozen Choreographed Show snapshot into Forge Draft! */
+  const handleSendShowToForge = () => {
+    playSfx('mintStamp');
+    stopChoreographedShow();
+    sendPinballShowToForge();
+  };
+
   const selectedToy = toys.find((t) => t.id === selectedToyId) ?? null;
   const unlockedCards = SOUND_CARDS.filter((c) => collection.includes(c.id));
   const recDurationSec =
@@ -1652,9 +1716,9 @@ export const PinballPage: React.FC = () => {
       label: '声音斜板',
       icon: (
         <svg viewBox="0 0 36 28" className="w-8 h-6">
-          <rect x="4" y="16" width="6" height="10" rx="1.5" fill="#17171C" />
-          <rect x="13" y="10" width="6" height="16" rx="1.5" fill="#17171C" />
-          <rect x="22" y="4" width="7" height="22" rx="1.5" fill="#17171C" />
+          <rect x="4" y="16" width="6" height="10" rx="1.5" fill="#1A1A1F" />
+          <rect x="13" y="10" width="6" height="16" rx="1.5" fill="#1A1A1F" />
+          <rect x="22" y="4" width="7" height="22" rx="1.5" fill="#1A1A1F" />
         </svg>
       ),
     },
@@ -1663,26 +1727,9 @@ export const PinballPage: React.FC = () => {
       label: '弹簧碰珠',
       icon: (
         <svg viewBox="0 0 36 30" className="w-8 h-6">
-          <rect
-            x="11"
-            y="16"
-            width="14"
-            height="10"
-            rx="3"
-            fill="#CBD5E1"
-            stroke="#17171C"
-            strokeWidth="2.5"
-          />
-          <ellipse
-            cx="18"
-            cy="11"
-            rx="13"
-            ry="8"
-            fill="#FF5526"
-            stroke="#17171C"
-            strokeWidth="2.5"
-          />
-          <ellipse cx="18" cy="9" rx="5" ry="2.5" fill="#FBF9F4" />
+          <rect x="11" y="16" width="14" height="10" rx="3" fill="#CBD5E1" stroke="#1A1A1F" strokeWidth="2.5" />
+          <ellipse cx="18" cy="11" rx="13" ry="8" fill="#FF5C2B" stroke="#1A1A1F" strokeWidth="2.5" />
+          <ellipse cx="18" cy="9" rx="5" ry="2.5" fill="#FFFDF8" />
         </svg>
       ),
     },
@@ -1692,43 +1739,11 @@ export const PinballPage: React.FC = () => {
       icon: (
         <svg viewBox="0 0 36 32" className="w-8 h-6">
           <g transform="translate(18,16)">
-            <ellipse
-              cx="0"
-              cy="-8"
-              rx="4"
-              ry="7"
-              fill="#7C3AED"
-              stroke="#17171C"
-              strokeWidth="2.2"
-            />
-            <ellipse
-              cx="0"
-              cy="8"
-              rx="4"
-              ry="7"
-              fill="#7C3AED"
-              stroke="#17171C"
-              strokeWidth="2.2"
-            />
-            <ellipse
-              cx="-8"
-              cy="0"
-              rx="7"
-              ry="4"
-              fill="#7C3AED"
-              stroke="#17171C"
-              strokeWidth="2.2"
-            />
-            <ellipse
-              cx="8"
-              cy="0"
-              rx="7"
-              ry="4"
-              fill="#7C3AED"
-              stroke="#17171C"
-              strokeWidth="2.2"
-            />
-            <circle cx="0" cy="0" r="3.5" fill="#FBF9F4" stroke="#17171C" strokeWidth="2" />
+            <ellipse cx="0" cy="-8" rx="4" ry="7" fill="#7C3AED" stroke="#1A1A1F" strokeWidth="2.2" />
+            <ellipse cx="0" cy="8" rx="4" ry="7" fill="#7C3AED" stroke="#1A1A1F" strokeWidth="2.2" />
+            <ellipse cx="-8" cy="0" rx="7" ry="4" fill="#7C3AED" stroke="#1A1A1F" strokeWidth="2.2" />
+            <ellipse cx="8" cy="0" rx="7" ry="4" fill="#7C3AED" stroke="#1A1A1F" strokeWidth="2.2" />
+            <circle cx="0" cy="0" r="3.5" fill="#FFFDF8" stroke="#1A1A1F" strokeWidth="2" />
           </g>
         </svg>
       ),
@@ -1738,51 +1753,11 @@ export const PinballPage: React.FC = () => {
       label: '传送门',
       icon: (
         <svg viewBox="0 0 40 28" className="w-9 h-6">
-          <line
-            x1="12"
-            y1="10"
-            x2="12"
-            y2="3"
-            stroke="#00D4AA"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-          <line
-            x1="20"
-            y1="8"
-            x2="20"
-            y2="1"
-            stroke="#00D4AA"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-          <line
-            x1="28"
-            y1="10"
-            x2="28"
-            y2="3"
-            stroke="#00D4AA"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-          <ellipse
-            cx="20"
-            cy="19"
-            rx="16"
-            ry="7"
-            fill="#7C3AED"
-            stroke="#17171C"
-            strokeWidth="2.5"
-          />
-          <ellipse
-            cx="20"
-            cy="18"
-            rx="10"
-            ry="3.5"
-            fill="#00D4AA"
-            stroke="#17171C"
-            strokeWidth="1.8"
-          />
+          <line x1="12" y1="10" x2="12" y2="3" stroke="#00D4AA" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="20" y1="8" x2="20" y2="1" stroke="#00D4AA" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="28" y1="10" x2="28" y2="3" stroke="#00D4AA" strokeWidth="2.5" strokeLinecap="round" />
+          <ellipse cx="20" cy="19" rx="16" ry="7" fill="#7C3AED" stroke="#1A1A1F" strokeWidth="2.5" />
+          <ellipse cx="20" cy="18" rx="10" ry="3.5" fill="#00D4AA" stroke="#1A1A1F" strokeWidth="1.8" />
         </svg>
       ),
     },
@@ -1793,7 +1768,7 @@ export const PinballPage: React.FC = () => {
       className={`w-full h-full p-3 grid gap-3 overflow-hidden ${
         theaterMode
           ? 'grid-cols-1'
-          : 'grid-cols-[minmax(215px,21.5%)_1fr_minmax(226px,22.5%)]'
+          : 'grid-cols-[minmax(218px,21.5%)_1fr_minmax(226px,22.5%)]'
       }`}
     >
       {/* ================= LEFT TOOLBELT PANEL ================= */}
@@ -1801,13 +1776,22 @@ export const PinballPage: React.FC = () => {
         <section className="brutal-panel p-3 flex flex-col justify-between gap-2 min-h-0 overflow-hidden">
           {pinballMode === 'free' ? (
             <>
-              {/* 声学机关 2x2 Grid */}
               <div className="shrink-0">
                 <div className="flex items-center justify-between mb-1.5">
-                  <h2 className="text-[13.5px] zh-display text-[#17171C]">
-                    声学机关
-                  </h2>
+                  <h2 className="text-[13.5px] zh-display text-[#1A1A1F]">声学机关</h2>
                   <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        playSfx('click', 0.6);
+                        setGridSnap((g) => !g);
+                      }}
+                      title={gridSnap ? '已开启 20px 网格吸附' : '开启网格吸附'}
+                      className={`brutal-pad p-1 rounded-lg ${
+                        gridSnap ? 'bg-[#FFD60A] text-[#1A1A1F]' : 'bg-[#FFFDF8] text-[#646474]'
+                      }`}
+                    >
+                      <Grid2x2 className="w-3 h-3" />
+                    </button>
                     <button
                       onClick={() => {
                         playSfx('click', 0.4);
@@ -1815,7 +1799,7 @@ export const PinballPage: React.FC = () => {
                       }}
                       disabled={pinballUndoCount === 0}
                       title="撤销机关操作 (Ctrl+Z)"
-                      className="brutal-pad p-1 rounded-lg bg-[#FBF9F4] disabled:opacity-35"
+                      className="brutal-pad p-1 rounded-lg bg-[#FFFDF8] disabled:opacity-35"
                     >
                       <Undo2 className="w-3 h-3" />
                     </button>
@@ -1826,7 +1810,7 @@ export const PinballPage: React.FC = () => {
                       }}
                       disabled={pinballRedoCount === 0}
                       title="重做机关操作 (Ctrl+Y)"
-                      className="brutal-pad p-1 rounded-lg bg-[#FBF9F4] disabled:opacity-35"
+                      className="brutal-pad p-1 rounded-lg bg-[#FFFDF8] disabled:opacity-35"
                     >
                       <Redo2 className="w-3 h-3" />
                     </button>
@@ -1843,7 +1827,7 @@ export const PinballPage: React.FC = () => {
                           setPinballTool(item.id);
                         }}
                         className={`brutal-btn py-1.5 px-1 rounded-xl flex flex-col items-center justify-center gap-0.5 whitespace-nowrap ${
-                          active ? 'bg-[#00D4AA] text-[#17171C]' : 'bg-[#FBF9F4] text-[#17171C]'
+                          active ? 'bg-[#00D4AA] text-[#1A1A1F]' : 'bg-[#FFFDF8] text-[#1A1A1F]'
                         }`}
                       >
                         {item.icon}
@@ -1857,10 +1841,8 @@ export const PinballPage: React.FC = () => {
               {/* 绑定声卡 Stack */}
               <div className="flex-1 flex flex-col min-h-0">
                 <div className="flex items-center justify-between mb-1 shrink-0">
-                  <h2 className="text-[13px] zh-display text-[#17171C]">
-                    绑定声卡
-                  </h2>
-                  <span className="text-[9.5px] font-bold text-[#626272]">点选切换机关音色</span>
+                  <h2 className="text-[13px] zh-display text-[#1A1A1F]">绑定声卡</h2>
+                  <span className="text-[9.5px] font-bold text-[#646474]">点选切换机关音色</span>
                 </div>
                 <div className="flex-1 overflow-y-auto holo-scroll pr-0.5 flex flex-col gap-1.5">
                   {unlockedCards.map((c) => {
@@ -1878,31 +1860,29 @@ export const PinballPage: React.FC = () => {
                           }
                           void holoAudio.previewCard(c.id);
                         }}
-                        className={`relative h-[50px] shrink-0 rounded-xl border-[2.5px] border-[#17171C] overflow-hidden cursor-pointer transition-all flex items-stretch text-left ${
+                        className={`relative h-[50px] shrink-0 rounded-xl border-[2.5px] border-[#1A1A1F] overflow-hidden cursor-pointer transition-all flex items-stretch text-left ${
                           isBound
-                            ? 'bg-[#14151B] text-[#FBF9F4] ring-2 ring-[#00D4AA] shadow-[3px_3px_0px_0px_#17171C] -translate-y-0.5'
-                            : 'bg-[#FBF9F4] text-[#17171C] hover:bg-[#F3EFE6] shadow-[2px_2px_0px_0px_#17171C]'
+                            ? 'bg-[#14151B] text-[#FFFDF8] ring-2 ring-[#00D4AA] shadow-[3px_3px_0px_0px_#1A1A1F] -translate-y-0.5'
+                            : 'bg-[#FFFDF8] text-[#1A1A1F] hover:bg-[#F3EFE6] shadow-[2px_2px_0px_0px_#1A1A1F]'
                         }`}
                       >
                         <div className="w-1.5 shrink-0" style={{ backgroundColor: cat.color }} />
-                        <div className="w-10 h-full shrink-0 border-r-[2px] border-[#17171C] holo-thumb-sheen">
+                        <div className="w-10 h-full shrink-0 border-r-[2px] border-[#1A1A1F] holo-thumb-sheen">
                           <CardArtwork artId={c.artId} />
                         </div>
                         <div className="flex-1 px-2 py-1 flex flex-col justify-between min-w-0">
                           <div className="flex items-center justify-between gap-1">
                             <span
-                              className="px-1.5 py-[0.5px] rounded text-[8px] font-black border border-[#17171C]"
+                              className="px-1.5 py-[0.5px] rounded text-[8px] font-black border border-[#1A1A1F]"
                               style={{ backgroundColor: rar.bg, color: rar.text }}
                             >
                               {rar.label}
                             </span>
-                            <span
-                              className={`font-mono-hw text-[9px] font-bold ${
-                                isBound ? 'text-[#00D4AA]' : 'text-[#626272]'
-                              }`}
-                            >
-                              {c.code}
-                            </span>
+                            <SoundSourceIcon
+                              cardId={c.id}
+                              size={15}
+                              className="shrink-0"
+                            />
                           </div>
                           <div className="text-[11.5px] font-black truncate leading-tight">
                             {c.zhTitle}
@@ -1914,16 +1894,15 @@ export const PinballPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 预设布局 Row */}
+              {/* 预设布局 Row (循环 / 瀑布 / 问答 / 清空) */}
               <div className="shrink-0 pt-0.5">
-                <h2 className="text-[12.5px] zh-display text-[#17171C] mb-1">
-                  预设布局
-                </h2>
-                <div className="grid grid-cols-3 gap-1.5">
+                <h2 className="text-[12.5px] zh-display text-[#1A1A1F] mb-1">预设布局</h2>
+                <div className="grid grid-cols-4 gap-1">
                   {(
                     [
                       { id: 'LOOP' as const, label: '循环' },
                       { id: 'CASCADE' as const, label: '瀑布' },
+                      { id: 'CALL_RESPONSE' as const, label: '问答' },
                       { id: 'CLEAR' as const, label: '清空' },
                     ] as const
                   ).map((preset) => (
@@ -1934,10 +1913,10 @@ export const PinballPage: React.FC = () => {
                         applyPinballPreset(preset.id);
                         setSelectedToyId(null);
                       }}
-                      className={`brutal-pad py-1.5 rounded-lg text-[11px] font-black whitespace-nowrap ${
+                      className={`brutal-pad py-1.5 rounded-lg text-[10.5px] font-black whitespace-nowrap ${
                         preset.id === 'CLEAR'
-                          ? 'bg-[#FBF9F4] hover:bg-[#FF5526] hover:text-white'
-                          : 'bg-[#FBF9F4] hover:bg-[#FFD426]'
+                          ? 'bg-[#FFFDF8] hover:bg-[#FF5C2B] hover:text-white'
+                          : 'bg-[#FFFDF8] hover:bg-[#FFD60A]'
                       }`}
                     >
                       {preset.label}
@@ -1947,19 +1926,16 @@ export const PinballPage: React.FC = () => {
               </div>
             </>
           ) : (
-            /* CHOREOGRAPHED SHOW INFO PANEL */
             <div className="flex flex-col justify-between h-full gap-2.5">
               <div>
-                <h2 className="text-base zh-display text-[#17171C]">
-                  编曲剧场演出
-                </h2>
-                <p className="text-[11px] font-bold text-[#626272] mt-1 leading-relaxed">
-                  由 02 插卡编曲冻结的真实音符时间轴驱动，四轨光球按音乐时钟沿抛物线精准落点，零物理杂音。
+                <h2 className="text-base zh-display text-[#1A1A1F]">编曲剧场演出</h2>
+                <p className="text-[11px] font-bold text-[#646474] mt-1 leading-relaxed">
+                  由 02 插卡编曲冻结的真实音符时间轴驱动，四轨形态化光球按同一音乐时钟精准落点，零物理碰撞杂音。
                 </p>
               </div>
 
               {pinballShowSnapshot && (
-                <div className="rounded-xl bg-[#14151B] text-[#FBF9F4] border-[2px] border-[#17171C] p-2.5 flex flex-col gap-1.5 text-[11px]">
+                <div className="rounded-xl bg-[#14151B] text-[#FFFDF8] border-[2px] border-[#1A1A1F] p-2.5 flex flex-col gap-1.5 text-[11px]">
                   <div className="flex justify-between">
                     <span className="text-white/55 font-bold">音符数量</span>
                     <span className="font-mono-hw text-[#00D4AA] font-bold">
@@ -1968,7 +1944,7 @@ export const PinballPage: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/55 font-bold">演奏速度</span>
-                    <span className="font-mono-hw text-[#FFD426] font-bold">
+                    <span className="font-mono-hw text-[#FFD60A] font-bold">
                       {pinballShowSnapshot.bpm} BPM
                     </span>
                   </div>
@@ -1989,16 +1965,16 @@ export const PinballPage: React.FC = () => {
                 {TRACK_CATEGORIES.map((cat) => (
                   <div
                     key={cat}
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-[#FBF9F4] border-[2px] border-[#17171C] text-[11px] font-black"
+                    className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-[#FFFDF8] border-[2px] border-[#1A1A1F] text-[10.5px] font-black"
                   >
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1.5 min-w-0">
                       <span
-                        className="w-2.5 h-2.5 rounded-full border border-[#17171C]"
+                        className="w-2.5 h-2.5 rounded-full border border-[#1A1A1F] shrink-0"
                         style={{ backgroundColor: TRACK_MOTION_PROFILES[cat].color }}
                       />
-                      {CATEGORY_META[cat].zhLabel}
+                      <span className="truncate">{CATEGORY_META[cat].zhLabel}</span>
                     </span>
-                    <span className="font-mono-hw text-[#626272]">
+                    <span className="font-mono-hw text-[#646474] shrink-0">
                       {choreography.laneAnchors[cat].length} 次
                     </span>
                   </div>
@@ -2010,7 +1986,7 @@ export const PinballPage: React.FC = () => {
                   playSfx('cartridgeLock');
                   performBeatInPinball();
                 }}
-                className="brutal-btn py-2 px-2.5 rounded-xl bg-[#FBF9F4] hover:bg-[#FFD426] text-[11px] font-black flex items-center justify-center gap-1.5 whitespace-nowrap"
+                className="brutal-btn py-2 px-2.5 rounded-xl bg-[#FFFDF8] hover:bg-[#FFD60A] text-[11px] font-black flex items-center justify-center gap-1.5 whitespace-nowrap"
               >
                 <Wand2 className="w-3.5 h-3.5 shrink-0" />
                 <span>同步最新编曲</span>
@@ -2022,34 +1998,36 @@ export const PinballPage: React.FC = () => {
 
       {/* ================= CENTER DUAL-MODE PINBALL / SHOW STAGE ================= */}
       <section
-        className={`relative rounded-[18px] border-[2.5px] border-[#17171C] shadow-[inset_0_2px_8px_rgba(23,23,28,0.12),4px_4px_0px_0px_#17171C] overflow-hidden flex flex-col min-h-0 ${
-          pinballMode === 'show' ? 'bg-[#121319]' : 'bg-[#E7E1D3]'
+        className={`relative rounded-[18px] border-[2.5px] border-[#1A1A1F] shadow-[inset_0_2px_8px_rgba(26,26,31,0.12),4px_4px_0px_0px_#1A1A1F] overflow-hidden flex flex-col min-h-0 ${
+          pinballMode === 'show' ? 'bg-[#14151B]' : 'bg-[#EDE7D9]'
         }`}
       >
-        {/* Top Floating Mode Switcher & Stage Utility Bar */}
+        {/* Top Floating Mode Switcher & Exhibition Placard */}
         <div className="absolute top-2.5 left-3 right-3 z-20 flex items-center justify-between gap-2 pointer-events-none">
-          <div className="pointer-events-auto flex items-center gap-1 bg-[#14151B]/92 p-1 rounded-xl border-[2px] border-[#17171C] shadow-[2px_2px_0px_#17171C]">
+          <div className="pointer-events-auto flex items-center gap-1 bg-[#14151B]/92 p-1 rounded-xl border-[2px] border-[#1A1A1F] shadow-[2px_2px_0px_#1A1A1F]">
             <button
+              data-testid="pinball-mode-free"
               onClick={() => {
                 playSfx('tab');
                 setPinballMode('free');
               }}
               className={`px-3 py-1 rounded-lg text-[11px] font-black tracking-wide transition-colors cursor-pointer whitespace-nowrap ${
                 pinballMode === 'free'
-                  ? 'bg-[#00D4AA] text-[#17171C]'
+                  ? 'bg-[#00D4AA] text-[#1A1A1F]'
                   : 'text-white/75 hover:text-white'
               }`}
             >
               自由实验
             </button>
             <button
+              data-testid="pinball-mode-show"
               onClick={() => {
                 playSfx('tab');
                 setPinballMode('show');
               }}
               className={`px-3 py-1 rounded-lg text-[11px] font-black tracking-wide transition-colors cursor-pointer flex items-center gap-1 whitespace-nowrap ${
                 pinballMode === 'show'
-                  ? 'bg-[#FFD426] text-[#17171C]'
+                  ? 'bg-[#FFD60A] text-[#1A1A1F]'
                   : 'text-white/75 hover:text-white'
               }`}
             >
@@ -2058,28 +2036,48 @@ export const PinballPage: React.FC = () => {
             </button>
           </div>
 
+          {/* Exhibition Mode Title Placard */}
+          {theaterMode && pinballShowSnapshot && (
+            <div className="pointer-events-auto px-3.5 py-1 rounded-xl bg-[#14151B]/92 border-[2px] border-[#FFD60A] text-[#FFFDF8] text-[11px] font-black flex items-center gap-2">
+              <span className="text-[#FFD60A]">{pinballShowSnapshot.title}</span>
+              <span className="font-mono-hw text-white/70">
+                {pinballShowSnapshot.bpm} BPM · {SCALE_META[pinballShowSnapshot.scale].label}
+              </span>
+            </div>
+          )}
+
           <div className="pointer-events-auto flex items-center gap-1.5">
             {pinballRemixOrigin && pinballMode === 'free' && (
-              <span className="px-2 py-1 rounded-lg bg-[#7C3AED] text-white border-[2px] border-[#17171C] text-[10.5px] font-black whitespace-nowrap">
+              <span className="px-2 py-1 rounded-lg bg-[#7C3AED] text-white border-[2px] border-[#1A1A1F] text-[10.5px] font-black whitespace-nowrap">
                 重混 {pinballRemixOrigin.parentCode} · 第{pinballRemixOrigin.lineageDepth}代
               </span>
             )}
+            {theaterMode && (
+              <button
+                onClick={() => toggleMute()}
+                title={muted ? '恢复声音' : '静音'}
+                className="brutal-pad p-1.5 rounded-lg bg-[#14151B] text-[#FFFDF8] border-white/30"
+              >
+                {muted ? <VolumeX className="w-3.5 h-3.5 text-[#FF5C2B]" /> : <Volume2 className="w-3.5 h-3.5 text-[#00D4AA]" />}
+              </button>
+            )}
             {pinballMode === 'show' && (
               <button
+                data-testid="pinball-theater-btn"
                 onClick={() => {
                   playSfx('click', 0.7);
                   setTheaterMode((v) => !v);
                 }}
-                title={theaterMode ? '退出剧场沉浸视图' : '展开剧场沉浸视图'}
-                className="brutal-pad px-2.5 py-1 rounded-lg bg-[#14151B] text-[#FFD426] border-[#FFD426] text-[10.5px] font-black flex items-center gap-1 whitespace-nowrap"
+                title={theaterMode ? '退出展演全屏模式' : '展开全屏展演模式'}
+                className="brutal-pad px-2.5 py-1 rounded-lg bg-[#14151B] text-[#FFD60A] border-[#FFD60A] text-[10.5px] font-black flex items-center gap-1 whitespace-nowrap"
               >
                 {theaterMode ? (
                   <>
-                    <Minimize2 className="w-3 h-3" /> 退出剧场
+                    <Minimize2 className="w-3 h-3" /> 退出展演
                   </>
                 ) : (
                   <>
-                    <Maximize2 className="w-3 h-3" /> 剧场模式
+                    <Maximize2 className="w-3 h-3" /> 展演模式
                   </>
                 )}
               </button>
@@ -2101,9 +2099,9 @@ export const PinballPage: React.FC = () => {
 
         {/* Selected Toy Floating Micro-Toolbar (FREE JAM) */}
         {pinballMode === 'free' && selectedToy && (
-          <div className="absolute bottom-[56px] left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-[#14151B] text-[#FBF9F4] border-[2px] border-[#FFD426] rounded-2xl px-3 py-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.4),3px_3px_0px_0px_#17171C]">
-            <span className="text-[11px] font-black text-[#FFD426] whitespace-nowrap">
-              {TOY_TYPE_ZH[selectedToy.type]}
+          <div className="absolute bottom-[56px] left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-[#14151B] text-[#FFFDF8] border-[2px] border-[#FFD60A] rounded-2xl px-3 py-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.4),3px_3px_0px_0px_#1A1A1F]">
+            <span className="text-[11px] font-black text-[#FFD60A] whitespace-nowrap">
+              {TOY_TYPE_ZH[selectedToy.type]} · {getCardById(selectedToy.cardId).zhTitle}
             </span>
             <span className="text-white/25">|</span>
             {selectedToy.type === 'block' && (
@@ -2111,13 +2109,9 @@ export const PinballPage: React.FC = () => {
                 <button
                   onClick={() => {
                     playSfx('knobTick', 0.4);
-                    updatePinballToy(
-                      selectedToy.id,
-                      { angle: selectedToy.angle - Math.PI / 12 },
-                      true
-                    );
+                    updatePinballToy(selectedToy.id, { angle: selectedToy.angle - Math.PI / 12 }, true);
                   }}
-                  className="p-1 rounded-lg bg-white/10 hover:bg-[#00D4AA] hover:text-[#17171C] cursor-pointer"
+                  className="p-1 rounded-lg bg-white/10 hover:bg-[#00D4AA] hover:text-[#1A1A1F] cursor-pointer"
                   title="逆时针旋转 15°"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -2125,13 +2119,9 @@ export const PinballPage: React.FC = () => {
                 <button
                   onClick={() => {
                     playSfx('knobTick', 0.7);
-                    updatePinballToy(
-                      selectedToy.id,
-                      { angle: selectedToy.angle + Math.PI / 12 },
-                      true
-                    );
+                    updatePinballToy(selectedToy.id, { angle: selectedToy.angle + Math.PI / 12 }, true);
                   }}
-                  className="p-1 rounded-lg bg-white/10 hover:bg-[#00D4AA] hover:text-[#17171C] cursor-pointer"
+                  className="p-1 rounded-lg bg-white/10 hover:bg-[#00D4AA] hover:text-[#1A1A1F] cursor-pointer"
                   title="顺时针旋转 15°"
                 >
                   <RotateCw className="w-3.5 h-3.5" />
@@ -2156,7 +2146,7 @@ export const PinballPage: React.FC = () => {
                 removePinballToy(selectedToy.id);
                 setSelectedToyId(null);
               }}
-              className="p-1 rounded-lg bg-[#FF5526] text-white cursor-pointer hover:brightness-110"
+              className="p-1 rounded-lg bg-[#FF5C2B] text-white cursor-pointer hover:brightness-110"
               title="删除机关（或右键点击机关）"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -2166,19 +2156,18 @@ export const PinballPage: React.FC = () => {
 
         {/* Visible 8-Second Rolling Recording Timeline Bar (FREE JAM) */}
         {pinballMode === 'free' && (
-          <div className="absolute bottom-2.5 left-3 right-3 z-20 flex items-center gap-2 bg-[#14151B]/95 text-[#FBF9F4] border-[2px] border-[#17171C] rounded-xl px-2.5 py-1.5 shadow-[0_6px_16px_rgba(0,0,0,0.3)]">
+          <div className="absolute bottom-2.5 left-3 right-3 z-20 flex items-center gap-2 bg-[#14151B]/95 text-[#FFFDF8] border-[2px] border-[#1A1A1F] rounded-xl px-2.5 py-1.5 shadow-[0_6px_16px_rgba(0,0,0,0.3)]">
             <div className="flex items-center gap-1.5 shrink-0">
               <span
                 className={`w-2 h-2 rounded-full ${
-                  timelineEvents.length > 0 ? 'bg-[#FF5526] animate-pulse' : 'bg-white/25'
+                  timelineEvents.length > 0 ? 'bg-[#FF5C2B] animate-pulse' : 'bg-white/25'
                 }`}
               />
-              <span className="font-mono-hw text-[10.5px] font-bold text-[#FFD426] whitespace-nowrap">
+              <span className="font-mono-hw text-[10.5px] font-bold text-[#FFD60A] whitespace-nowrap">
                 8 秒录音 · {timelineEvents.length} 音符 ({recDurationSec}s)
               </span>
             </div>
 
-            {/* Event Tick Track */}
             <div className="flex-1 h-5 rounded-md bg-white/[0.06] border border-white/10 relative overflow-hidden">
               {timelineEvents.length === 0 ? (
                 <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white/45 truncate px-2">
@@ -2187,11 +2176,12 @@ export const PinballPage: React.FC = () => {
               ) : (
                 timelineEvents.map((ev, i) => {
                   const pct = Math.min(98, (ev.timeOffsetMs / RECORDING_WINDOW_MS) * 100);
+                  const card = getCardById(ev.cardId);
                   return (
                     <span
                       key={i}
                       style={{ left: `${pct}%`, backgroundColor: ev.color }}
-                      title={`${ev.note} @ ${(ev.timeOffsetMs / 1000).toFixed(2)}s`}
+                      title={`${card.zhTitle} · ${ev.note} @ ${(ev.timeOffsetMs / 1000).toFixed(2)}s`}
                       className="absolute top-1 bottom-1 w-[4px] rounded-full shadow-[0_0_5px_currentColor]"
                     />
                   );
@@ -2204,7 +2194,7 @@ export const PinballPage: React.FC = () => {
                 onClick={() => void handlePlayRecording()}
                 disabled={timelineEvents.length === 0}
                 title="试听当前录制的弹珠片段"
-                className="px-2 py-1 rounded-lg bg-[#00D4AA] text-[#17171C] text-[10.5px] font-black disabled:opacity-35 cursor-pointer flex items-center gap-1 whitespace-nowrap"
+                className="px-2 py-1 rounded-lg bg-[#00D4AA] text-[#1A1A1F] text-[10.5px] font-black disabled:opacity-35 cursor-pointer flex items-center gap-1 whitespace-nowrap"
               >
                 {playingRec ? (
                   <>
@@ -2217,9 +2207,10 @@ export const PinballPage: React.FC = () => {
                 )}
               </button>
               <button
+                data-testid="pinball-to-quantize-btn"
                 onClick={handleSendToBeatQuantize}
                 disabled={timelineEvents.length === 0}
-                title="送回 02 插卡编曲进行量化预览"
+                title="送回 02 插卡编曲进行量化预览与原/量化对比"
                 className="px-2 py-1 rounded-lg bg-[#7C3AED] text-white text-[10.5px] font-black disabled:opacity-35 cursor-pointer flex items-center gap-1 whitespace-nowrap"
               >
                 <Music className="w-2.5 h-2.5" /> 送回节拍台
@@ -2228,7 +2219,7 @@ export const PinballPage: React.FC = () => {
                 onClick={handleClearRecording}
                 disabled={timelineEvents.length === 0}
                 title="清空当前录音缓冲"
-                className="p-1 rounded-lg bg-white/10 text-white/75 hover:bg-[#FF5526] hover:text-white disabled:opacity-30 cursor-pointer"
+                className="p-1 rounded-lg bg-white/10 text-white/75 hover:bg-[#FF5C2B] hover:text-white disabled:opacity-30 cursor-pointer"
               >
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -2238,13 +2229,14 @@ export const PinballPage: React.FC = () => {
 
         {/* Choreographed Show Bottom Transport Strip */}
         {pinballMode === 'show' && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-[#14151B]/95 border-[2px] border-[#FFD426] rounded-2xl px-3.5 py-2 shadow-[0_10px_28px_rgba(0,0,0,0.55)]">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-[#14151B]/95 border-[2px] border-[#FFD60A] rounded-2xl px-3.5 py-2 shadow-[0_10px_28px_rgba(0,0,0,0.55)]">
             <button
+              data-testid="pinball-play-show-btn"
               onClick={() =>
                 showPlaying ? stopChoreographedShow() : void startChoreographedShow()
               }
               className={`brutal-btn px-4 py-1.5 rounded-xl text-xs font-black tracking-wide flex items-center gap-1.5 whitespace-nowrap ${
-                showPlaying ? 'bg-[#FF5526] text-white' : 'bg-[#00D4AA] text-[#17171C]'
+                showPlaying ? 'bg-[#FF5C2B] text-white' : 'bg-[#00D4AA] text-[#1A1A1F]'
               }`}
             >
               {showPlaying ? (
@@ -2259,12 +2251,9 @@ export const PinballPage: React.FC = () => {
               )}
             </button>
             <button
-              onClick={() => {
-                playSfx('mintStamp');
-                stopChoreographedShow();
-                sendBeatToForge();
-              }}
-              className="brutal-btn px-3 py-1.5 rounded-xl bg-[#FFD426] text-[#17171C] text-xs font-black flex items-center gap-1 whitespace-nowrap"
+              data-testid="pinball-show-to-forge-btn"
+              onClick={handleSendShowToForge}
+              className="brutal-btn px-3 py-1.5 rounded-xl bg-[#FFD60A] text-[#1A1A1F] text-xs font-black flex items-center gap-1 whitespace-nowrap"
             >
               <span>送去闪卡铸造</span>
               <span>→</span>
@@ -2280,8 +2269,9 @@ export const PinballPage: React.FC = () => {
             <>
               <div className="grid grid-cols-[1.35fr_1fr] gap-2 shrink-0">
                 <button
+                  data-testid="pinball-drop-btn"
                   onClick={() => dropSingleBall(false)}
-                  className="brutal-btn py-2.5 px-2 rounded-xl bg-[#00D4AA] text-[#17171C] text-[13.5px] zh-display flex items-center justify-center gap-1 whitespace-nowrap"
+                  className="brutal-btn py-2.5 px-2 rounded-xl bg-[#00D4AA] text-[#1A1A1F] text-[13.5px] zh-display flex items-center justify-center gap-1 whitespace-nowrap"
                 >
                   <Play className="w-3.5 h-3.5 fill-current shrink-0" />
                   <span>投掷弹珠</span>
@@ -2292,12 +2282,12 @@ export const PinballPage: React.FC = () => {
                     setPinballAutoDrop(!autoDrop);
                   }}
                   className={`brutal-btn py-2 px-2 rounded-xl text-[11.5px] font-black leading-tight flex items-center justify-center gap-1.5 whitespace-nowrap ${
-                    autoDrop ? 'bg-[#FF5526] text-[#17171C]' : 'bg-[#FBF9F4] text-[#17171C]'
+                    autoDrop ? 'bg-[#FF5C2B] text-white' : 'bg-[#FFFDF8] text-[#1A1A1F]'
                   }`}
                 >
                   <span
-                    className={`w-2.5 h-2.5 rounded-full border-2 border-[#17171C] shrink-0 ${
-                      autoDrop ? 'bg-[#FBF9F4] animate-pulse' : 'bg-[#E7E1D3]'
+                    className={`w-2.5 h-2.5 rounded-full border-2 border-[#1A1A1F] shrink-0 ${
+                      autoDrop ? 'bg-[#FFFDF8] animate-pulse' : 'bg-[#EDE7D9]'
                     }`}
                   />
                   <span>
@@ -2320,54 +2310,54 @@ export const PinballPage: React.FC = () => {
                   label="落球频率"
                   value={(dropRate - 0.1) / 0.9}
                   onChange={(v) => setPinballDropRate(0.1 + v * 0.9)}
-                  color="#FF5526"
+                  color="#FF5C2B"
                   height={13}
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-2 py-1.5 border-y-[1.5px] border-[#17171C]/12">
+              <div className="flex items-center justify-between gap-2 py-1.5 border-y-[1.5px] border-[#1A1A1F]/12">
                 <BrutalKnob
                   value={(bounce - 0.5) / 0.85}
                   onChange={(v) => setPinballBounce(0.5 + v * 0.85)}
-                  color="#FFD426"
+                  color="#FFD60A"
                   size={40}
                   label="弹性"
-                  title="上下拖拽或滚轮调节弹珠全局弹性"
+                  title="上下拖拽、滚轮或方向键调节弹珠全局弹性"
                 />
-                <div className="h-10 w-[1.5px] bg-[#17171C]/18" />
+                <div className="h-10 w-[1.5px] bg-[#1A1A1F]/18" />
                 <button
                   onClick={() => {
                     playSfx('click', 0.75);
                     cycleScale();
                   }}
                   title={`调式锁定：${SCALE_META[scale].zhLabel}`}
-                  className="brutal-btn flex-1 py-2 px-2 rounded-xl bg-[#FBF9F4] text-xs font-black flex items-center justify-center gap-1 whitespace-nowrap"
+                  className="brutal-btn flex-1 py-2 px-2 rounded-xl bg-[#FFFDF8] text-xs font-black flex items-center justify-center gap-1 whitespace-nowrap"
                 >
                   <span>{SCALE_META[scale].label}</span>
                   <ChevronDown className="w-3.5 h-3.5 shrink-0" strokeWidth={3} />
                 </button>
               </div>
 
-              <div className="relative oled-scanlines rounded-2xl bg-[#14151B] border-[2.5px] border-[#17171C] shadow-[inset_0_3px_10px_rgba(0,0,0,0.65)] p-2.5 flex flex-col justify-between gap-1.5 h-[128px] shrink-0">
+              <div className="relative oled-scanlines rounded-2xl bg-[#14151B] border-[2.5px] border-[#1A1A1F] shadow-[inset_0_3px_10px_rgba(0,0,0,0.65)] p-2.5 flex flex-col justify-between gap-1.5 h-[126px] shrink-0">
                 <div className="flex items-center justify-between">
                   <span className="text-[10.5px] font-bold tracking-wider text-white/80">
                     {comboTitle}
                   </span>
-                  <span className="font-mono-hw text-[10.5px] font-bold text-[#FFD426]">
+                  <span className="font-mono-hw text-[10.5px] font-bold text-[#FFD60A]">
                     {toys.length} 个机关
                   </span>
                 </div>
 
                 <div className="flex items-center justify-center gap-1.5">
-                  <span className="text-[#FFD426] font-black text-sm">ミ</span>
+                  <span className="text-[#FFD60A] font-black text-sm">ミ</span>
                   <span
                     className={`font-mono-hw font-black text-[21px] tracking-tight leading-none ${
-                      combo >= 15 ? 'text-[#FFD426]' : 'text-[#00D4AA]'
+                      combo >= 15 ? 'text-[#FFD60A]' : 'text-[#00D4AA]'
                     }`}
                   >
                     连击 x{combo}
                   </span>
-                  <span className="text-[#FFD426] font-black text-sm">彡</span>
+                  <span className="text-[#FFD60A] font-black text-sm">彡</span>
                 </div>
 
                 <div className="h-6 rounded-full bg-white/[0.07] px-2 flex items-center justify-center gap-1.5 overflow-hidden">
@@ -2379,7 +2369,7 @@ export const PinballPage: React.FC = () => {
                         key={dot.id}
                         title={dot.note}
                         style={{ backgroundColor: dot.color }}
-                        className="w-3.5 h-3.5 rounded-full border border-black/50 shrink-0 shadow-[0_0_7px_rgba(255,255,255,0.35)]"
+                        className="w-3.5 h-3.5 rounded-full border border-black/50 shrink-0"
                       />
                     ))
                   )}
@@ -2387,11 +2377,12 @@ export const PinballPage: React.FC = () => {
               </div>
 
               <button
+                data-testid="pinball-to-forge-btn"
                 onClick={handleRecToForge}
                 className={`brutal-btn-lg w-full py-2.5 rounded-2xl text-[14px] zh-display flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap ${
                   timelineEvents.length > 0
-                    ? 'bg-[#FFD426] text-[#17171C]'
-                    : 'bg-[#E7E1D3] text-[#626272]'
+                    ? 'bg-[#FFD60A] text-[#1A1A1F]'
+                    : 'bg-[#EDE7D9] text-[#646474]'
                 }`}
               >
                 <span>
@@ -2403,32 +2394,29 @@ export const PinballPage: React.FC = () => {
               </button>
             </>
           ) : (
-            /* RIGHT POD IN CHOREOGRAPHED SHOW MODE */
             <div className="flex flex-col gap-2.5 h-full">
-              <div className="rounded-2xl bg-[#14151B] text-[#FBF9F4] border-[2.5px] border-[#17171C] p-3 flex flex-col gap-2 shrink-0">
+              <div className="rounded-2xl bg-[#14151B] text-[#FFFDF8] border-[2.5px] border-[#1A1A1F] p-3 flex flex-col gap-2 shrink-0">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-black text-[#00D4AA]">
-                    剧场导控
-                  </span>
+                  <span className="text-[11px] font-black text-[#00D4AA]">剧场导控</span>
                   <span
                     className={`w-2 h-2 rounded-full ${
-                      showPlaying ? 'bg-[#00D4AA] animate-ping' : 'bg-[#FFD426]'
+                      showPlaying ? 'bg-[#00D4AA] animate-ping' : 'bg-[#FFD60A]'
                     }`}
                   />
                 </div>
                 <p className="text-[11px] font-bold text-white/75 leading-relaxed">
-                  观察四条声部光球如何在同一音乐时钟下弹跳、触发和弦涟漪，并在终场绽放作品专属声音纹章。
+                  四类声源以专属形态（鼓槌方印 / 铜铃双环 / 星芒弦光 / 烟火云波）在同一时钟下落点，终场汇成声音纹章。
                 </p>
               </div>
 
               {pinballShowSnapshot && (
-                <div className="flex-1 rounded-2xl bg-[#14151B] text-[#FBF9F4] border-[2.5px] border-[#17171C] p-3 flex flex-col items-center justify-center gap-2 min-h-0">
-                  <span className="text-[10.5px] font-bold tracking-wider text-[#FFD426]">
+                <div className="flex-1 rounded-2xl bg-[#14151B] text-[#FFFDF8] border-[2.5px] border-[#1A1A1F] p-3 flex flex-col items-center justify-center gap-2 min-h-0">
+                  <span className="text-[10.5px] font-bold tracking-wider text-[#FFD60A]">
                     终场声音纹章预览
                   </span>
-                  <SoundSigil snapshot={pinballShowSnapshot} size={116} />
+                  <SoundSigil snapshot={pinballShowSnapshot} size={112} />
                   <span className="text-[10px] font-bold text-white/60 text-center">
-                    终场将随作品声学结构自动绽放
+                    送去铸造将严格封存本场演出快照
                   </span>
                 </div>
               )}
@@ -2439,7 +2427,7 @@ export const PinballPage: React.FC = () => {
                     showPlaying ? stopChoreographedShow() : void startChoreographedShow()
                   }
                   className={`brutal-btn-lg py-2.5 rounded-2xl text-sm zh-display flex items-center justify-center gap-1.5 whitespace-nowrap ${
-                    showPlaying ? 'bg-[#FF5526] text-white' : 'bg-[#00D4AA] text-[#17171C]'
+                    showPlaying ? 'bg-[#FF5C2B] text-white' : 'bg-[#00D4AA] text-[#1A1A1F]'
                   }`}
                 >
                   {showPlaying ? (
@@ -2458,18 +2446,15 @@ export const PinballPage: React.FC = () => {
                     playSfx('tab');
                     setPinballMode('free');
                   }}
-                  className="brutal-btn py-2 rounded-xl bg-[#FBF9F4] text-[#17171C] text-xs font-black whitespace-nowrap"
+                  className="brutal-btn py-2 rounded-xl bg-[#FFFDF8] text-[#1A1A1F] text-xs font-black whitespace-nowrap"
                 >
                   切回自由实验
                 </button>
 
                 <button
-                  onClick={() => {
-                    playSfx('mintStamp');
-                    stopChoreographedShow();
-                    sendBeatToForge();
-                  }}
-                  className="brutal-btn-lg w-full py-2.5 rounded-2xl bg-[#FFD426] text-[#17171C] text-[13.5px] zh-display flex items-center justify-center gap-1.5 whitespace-nowrap"
+                  data-testid="pinball-show-to-forge-side-btn"
+                  onClick={handleSendShowToForge}
+                  className="brutal-btn-lg w-full py-2.5 rounded-2xl bg-[#FFD60A] text-[#1A1A1F] text-[13.5px] zh-display flex items-center justify-center gap-1.5 whitespace-nowrap"
                 >
                   <span>送去闪卡铸造</span>
                   <span className="text-base leading-none">→</span>

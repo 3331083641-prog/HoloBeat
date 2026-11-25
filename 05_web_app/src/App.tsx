@@ -13,29 +13,42 @@ import { useHoloStore } from './store/useHoloStore';
 
 export const App: React.FC = () => {
   const activePage = useHoloStore((s) => s.activePage);
+  const reducedMotion = useHoloStore((s) => s.reducedMotion);
   const hydrateFromIndexedDb = useHoloStore((s) => s.hydrateFromIndexedDb);
+  const resetMomentaryFx = useHoloStore((s) => s.resetMomentaryFx);
 
   // Hydrate persistent IndexedDB minted archive & forge draft safely on boot
   useEffect(() => {
     void hydrateFromIndexedDb();
   }, [hydrateFromIndexedDb]);
 
-  // Cleanly halt isolated snapshot audio when switching pages or leaving the tab
+  // Cleanly halt isolated snapshot audio & reset momentary FX when switching pages
   useEffect(() => {
     holoAudio.stopSnapshotPlayback();
     holoAudio.stopPinballRecording();
-  }, [activePage]);
+    resetMomentaryFx();
+  }, [activePage, resetMomentaryFx]);
 
   useEffect(() => {
     const onUnload = () => {
       holoAudio.stopAllPlayback();
     };
+    const onBlur = () => {
+      resetMomentaryFx();
+    };
     window.addEventListener('pagehide', onUnload);
-    return () => window.removeEventListener('pagehide', onUnload);
-  }, []);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('pagehide', onUnload);
+      window.removeEventListener('blur', onBlur);
+    };
+  }, [resetMomentaryFx]);
 
   return (
-    <div className="w-screen h-screen flex flex-col overflow-hidden canvas-dot-grid">
+    <div
+      data-reduced-motion={reducedMotion ? 'true' : 'false'}
+      className="w-screen h-screen flex flex-col overflow-hidden canvas-dot-grid"
+    >
       <TopNavbar />
 
       <main className="flex-1 min-h-0 overflow-hidden relative">
