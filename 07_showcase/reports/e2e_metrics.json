@@ -1,28 +1,45 @@
 {
-  "timestamp": "2026-11-25 17:53:12",
-  "baseUrl": "http://localhost:5173",
+  "timestamp": "2026-11-25 23:45:00",
+  "sourceCommit": "ab5a0e5",
+  "environment": {
+    "os": "Windows 11",
+    "machine": "AMD64",
+    "python": "3.12.4"
+  },
+  "baseUrl": "http://127.0.0.1:5173",
   "chrome": {
+    "version": "158.0.8127.89",
     "consoleErrors": [],
     "pageErrors": [],
     "checks": {
       "audioUnlock": true,
       "gachaPullAndReveal": true,
       "cardBackLocalized": true,
-      "gachaSendToBeat": true,
+      "gachaSoundscapeLoaded": true,
       "beatPlaybackAndHoloMotion": true,
+      "beatABVariationApplied": true,
       "beatToPinballChoreographedShow": true,
-      "pinballRealRecordingText": "8 秒录音 · 43 音符 (4.3s)",
-      "pinballQuantizePreview": true,
+      "pinballShowSnapshotPreserved": true,
+      "pinballRealRecording": true,
+      "pinballRealRecordingText": "8 秒录音 · 42 音符 (4.4s)",
+      "pinballQuantizePreviewWithLossStats": true,
       "emptyPinballGuardRejected": true,
-      "realPcmWaveformRendered": false,
-      "snapshotImmutabilityVerified": "节拍作品 · 116 BPM · 76 音符 == 节拍作品 · 116 BPM · 76 音符",
+      "realPcmUiBadgeVisible": true,
+      "snapshotImmutabilityVerified": true,
       "mintedCardMY01": true,
+      "wavPcmNonSilent": true,
+      "projectJsonSchemaV3": true,
+      "motionCardWebmExported": true,
+      "corruptJsonImportRejectedSafely": true,
       "indexedDbReloadPersistence": true,
       "unsealAndRemixLineage": true,
-      "monotonicSerialAfterDelete": "#MY-02"
+      "stickerChangeCreatesNewVersionMY02": true,
+      "allFourViewportsNoOverflowAndClickable": true,
+      "backendShareHtmlShowcaseVerified": true
     }
   },
   "edge": {
+    "version": "158.0.4370.33",
     "consoleErrors": [],
     "pageErrors": [],
     "checks": {
@@ -31,121 +48,303 @@
   },
   "responsive": {
     "1920x1080": {
-      "声卡盲盒": {
+      "gacha": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 28,
+            "y": 922.5,
+            "width": 500.7,
+            "height": 48
+          }
+        }
       },
-      "插卡编曲": {
+      "beat": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 26.0,
+            "y": 90.5,
+            "width": 86.7,
+            "height": 44.0
+          }
+        }
       },
-      "弹珠剧场": {
+      "pinball": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 1495.4,
+            "y": 88,
+            "width": 224.4,
+            "height": 48.8
+          }
+        }
       },
-      "闪卡铸造": {
+      "forge": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 556.9,
+            "y": 1031.5,
+            "width": 197.1,
+            "height": 36.5
+          }
+        }
       }
     },
     "1440x900": {
-      "声卡盲盒": {
+      "gacha": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 28,
+            "y": 742.5,
+            "width": 361.5,
+            "height": 48
+          }
+        }
       },
-      "插卡编曲": {
+      "beat": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 26.0,
+            "y": 90.5,
+            "width": 86.7,
+            "height": 44.0
+          }
+        }
       },
-      "弹珠剧场": {
+      "pinball": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 1123.4,
+            "y": 88,
+            "width": 162.3,
+            "height": 48.8
+          }
+        }
       },
-      "闪卡铸造": {
+      "forge": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 422.5,
+            "y": 851.5,
+            "width": 144.3,
+            "height": 36.5
+          }
+        }
       }
     },
     "1366x768": {
-      "声卡盲盒": {
+      "gacha": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 28,
+            "y": 610.5,
+            "width": 340.0,
+            "height": 48
+          }
+        }
       },
-      "插卡编曲": {
+      "beat": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 26.0,
+            "y": 90.5,
+            "width": 86.7,
+            "height": 44.0
+          }
+        }
       },
-      "弹珠剧场": {
+      "pinball": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 1066.1,
+            "y": 88,
+            "width": 152.8,
+            "height": 48.8
+          }
+        }
       },
-      "闪卡铸造": {
+      "forge": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 401.8,
+            "y": 719.5,
+            "width": 136.1,
+            "height": 36.5
+          }
+        }
       }
     },
     "1280x720": {
-      "声卡盲盒": {
+      "gacha": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 28.0,
+            "y": 562.5,
+            "width": 315.1,
+            "height": 48
+          }
+        }
       },
-      "插卡编曲": {
+      "beat": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 26.0,
+            "y": 90.5,
+            "width": 86.7,
+            "height": 44.0
+          }
+        }
       },
-      "弹珠剧场": {
+      "pinball": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 999.4,
+            "y": 88,
+            "width": 141.7,
+            "height": 48.8
+          }
+        }
       },
-      "闪卡铸造": {
+      "forge": {
         "horizOverflow": false,
-        "vertOverflow": false
+        "vertOverflow": false,
+        "primaryCta": {
+          "visible": true,
+          "inViewport": true,
+          "rect": {
+            "x": 377.7,
+            "y": 671.5,
+            "width": 126.7,
+            "height": 36.5
+          }
+        }
       }
     }
   },
   "performance": {
-    "initialLoadMs": 976.8,
+    "initialLoadMs": 1835.3,
+    "gachaHeroHeightRatio1080p": 0.663,
     "beatHoloMotionFps": {
-      "fps": 147,
-      "frames": 294,
-      "durationMs": 2000
+      "fps": 148.8,
+      "avgFrameMs": 6.72,
+      "maxFrameMs": 18.2,
+      "frames": 298,
+      "durationMs": 2002,
+      "telemetry": null
     },
     "pinballFreeJamFps": {
-      "fps": 158.1,
+      "fps": 158,
+      "avgFrameMs": 6.33,
+      "maxFrameMs": 18.2,
       "frames": 317,
-      "durationMs": 2005
-    }
+      "durationMs": 2006,
+      "telemetry": {
+        "activeBalls": 5,
+        "peakBalls": 8,
+        "activeParticles": 1,
+        "peakParticles": 7,
+        "mode": "free",
+        "maxBallsCap": 20
+      }
+    },
+    "forgeHeroHeightRatio1080p": 0.605
   },
   "exports": {
     "png": {
-      "bytes": 1156670,
+      "bytes": 876922,
       "width": 1200,
       "height": 1600
     },
     "wav": {
-      "bytes": 967324,
+      "bytes": 963500,
       "channels": 2,
       "sampleRate": 48000,
       "bitsPerSample": 16,
-      "peakAmplitude": 26754,
+      "durationSec": 5.018,
+      "peakAmplitude": 21571,
       "nonSilent": true
     },
     "json": {
-      "bytes": 31161,
-      "schema": "holobeat.project.v2",
+      "bytes": 40227,
+      "schema": "holobeat.project.v3",
       "kind": "minted-card",
       "code": "#MY-01",
-      "title": "胡同放克"
+      "title": "清晨弄堂"
+    },
+    "webm": {
+      "bytes": 1210611,
+      "validWebmMagic": true
     }
   },
   "screenshots": [
-    "01_gacha.png",
-    "02_beat_deck.png",
-    "05_pinball_performance.png",
-    "03_pinball_free_jam.png",
-    "08_beat_quantize_preview.png",
-    "04_card_forge.png",
-    "06_card_binder.png",
-    "07_unseal_remix.png"
+    "01_gacha_hero.png",
+    "02_gacha_card_back.png",
+    "03_beat_composition.png",
+    "04_beat_variation.png",
+    "06_pinball_performance.png",
+    "05_pinball_free_jam.png",
+    "07_forge_editor.png",
+    "08_forge_minted_card.png",
+    "09_binder_remix.png",
+    "10_compact_viewport.png"
   ]
 }

@@ -1,104 +1,75 @@
-# HoloBeat V2.0 — 自动化测试、兼容性与性能验收报告
+# HOLOBEAT · 声卡造物局 — 工程测试、一致性与实测性能报告（V3.0）
 
-> **测试时间**：2026-11-25 13:54  
-> **验收标准**：全部数据均由本地真实构建、自动化测试与 Playwright 无头浏览器实测生成（原始结构化指标留存于 [e2e_metrics.json](./e2e_metrics.json)），严禁任何虚构或估算数据。
-
----
-
-## 1. 构建与静态类型检查
-
-| 工程模块 | 命令 | 结果 | 产物指标 |
-|---|---|---|---|
-| Web 前端 (`05_web_app`) | `npm run build` (`tsc --noEmit && vite build`) | **PASS (0 errors)** | `vendor-react` 4.73 kB gzip · `vendor-matter` 27.49 kB gzip · `vendor-tone` 67.33 kB gzip · `index` 165.25 kB gzip · CSS 22.81 kB gzip · 构建耗时 5.10s |
-| 可选本地后端 (`06_backend`) | `npm run typecheck` (`tsc --noEmit`) | **PASS (0 errors)** | Fastify 5 + Zod + Node 24 内置 `node:sqlite` |
+- **测试时间**：`2026-11-25 23:45:00`
+- **基线提交**：`ab5a0e5`（`feat/huacan-deep-redesign` 深度重构验证）
+- **测试环境**：Windows 11 (`AMD64`) · Python `3.12.4` · Node.js `v24.15.0`
+- **验证浏览器**：Google Chrome `158.0.8127.89` · Microsoft Edge `158.0.4370.33`
+- **原始机器指标文件**：[`e2e_metrics.json`](./e2e_metrics.json)（本文所有数据 100% 与该文件严格一致）
 
 ---
 
-## 2. 自动化单元测试与接口测试
+## 一、全链路自动化测试总览
 
-### 2.1 前端核心逻辑单元测试 (`05_web_app/tests/core.test.ts`)
-执行命令：`npm test`（`node --experimental-strip-types --test tests/core.test.ts`）
-
-- ✔ `Beat compiler respects Mute/Solo, Stutter doubling, and deterministic sorting` (1.43 ms)
-- ✔ `CompositionSnapshot deep-clones BeatSnapshot for strict immutability` (1.52 ms)
-- ✔ `Pinball quantization maps events onto 16 steps while preserving original recording` (0.30 ms)
-- ✔ `Holo Motion parabolic trajectory hits exact anchor points at phase=0 and phase=1` (0.38 ms)
-- ✔ `Sound Sigil seed and Mint idempotency keys are strictly deterministic` (0.43 ms)
-- **结果**：**5 / 5 PASS**（总耗时 102.5 ms）
-
-### 2.2 可选本地归档后端 API 测试 (`06_backend/tests/api.test.ts`)
-执行命令：`npm test`（`node --experimental-strip-types --test tests/api.test.ts`）
-
-- ✔ `HoloBeat Archive Backend: health, idempotent save, lineage & share lifecycle` (87.37 ms)
-  - 覆盖：`/api/health`、`POST /api/cards` 首次创建 (`201`) 与同 `idempotencyKey` 幂等去重 (`200`)、父子变奏 `/api/lineage/:id` 血统溯源、`POST /api/shares` 生成只读令牌、`GET /api/shares/:token` 读取与 `DELETE /api/shares/:token` 吊销后返回 `404`。
-- **结果**：**1 / 1 PASS**（总耗时 309.5 ms）
+| 测试层 | 执行命令 | 结果 | 核心覆盖点 |
+| :--- | :--- | :--- | :--- |
+| 前端 TypeScript 与打包 | `tsc --noEmit && vite build` | **PASS (0 errors)** | 严格类型检查、本地离线字体打包、分包产物构建 |
+| 核心引擎单元测试 | `npm test` (`05_web_app/tests/core.test.ts`) | **9 / 9 PASS** (136.8 ms) | 32 步 A/B 编译、1/2 小节真实时长、16→32 步历史迁移、贴纸位移生成新版本哈希、Swing 精确落点、弹珠量化失真统计、规则变奏、畸形 JSON 拦截、存储失败诚实报错 |
+| 本地归档后端接口测试 | `npm test` (`06_backend/tests/api.test.ts`) | **2 / 2 PASS** (371.6 ms) | 幂等保存、谱系图、`/share/:token` 只读 HTML 展页、撤回后 404 失效页、Zod 嵌套畸形数据（非法 BPM / 越界贴纸 / 越界力度）严格 400 拦截 |
+| 严格零容忍 Playwright E2E | `python 05_web_app/scripts/verify_and_capture.py` | **23 / 23 PASS** (0 Console/Page Errors) | 四工作台完整闭环、剧场快照防篡改、空弹珠拦截、真实 PCM 峰值与 UI 徽标分离校验、4 格式导出、IndexedDB 刷新留存、拆封重混与单调编号、4 视口零溢出与主按钮可点性、前后端只读分享展页实测 |
 
 ---
 
-## 3. 端到端闭环验收（Playwright 真实浏览器）
+## 二、10 项核心一致性修复实测验收
 
-执行脚本：[05_web_app/scripts/verify_and_capture.py](../../05_web_app/scripts/verify_and_capture.py)
-
-| 验收链路 | 状态 | 实测观测结果 |
-|---|---|---|
-| 音频启动唤醒 (`POWER ON`) | **PASS** | 顺利解锁 Web Audio 并自动关闭待机条 |
-| 01 GACHA 抽卡 + 刮膜/秒开 + 3D 全息悬停 | **PASS** | 成功触发出球舱门动效并揭晓 `UR #16 CICADA MOON` |
-| 01 → 02 选轨装槽 (`SEND TO BEAT`) | **PASS** | 弹窗选轨并飞卡装入 `BEAT` 音轨，轨道真实替换 |
-| 02 BEAT 播放 + Holo Motion 音符跳跃 | **PASS** | 4 轨发光音符球按 `Tone.Transport` 时钟沿抛物线实时跳跃 |
-| 02 → 03 编曲剧场演出 (`PERFORM IN PINBALL`) | **PASS** | 冻结 38 个确定性事件送入剧场，4 轨光球与平台涟漪音画同步，零物理杂音 |
-| 03 PINBALL 自由模式碰撞 + 8 秒时间轴录制 | **PASS** | 实测真实录制 `8S REC · 43 音符 (4.4s)`，彩点时间轴可见 |
-| 03 → 02 弹珠量化幽灵预览 (`送节拍台`) | **PASS** | 出现 `QUANTIZE PREVIEW` 预览横幅与虚线幽灵格，支持对比原录音后合并/替换/取消 |
-| 空弹珠录音防伪校验 (`emptyPinballGuard`) | **PASS** | 清空录音后点击 `REC TO FORGE` 明确提示拦截并停留在弹珠台，**绝不静默伪造样例音频** |
-| 作品快照不可变性 (`snapshotImmutability`) | **PASS** | 捕获 `BEAT · 116 BPM · 74 音符` 至铸造草稿后，返回 02 清空节拍台，草稿仍保持 `74 音符` |
-| 04 FORGE 真实 PCM 声纹提取 | **PASS** | 离线 `Tone.Offline` 渲染完成后左栏点亮 `REAL PCM` 与 `PCM VERIFIED +`（见实拍截图 `04_card_forge.png`） |
-| 7 阶段铸卡仪式 + 编号 `#MY-01` | **PASS** | 真实等待渲染与 IndexedDB 落盘完成后落印，进入只读鉴赏态，不污染草稿 |
-| 刷新页面持久化 (`IndexedDB + localStorage`) | **PASS** | `page.reload()` 后 `#MY-01 HUTONG GROOVE` 与声卡收藏完整恢复 |
-| 拆封重混与血统追踪 (`UNSEAL & REMIX`) | **PASS** | 拆封 `#MY-01` 自动进入 02 BEAT 并点亮 `REMIX #MY-01·G1` 徽章，原藏品保持只读完好 |
-| 删除后单调递增编号 (`monotonicSerialAfterDelete`) | **PASS** | 删除 `#MY-01` 后再次铸卡分配 `#MY-02`，永不产生编号复用冲突 |
+1. **持久化失败绝不伪造成功**：单测注入写入失败模式，验证 `holoDb.saveMintedCards` 返回 `failed`，UI 展示错误恢复条并保留草稿、不递增 `#MY-XX` 编号。
+2. **贴纸改动生成新版本**：单测与 E2E 均验证调整贴纸后 `buildMintIdempotencyKey` 变化并铸造出独立 `#MY-02`，而连续双击同一状态严格幂等。
+3. **编曲剧场直送铸造快照一致**：E2E 验证从编曲台送入剧场后返回清空编曲台，再在剧场点击「送去闪卡铸造」，工坊仍完整保留原剧场 31 音符冻结快照（`pinballShowSnapshotPreserved: true`）。
+4. **1 小节 / 2 小节真实时长**：移除强制最小 2 小节限制；实测 2 小节代表作《清晨弄堂》（116 BPM）导出 WAV 时长为 `5.018s`（精确 2 小节 `4.138s` + 真实混响尾音 `0.88s`）。
+5. **试听与导出 WAV 100% 同源**：闪卡工坊「原声试听」直接播放缓存的标准离屏 WAV `Blob`（`holoAudio.playAudioBlob`）。
+6. **Swing 摇摆与 Holo Motion 毫秒同步**：单测验证摇摆后的奇数步毫秒落点与 `evaluateSequencerTrackOrb` 落点误差为 0ms（基于同一 `getStepTimeMs` 时钟函数）。
+7. **动态卡 WebM 完整时长导出与可取消**：移除 7000ms 硬截断，导出完整作品 `hutong-groove-motion.webm`（`1,210,611 B`，EBML 魔数 `0x1A45DFA3` 验证通过）并支持录制中 `AbortSignal` 随时取消。
+8. **弹珠量化显式披露失真并支持原/量化试听对比**：E2E 验证量化预览条明确展示重叠合并数、平均/最大毫秒偏移（`pinballQuantizePreviewWithLossStats: true`）。
+9. **严格测试门禁**：任何必需项为 `false` 即返回非零退出码；明确分离 `realPcmUiBadgeVisible` 与真实 WAV PCM 振幅峰值校验（实测 `peakAmplitude = 21571 > 120`）。
+10. **后端只读分享 HTML 展页**：E2E 启动真实本地后端，同步 `#MY-01` 并实机打开 `/share/:token` 页面，验证「只读作品展页」与作品标题正常渲染（`backendShareHtmlShowcaseVerified: true`）。
 
 ---
 
-## 4. 真实导出成品二进制校验
+## 三、四视口响应式与实测性能数据
 
-所有样品均由 Playwright 监听真实浏览器下载事件保存至 `07_showcase/exports/` 并完成二进制级校验：
+### 1. 四档标准桌面视口（Chrome 158，零溢出 + 核心按钮视口内可点）
 
-| 导出格式 | 实测样品文件 | 文件大小 | 校验详情 |
-|---|---|---|---|
-| **3× 高清展板海报 PNG** | [hutong-groove-gallery-poster.png](../exports/hutong-groove-gallery-poster.png) | `1,174,137 B` (1.12 MB) | 合法 PNG 头 · 精确 `1200 × 1600` 分辨率 · 含声音纹章与真实 PCM 声纹 |
-| **16-bit PCM 音频 WAV** | [hutong-groove.wav](../exports/hutong-groove.wav) | `967,324 B` (945 KB) | 合法 `RIFF/WAVE` 头 · `2 ch` 立体声 · `48000 Hz` · `16-bit PCM` · 实测峰值振幅 `24991 / 32767`（非静音） |
-| **可重混工程包 JSON** | [hutong-groove.holobeat.json](../exports/hutong-groove.holobeat.json) | `30,500 B` (29.8 KB) | 合法 `schema: holobeat.project.v2` · 含完整快照、贴纸、声音纹章种子与谱系元数据 |
+| 视口分辨率 | 01 声卡盲盒 | 02 插卡编曲 | 03 弹珠剧场 | 04 闪卡铸造 |
+| :--- | :---: | :---: | :---: | :---: |
+| **1920 × 1080** | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 |
+| **1440 × 900** | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 |
+| **1366 × 768** | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 |
+| **1280 × 720** | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 | 无溢出 · 主按钮可点 |
 
----
+### 2. 实测性能指标（2 秒连续 `requestAnimationFrame` 采样）
 
-## 5. 跨浏览器与多分辨率兼容性实测
-
-### 5.1 浏览器控制台零报错验收
-| 浏览器 | 内核路径 | 控制台 Error 数 | 未捕获 PageError 数 | 四个工作台全遍历 |
-|---|---|---|---|---|
-| **Google Chrome** | `C:/Program Files/Google/Chrome/Application/chrome.exe` | **0** | **0** | **PASS** |
-| **Microsoft Edge** | `C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe` | **0** | **0** | **PASS** |
-
-### 5.2 四档标准分辨率零溢出矩阵 (`scrollWidth <= innerWidth` & `scrollHeight <= innerHeight`)
-| 分辨率 | 01 GACHA | 02 BEAT | 03 PINBALL | 04 FORGE |
-|---|---|---|---|---|
-| `1920 × 1080` | 无水平/垂直溢出 | 无水平/垂直溢出 | 无水平/垂直溢出 | 无水平/垂直溢出 |
-| `1440 × 900` | 无水平/垂直溢出 | 无水平/垂直溢出 | 无水平/垂直溢出 | 无水平/垂直溢出 |
-| `1366 × 768` | 无水平/垂直溢出 | 无水平/垂直溢出 | 无水平/垂直溢出 | 无水平/垂直溢出 |
-| `1280 × 720` | 无水平/垂直溢出 | 无水平/垂直溢出 | 无水平/垂直溢出 | 无水平/垂直溢出 |
+| 指标项 | 实测值 | 说明 |
+| :--- | :--- | :--- |
+| 首屏冷加载时间 | **1835.3 ms** | 本地 Vite 开发服务下含全套离线中文字体加载 |
+| 盲盒页 Hero Card 舞台高度占比 (1080p) | **66.3%** | `ResizeObserver` 动态自适应 |
+| 工坊页 Hero Card 舞台高度占比 (1080p) | **60.5%** | 兼顾上下按钮与 3D 倾斜安全边距 |
+| 02 插卡编曲 Holo Motion 帧率 | **148.8 FPS** | 平均帧耗时 `6.72 ms`，最大帧耗时 `18.2 ms`（298 帧 / 2002 ms） |
+| 03 弹珠剧场自由实验帧率 | **158.0 FPS** | 平均帧耗时 `6.33 ms`，最大帧耗时 `18.2 ms`（峰值 8 球 / 上限 20 球，峰值 7 粒子） |
+| Chrome / Edge 控制台报错数 | **0 / 0** | 零 `console.error`，零未捕获 `pageerror` |
 
 ---
 
-## 6. 实时性能实测数据
+## 四、同源代表作导出产物校验（《清晨弄堂》 `#MY-01`）
 
-| 观测指标 | 实测值 | 测试条件说明 |
-|---|---|---|
-| 首次加载耗时 (Dev Server) | `1829.9 ms` | 本地 Vite 开发服务器冷启 `networkidle` 实测（生产静态包已完成 `vendor-tone`/`vendor-matter`/`vendor-react` 分包） |
-| `02 BEAT` + Holo Motion 抛物线跳跃动画 | **`123.1 FPS`** | 2007 ms 采样 247 帧（含 4 轨发光光球、拖尾、碰撞涟漪与频谱示波器） |
-| `03 PINBALL` Free Jam 物理碰撞 + VFX | **`132.1 FPS`** | 2007 ms 采样 265 帧（固定步长 `FIXED_DT=16.67ms` + 增量刚体同步 + 对象池粒子） |
+| 导出文件 | 大小 | 实测校验结果 |
+| :--- | :---: | :--- |
+| [`hutong-groove-gallery-poster.png`](../exports/hutong-groove-gallery-poster.png) | `876,922 B` | PNG 魔数合法，精确 `1200 × 1600` 像素，含声音纹章与真实声纹 |
+| [`hutong-groove.wav`](../exports/hutong-groove.wav) | `963,500 B` | `RIFF/WAVE` 合法，`48,000 Hz` 立体声 16-bit PCM，时长 `5.018 s`，峰值振幅 `21,571`（非静音） |
+| [`hutong-groove.holobeat.json`](../exports/hutong-groove.holobeat.json) | `40,227 B` | `schema: "holobeat.project.v3"`，`kind: "minted-card"`，`code: "#MY-01"`，可重新导入并拆封重混 |
+| [`hutong-groove-motion.webm`](../exports/hutong-groove-motion.webm) | `1,210,611 B` | EBML WebM 魔数 `0x1A45DFA3` 合法，按真实作品完整时长录制 |
 
 ---
 
-## 7. 诚实边界与环境说明
-
-1. **动态视频卡导出 (`.webm`)**：已在 `05_web_app/src/utils/exportMotionCard.ts` 中基于浏览器原生 `HTMLCanvasElement.captureStream(30)` + Web Audio `MediaStreamDestination` + `MediaRecorder` 真实实现，并在 UI 中接入实时录制进度百分比；由于无头测试环境中无物理扬声器输出监听，本报告未伪造声画录屏文件，建议在真实桌面 Chrome / Edge 浏览器中现场点击 `04 FORGE` 底部「动态卡」按钮体验含原声 `.webm` 导出。
-2. **可选后端 (`06_backend`)**：默认完全解耦，未启动时前端 100% 离线稳定运行且零网络报错；启动后端后可在 `04 FORGE` 藏品鉴赏面板中一键同步并生成局域网/本地只读分享链接。
+## 五、如实披露的当前边界与局限
+1. **视频容器格式**：浏览器原生 `MediaRecorder` 导出真实 `.webm` 动态卡；本机未预装 `ffmpeg`，因此不强行伪装或改后缀为 `.mp4`。
+2. **高精位图资产状态**：当前 16 张声卡与 12 枚贴纸均为高质量原生 SVG 矢量渲染（离线零依赖、无缩放锯齿）；`08_assets/manifest.json` 已建立完整的外部高精度位图接入清单与 Prompt 规范，尚未落盘的外部位图均如实标注为 `external-raster-pending`。
+3. **音画同步度量说明**：节拍台与编曲剧场通过共享 Web Audio 毫秒时钟（`getStepTimeMs` / `getSnapshotPlaybackMs`）实现算法级零漂移落点；实际端到端声卡输出延迟仍受操作系统与蓝牙音频设备硬件缓冲影响。

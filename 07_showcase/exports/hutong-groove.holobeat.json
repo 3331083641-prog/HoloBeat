@@ -1,22 +1,25 @@
 {
-  "schema": "holobeat.project.v2",
-  "exportedAt": 1795600423588,
+  "schema": "holobeat.project.v3",
+  "exportedAt": 1795621537070,
   "kind": "minted-card",
   "card": {
-    "id": "minted-907de192-2fb2-42aa-8eaf-d305cfa99674",
+    "id": "minted-1052e015-778a-4e01-b694-48f348de0b6e",
+    "schemaVersion": 3,
+    "assetVersion": "assets-v3",
+    "rendererVersion": "holobeat-dsp-3",
     "serialNumber": 1,
     "code": "#MY-01",
-    "idempotencyKey": "snap-beat-87ed56ae-82dd-4cd3-be46-b28d7824bfd0::胡同放克::UR::prism::neon-dj::3",
-    "title": "胡同放克",
+    "idempotencyKey": "snap-beat-a5f458a7-7655-447e-b2c5-71de41e8e54e::sig-38216f55-31::清晨弄堂::UR::prism::bamboo-cat::assets-v3::stk-205436f8",
+    "title": "清晨弄堂",
     "rarity": "UR",
     "foil": "prism",
-    "artId": "neon-dj",
+    "artId": "bamboo-cat",
     "sourceType": "beat",
     "isDemo": false,
     "stickers": [
       {
         "uid": "stk-init-1",
-        "stickerId": "bolt",
+        "stickerId": "clapper",
         "x": 16,
         "y": 58,
         "scale": 1,
@@ -25,67 +28,76 @@
       },
       {
         "uid": "stk-init-2",
-        "stickerId": "note",
-        "x": 85,
+        "stickerId": "bell",
+        "x": 84,
         "y": 60,
         "scale": 1,
         "rotation": 8,
         "zIndex": 2
       },
       {
-        "uid": "stk-bb64c4a5-35d4-45f9-b38f-699e3e8f27bb",
-        "stickerId": "bolt",
-        "x": 52.128367820254624,
-        "y": 46.4043437704741,
+        "uid": "stk-98c0fad2-0456-4429-9041-fdf72dc8977e",
+        "stickerId": "clapper",
+        "x": 18,
+        "y": 66,
         "scale": 1,
-        "rotation": -2,
+        "rotation": -6,
         "zIndex": 3
       }
     ],
     "waveformBars": [
-      0.705,
-      0.698,
-      0.299,
-      0.119,
-      0.775,
-      0.248,
-      0.96,
-      0.228,
-      0.581,
-      0.229,
-      0.639,
-      1,
-      0.666,
-      0.887,
-      0.213,
+      0.624,
       0.1,
-      0.758,
-      0.989,
-      0.252,
-      0.541,
-      0.291,
-      0.702,
-      0.407,
-      0.148,
+      0.1,
+      0.1,
+      0.83,
+      0.184,
+      0.818,
+      0.1,
+      0.102,
+      0.1,
+      0.74,
+      0.943,
+      0.394,
+      0.1,
+      0.102,
+      0.1,
+      0.808,
+      1,
+      0.241,
+      0.1,
+      0.18,
+      0.765,
+      0.481,
+      0.1,
       0.1,
       0.1,
       0.1,
       0.1
     ],
     "waveformIsRealPcm": true,
-    "audioFingerprintSeed": 2558896588,
+    "audioCacheKey": "holobeat-dsp-3::sig-38216f55-31",
+    "audioFingerprintSeed": 4070914003,
     "snapshot": {
-      "id": "snap-beat-87ed56ae-82dd-4cd3-be46-b28d7824bfd0",
+      "id": "snap-beat-a5f458a7-7655-447e-b2c5-71de41e8e54e",
+      "schemaVersion": 3,
+      "rendererVersion": "holobeat-dsp-3",
+      "assetVersion": "assets-v3",
+      "title": "胡同放克",
       "sourceType": "beat",
-      "capturedAt": 1795600414240,
+      "capturedAt": 1795621530927,
       "durationMs": 4138,
+      "tailMs": 880,
       "bpm": 116,
+      "swing": 0.16,
       "scale": "PENTA_C",
+      "bars": 2,
       "beatSnapshot": {
         "bpm": 116,
         "swing": 0.16,
         "scale": "PENTA_C",
         "bars": 2,
+        "activePhraseLoop": "AB",
         "liveFx": {
           "bitcrush": false,
           "echo": false,
@@ -97,17 +109,33 @@
             "cardId": "card-01",
             "steps": [
               true,
-              true,
-              true,
               false,
               false,
               false,
-              true,
-              false,
-              true,
               false,
               false,
               true,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              true,
+              false,
+              false,
+              false,
               false,
               false,
               true,
@@ -129,7 +157,217 @@
               false,
               false,
               false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
               false
+            ],
+            "stepCells": [
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.76,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              }
             ],
             "volume": 0.88,
             "tone": 0.5,
@@ -142,19 +380,35 @@
             "steps": [
               false,
               false,
+              false,
+              false,
               true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
               false,
               true,
               false,
               false,
-              true,
-              true,
+              false,
+              false,
               false,
               true,
               false,
               true,
               true,
-              true,
+              false,
               true
             ],
             "accents": [
@@ -173,7 +427,217 @@
               true,
               false,
               false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
               false
+            ],
+            "stepCells": [
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.95,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              }
             ],
             "volume": 0.72,
             "tone": 0.58,
@@ -182,24 +646,40 @@
           },
           {
             "category": "MELODY",
-            "cardId": "card-09",
+            "cardId": "card-10",
             "steps": [
               true,
+              false,
+              false,
               true,
+              false,
+              false,
               true,
+              false,
+              true,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              true,
+              false,
+              false,
+              true,
+              false,
               true,
               false,
               false,
               true,
               true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true,
-              true
+              false,
+              false,
+              false
             ],
             "accents": [
               true,
@@ -217,7 +697,217 @@
               false,
               false,
               false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
               false
+            ],
+            "stepCells": [
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.72,
+                "pitchOffset": 1,
+                "lengthSteps": 2
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 1,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.72,
+                "pitchOffset": 2,
+                "lengthSteps": 2
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 2
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              }
             ],
             "volume": 0.78,
             "tone": 0.54,
@@ -231,19 +921,35 @@
               true,
               false,
               false,
-              true,
-              true,
               false,
               false,
               false,
-              true,
-              true,
-              true,
+              false,
               false,
               true,
               false,
               false,
-              true
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false
             ],
             "accents": [
               true,
@@ -261,9 +967,219 @@
               false,
               false,
               false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
               false
             ],
-            "volume": 0.74,
+            "stepCells": [
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 1,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.92,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.8,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.72,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              }
+            ],
+            "volume": 0.72,
             "tone": 0.52,
             "mute": false,
             "solo": false
@@ -287,10 +1203,10 @@
         {
           "id": "ev-2-0",
           "timeOffsetMs": 0,
-          "durationMs": 181,
+          "durationMs": 175,
           "pitch": "C5",
           "velocity": 1,
-          "cardId": "card-09",
+          "cardId": "card-10",
           "trackCategory": "MELODY",
           "trackIndex": 2,
           "stepIndex": 0,
@@ -311,95 +1227,17 @@
           "color": "#FFD60A"
         },
         {
-          "id": "ev-0-1",
-          "timeOffsetMs": 140,
-          "durationMs": 110,
-          "pitch": "C3",
-          "velocity": 0.72,
-          "cardId": "card-01",
-          "trackCategory": "BEAT",
-          "trackIndex": 0,
-          "stepIndex": 1,
-          "tone": 0.5,
-          "color": "#7C3AED"
-        },
-        {
-          "id": "ev-2-1",
-          "timeOffsetMs": 140,
-          "durationMs": 181,
-          "pitch": "E5",
-          "velocity": 0.72,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 1,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-0-2",
-          "timeOffsetMs": 259,
-          "durationMs": 110,
-          "pitch": "C3",
-          "velocity": 0.8,
-          "cardId": "card-01",
-          "trackCategory": "BEAT",
-          "trackIndex": 0,
-          "stepIndex": 2,
-          "tone": 0.5,
-          "color": "#7C3AED"
-        },
-        {
-          "id": "ev-1-2",
-          "timeOffsetMs": 259,
-          "durationMs": 110,
-          "pitch": "D6",
-          "velocity": 0.8,
-          "cardId": "card-05",
-          "trackCategory": "PERC",
-          "trackIndex": 1,
-          "stepIndex": 2,
-          "tone": 0.58,
-          "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-2-2",
-          "timeOffsetMs": 259,
-          "durationMs": 181,
-          "pitch": "G5",
-          "velocity": 0.8,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 2,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
           "id": "ev-2-3",
           "timeOffsetMs": 398,
-          "durationMs": 181,
+          "durationMs": 175,
           "pitch": "E5",
           "velocity": 0.72,
-          "cardId": "card-09",
+          "cardId": "card-10",
           "trackCategory": "MELODY",
           "trackIndex": 2,
           "stepIndex": 3,
           "tone": 0.54,
           "color": "#00D4AA"
-        },
-        {
-          "id": "ev-3-3",
-          "timeOffsetMs": 398,
-          "durationMs": 310,
-          "pitch": "C4",
-          "velocity": 0.72,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 3,
-          "tone": 0.52,
-          "color": "#FFD60A"
         },
         {
           "id": "ev-1-4",
@@ -413,19 +1251,6 @@
           "stepIndex": 4,
           "tone": 0.58,
           "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-3-4",
-          "timeOffsetMs": 517,
-          "durationMs": 310,
-          "pitch": "A3",
-          "velocity": 0.92,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 4,
-          "tone": 0.52,
-          "color": "#FFD60A"
         },
         {
           "id": "ev-0-6",
@@ -443,39 +1268,13 @@
         {
           "id": "ev-2-6",
           "timeOffsetMs": 776,
-          "durationMs": 181,
+          "durationMs": 175,
           "pitch": "C5",
           "velocity": 0.8,
-          "cardId": "card-09",
+          "cardId": "card-10",
           "trackCategory": "MELODY",
           "trackIndex": 2,
           "stepIndex": 6,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-1-7",
-          "timeOffsetMs": 916,
-          "durationMs": 110,
-          "pitch": "D6",
-          "velocity": 0.72,
-          "cardId": "card-05",
-          "trackCategory": "PERC",
-          "trackIndex": 1,
-          "stepIndex": 7,
-          "tone": 0.58,
-          "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-2-7",
-          "timeOffsetMs": 916,
-          "durationMs": 181,
-          "pitch": "E5",
-          "velocity": 0.72,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 7,
           "tone": 0.54,
           "color": "#00D4AA"
         },
@@ -493,25 +1292,12 @@
           "color": "#7C3AED"
         },
         {
-          "id": "ev-1-8",
-          "timeOffsetMs": 1034,
-          "durationMs": 110,
-          "pitch": "G5",
-          "velocity": 0.92,
-          "cardId": "card-05",
-          "trackCategory": "PERC",
-          "trackIndex": 1,
-          "stepIndex": 8,
-          "tone": 0.58,
-          "color": "#FF5C2B"
-        },
-        {
           "id": "ev-2-8",
           "timeOffsetMs": 1034,
-          "durationMs": 181,
+          "durationMs": 175,
           "pitch": "G5",
           "velocity": 1,
-          "cardId": "card-09",
+          "cardId": "card-10",
           "trackCategory": "MELODY",
           "trackIndex": 2,
           "stepIndex": 8,
@@ -532,32 +1318,6 @@
           "color": "#FFD60A"
         },
         {
-          "id": "ev-2-9",
-          "timeOffsetMs": 1174,
-          "durationMs": 181,
-          "pitch": "A5",
-          "velocity": 0.72,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 9,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-3-9",
-          "timeOffsetMs": 1174,
-          "durationMs": 310,
-          "pitch": "F3",
-          "velocity": 0.72,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 9,
-          "tone": 0.52,
-          "color": "#FFD60A"
-        },
-        {
           "id": "ev-1-10",
           "timeOffsetMs": 1293,
           "durationMs": 110,
@@ -571,51 +1331,12 @@
           "color": "#FF5C2B"
         },
         {
-          "id": "ev-2-10",
-          "timeOffsetMs": 1293,
-          "durationMs": 181,
-          "pitch": "G5",
-          "velocity": 0.8,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 10,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-3-10",
-          "timeOffsetMs": 1293,
-          "durationMs": 310,
-          "pitch": "F3",
-          "velocity": 0.8,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 10,
-          "tone": 0.52,
-          "color": "#FFD60A"
-        },
-        {
-          "id": "ev-0-11",
-          "timeOffsetMs": 1433,
-          "durationMs": 110,
-          "pitch": "C3",
-          "velocity": 0.72,
-          "cardId": "card-01",
-          "trackCategory": "BEAT",
-          "trackIndex": 0,
-          "stepIndex": 11,
-          "tone": 0.5,
-          "color": "#7C3AED"
-        },
-        {
           "id": "ev-2-11",
           "timeOffsetMs": 1433,
-          "durationMs": 181,
-          "pitch": "E5",
+          "durationMs": 349,
+          "pitch": "G5",
           "velocity": 0.72,
-          "cardId": "card-09",
+          "cardId": "card-10",
           "trackCategory": "MELODY",
           "trackIndex": 2,
           "stepIndex": 11,
@@ -636,58 +1357,6 @@
           "color": "#FF5C2B"
         },
         {
-          "id": "ev-2-12",
-          "timeOffsetMs": 1552,
-          "durationMs": 181,
-          "pitch": "C5",
-          "velocity": 0.92,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 12,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-3-12",
-          "timeOffsetMs": 1552,
-          "durationMs": 310,
-          "pitch": "G3",
-          "velocity": 0.92,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 12,
-          "tone": 0.52,
-          "color": "#FFD60A"
-        },
-        {
-          "id": "ev-1-13",
-          "timeOffsetMs": 1691,
-          "durationMs": 110,
-          "pitch": "D6",
-          "velocity": 0.72,
-          "cardId": "card-05",
-          "trackCategory": "PERC",
-          "trackIndex": 1,
-          "stepIndex": 13,
-          "tone": 0.58,
-          "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-2-13",
-          "timeOffsetMs": 1691,
-          "durationMs": 181,
-          "pitch": "A4",
-          "velocity": 0.72,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 13,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
           "id": "ev-0-14",
           "timeOffsetMs": 1810,
           "durationMs": 110,
@@ -701,71 +1370,6 @@
           "color": "#7C3AED"
         },
         {
-          "id": "ev-1-14",
-          "timeOffsetMs": 1810,
-          "durationMs": 110,
-          "pitch": "D6",
-          "velocity": 0.8,
-          "cardId": "card-05",
-          "trackCategory": "PERC",
-          "trackIndex": 1,
-          "stepIndex": 14,
-          "tone": 0.58,
-          "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-2-14",
-          "timeOffsetMs": 1810,
-          "durationMs": 181,
-          "pitch": "G4",
-          "velocity": 0.8,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 14,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-1-15",
-          "timeOffsetMs": 1950,
-          "durationMs": 110,
-          "pitch": "D6",
-          "velocity": 0.72,
-          "cardId": "card-05",
-          "trackCategory": "PERC",
-          "trackIndex": 1,
-          "stepIndex": 15,
-          "tone": 0.58,
-          "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-2-15",
-          "timeOffsetMs": 1950,
-          "durationMs": 181,
-          "pitch": "C5",
-          "velocity": 0.72,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 15,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-3-15",
-          "timeOffsetMs": 1950,
-          "durationMs": 310,
-          "pitch": "G3",
-          "velocity": 0.72,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 15,
-          "tone": 0.52,
-          "color": "#FFD60A"
-        },
-        {
           "id": "ev-0-16",
           "timeOffsetMs": 2069,
           "durationMs": 110,
@@ -774,20 +1378,20 @@
           "cardId": "card-01",
           "trackCategory": "BEAT",
           "trackIndex": 0,
-          "stepIndex": 0,
+          "stepIndex": 16,
           "tone": 0.5,
           "color": "#7C3AED"
         },
         {
           "id": "ev-2-16",
           "timeOffsetMs": 2069,
-          "durationMs": 181,
-          "pitch": "C5",
+          "durationMs": 175,
+          "pitch": "E5",
           "velocity": 1,
-          "cardId": "card-09",
+          "cardId": "card-10",
           "trackCategory": "MELODY",
           "trackIndex": 2,
-          "stepIndex": 0,
+          "stepIndex": 16,
           "tone": 0.54,
           "color": "#00D4AA"
         },
@@ -800,100 +1404,22 @@
           "cardId": "card-13",
           "trackCategory": "VIBE",
           "trackIndex": 3,
-          "stepIndex": 0,
+          "stepIndex": 16,
           "tone": 0.52,
           "color": "#FFD60A"
-        },
-        {
-          "id": "ev-0-17",
-          "timeOffsetMs": 2209,
-          "durationMs": 110,
-          "pitch": "C3",
-          "velocity": 0.72,
-          "cardId": "card-01",
-          "trackCategory": "BEAT",
-          "trackIndex": 0,
-          "stepIndex": 1,
-          "tone": 0.5,
-          "color": "#7C3AED"
-        },
-        {
-          "id": "ev-2-17",
-          "timeOffsetMs": 2209,
-          "durationMs": 181,
-          "pitch": "E5",
-          "velocity": 0.72,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 1,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-0-18",
-          "timeOffsetMs": 2328,
-          "durationMs": 110,
-          "pitch": "C3",
-          "velocity": 0.8,
-          "cardId": "card-01",
-          "trackCategory": "BEAT",
-          "trackIndex": 0,
-          "stepIndex": 2,
-          "tone": 0.5,
-          "color": "#7C3AED"
-        },
-        {
-          "id": "ev-1-18",
-          "timeOffsetMs": 2328,
-          "durationMs": 110,
-          "pitch": "D6",
-          "velocity": 0.8,
-          "cardId": "card-05",
-          "trackCategory": "PERC",
-          "trackIndex": 1,
-          "stepIndex": 2,
-          "tone": 0.58,
-          "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-2-18",
-          "timeOffsetMs": 2328,
-          "durationMs": 181,
-          "pitch": "G5",
-          "velocity": 0.8,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 2,
-          "tone": 0.54,
-          "color": "#00D4AA"
         },
         {
           "id": "ev-2-19",
           "timeOffsetMs": 2467,
-          "durationMs": 181,
-          "pitch": "E5",
+          "durationMs": 175,
+          "pitch": "G5",
           "velocity": 0.72,
-          "cardId": "card-09",
+          "cardId": "card-10",
           "trackCategory": "MELODY",
           "trackIndex": 2,
-          "stepIndex": 3,
+          "stepIndex": 19,
           "tone": 0.54,
           "color": "#00D4AA"
-        },
-        {
-          "id": "ev-3-19",
-          "timeOffsetMs": 2467,
-          "durationMs": 310,
-          "pitch": "C4",
-          "velocity": 0.72,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 3,
-          "tone": 0.52,
-          "color": "#FFD60A"
         },
         {
           "id": "ev-1-20",
@@ -904,22 +1430,9 @@
           "cardId": "card-05",
           "trackCategory": "PERC",
           "trackIndex": 1,
-          "stepIndex": 4,
+          "stepIndex": 20,
           "tone": 0.58,
           "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-3-20",
-          "timeOffsetMs": 2586,
-          "durationMs": 310,
-          "pitch": "A3",
-          "velocity": 0.92,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 4,
-          "tone": 0.52,
-          "color": "#FFD60A"
         },
         {
           "id": "ev-0-22",
@@ -930,46 +1443,20 @@
           "cardId": "card-01",
           "trackCategory": "BEAT",
           "trackIndex": 0,
-          "stepIndex": 6,
+          "stepIndex": 22,
           "tone": 0.5,
           "color": "#7C3AED"
         },
         {
           "id": "ev-2-22",
           "timeOffsetMs": 2845,
-          "durationMs": 181,
-          "pitch": "C5",
-          "velocity": 0.8,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 6,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-1-23",
-          "timeOffsetMs": 2984,
-          "durationMs": 110,
-          "pitch": "D6",
-          "velocity": 0.72,
-          "cardId": "card-05",
-          "trackCategory": "PERC",
-          "trackIndex": 1,
-          "stepIndex": 7,
-          "tone": 0.58,
-          "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-2-23",
-          "timeOffsetMs": 2984,
-          "durationMs": 181,
+          "durationMs": 175,
           "pitch": "E5",
-          "velocity": 0.72,
-          "cardId": "card-09",
+          "velocity": 0.8,
+          "cardId": "card-10",
           "trackCategory": "MELODY",
           "trackIndex": 2,
-          "stepIndex": 7,
+          "stepIndex": 22,
           "tone": 0.54,
           "color": "#00D4AA"
         },
@@ -982,33 +1469,20 @@
           "cardId": "card-01",
           "trackCategory": "BEAT",
           "trackIndex": 0,
-          "stepIndex": 8,
+          "stepIndex": 24,
           "tone": 0.5,
           "color": "#7C3AED"
         },
         {
-          "id": "ev-1-24",
-          "timeOffsetMs": 3103,
-          "durationMs": 110,
-          "pitch": "G5",
-          "velocity": 0.92,
-          "cardId": "card-05",
-          "trackCategory": "PERC",
-          "trackIndex": 1,
-          "stepIndex": 8,
-          "tone": 0.58,
-          "color": "#FF5C2B"
-        },
-        {
           "id": "ev-2-24",
           "timeOffsetMs": 3103,
-          "durationMs": 181,
-          "pitch": "G5",
+          "durationMs": 175,
+          "pitch": "A5",
           "velocity": 1,
-          "cardId": "card-09",
+          "cardId": "card-10",
           "trackCategory": "MELODY",
           "trackIndex": 2,
-          "stepIndex": 8,
+          "stepIndex": 24,
           "tone": 0.54,
           "color": "#00D4AA"
         },
@@ -1021,33 +1495,7 @@
           "cardId": "card-13",
           "trackCategory": "VIBE",
           "trackIndex": 3,
-          "stepIndex": 8,
-          "tone": 0.52,
-          "color": "#FFD60A"
-        },
-        {
-          "id": "ev-2-25",
-          "timeOffsetMs": 3243,
-          "durationMs": 181,
-          "pitch": "A5",
-          "velocity": 0.72,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 9,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-3-25",
-          "timeOffsetMs": 3243,
-          "durationMs": 310,
-          "pitch": "F3",
-          "velocity": 0.72,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 9,
+          "stepIndex": 24,
           "tone": 0.52,
           "color": "#FFD60A"
         },
@@ -1060,59 +1508,20 @@
           "cardId": "card-05",
           "trackCategory": "PERC",
           "trackIndex": 1,
-          "stepIndex": 10,
+          "stepIndex": 26,
           "tone": 0.58,
           "color": "#FF5C2B"
         },
         {
-          "id": "ev-2-26",
-          "timeOffsetMs": 3362,
-          "durationMs": 181,
-          "pitch": "G5",
-          "velocity": 0.8,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 10,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-3-26",
-          "timeOffsetMs": 3362,
-          "durationMs": 310,
-          "pitch": "F3",
-          "velocity": 0.8,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 10,
-          "tone": 0.52,
-          "color": "#FFD60A"
-        },
-        {
-          "id": "ev-0-27",
-          "timeOffsetMs": 3502,
-          "durationMs": 110,
-          "pitch": "C3",
-          "velocity": 0.72,
-          "cardId": "card-01",
-          "trackCategory": "BEAT",
-          "trackIndex": 0,
-          "stepIndex": 11,
-          "tone": 0.5,
-          "color": "#7C3AED"
-        },
-        {
           "id": "ev-2-27",
           "timeOffsetMs": 3502,
-          "durationMs": 181,
+          "durationMs": 349,
           "pitch": "E5",
           "velocity": 0.72,
-          "cardId": "card-09",
+          "cardId": "card-10",
           "trackCategory": "MELODY",
           "trackIndex": 2,
-          "stepIndex": 11,
+          "stepIndex": 27,
           "tone": 0.54,
           "color": "#00D4AA"
         },
@@ -1125,35 +1534,22 @@
           "cardId": "card-05",
           "trackCategory": "PERC",
           "trackIndex": 1,
-          "stepIndex": 12,
+          "stepIndex": 28,
           "tone": 0.58,
           "color": "#FF5C2B"
         },
         {
           "id": "ev-2-28",
           "timeOffsetMs": 3621,
-          "durationMs": 181,
-          "pitch": "C5",
-          "velocity": 0.92,
-          "cardId": "card-09",
+          "durationMs": 349,
+          "pitch": "A4",
+          "velocity": 1,
+          "cardId": "card-10",
           "trackCategory": "MELODY",
           "trackIndex": 2,
-          "stepIndex": 12,
+          "stepIndex": 28,
           "tone": 0.54,
           "color": "#00D4AA"
-        },
-        {
-          "id": "ev-3-28",
-          "timeOffsetMs": 3621,
-          "durationMs": 310,
-          "pitch": "G3",
-          "velocity": 0.92,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 12,
-          "tone": 0.52,
-          "color": "#FFD60A"
         },
         {
           "id": "ev-1-29",
@@ -1164,104 +1560,42 @@
           "cardId": "card-05",
           "trackCategory": "PERC",
           "trackIndex": 1,
-          "stepIndex": 13,
+          "stepIndex": 29,
           "tone": 0.58,
           "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-2-29",
-          "timeOffsetMs": 3760,
-          "durationMs": 181,
-          "pitch": "A4",
-          "velocity": 0.72,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 13,
-          "tone": 0.54,
-          "color": "#00D4AA"
         },
         {
           "id": "ev-0-30",
           "timeOffsetMs": 3879,
           "durationMs": 110,
           "pitch": "C3",
-          "velocity": 0.8,
+          "velocity": 0.76,
           "cardId": "card-01",
           "trackCategory": "BEAT",
           "trackIndex": 0,
-          "stepIndex": 14,
+          "stepIndex": 30,
           "tone": 0.5,
           "color": "#7C3AED"
-        },
-        {
-          "id": "ev-1-30",
-          "timeOffsetMs": 3879,
-          "durationMs": 110,
-          "pitch": "D6",
-          "velocity": 0.8,
-          "cardId": "card-05",
-          "trackCategory": "PERC",
-          "trackIndex": 1,
-          "stepIndex": 14,
-          "tone": 0.58,
-          "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-2-30",
-          "timeOffsetMs": 3879,
-          "durationMs": 181,
-          "pitch": "G4",
-          "velocity": 0.8,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 14,
-          "tone": 0.54,
-          "color": "#00D4AA"
         },
         {
           "id": "ev-1-31",
           "timeOffsetMs": 4019,
           "durationMs": 110,
           "pitch": "D6",
-          "velocity": 0.72,
+          "velocity": 0.95,
           "cardId": "card-05",
           "trackCategory": "PERC",
           "trackIndex": 1,
-          "stepIndex": 15,
+          "stepIndex": 31,
           "tone": 0.58,
           "color": "#FF5C2B"
-        },
-        {
-          "id": "ev-2-31",
-          "timeOffsetMs": 4019,
-          "durationMs": 181,
-          "pitch": "C5",
-          "velocity": 0.72,
-          "cardId": "card-09",
-          "trackCategory": "MELODY",
-          "trackIndex": 2,
-          "stepIndex": 15,
-          "tone": 0.54,
-          "color": "#00D4AA"
-        },
-        {
-          "id": "ev-3-31",
-          "timeOffsetMs": 4019,
-          "durationMs": 310,
-          "pitch": "G3",
-          "velocity": 0.72,
-          "cardId": "card-13",
-          "trackCategory": "VIBE",
-          "trackIndex": 3,
-          "stepIndex": 15,
-          "tone": 0.52,
-          "color": "#FFD60A"
         }
-      ]
+      ],
+      "contentSignature": "sig-38216f55-31",
+      "soundSeed": 3060892508
     },
     "lineageDepth": 0,
-    "createdAt": 1795600420067
+    "createdAt": 1795621535076,
+    "storageStatus": "primary"
   }
 }
