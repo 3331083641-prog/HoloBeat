@@ -43,49 +43,55 @@ export const RARITY_META: Record<
   SR: { label: 'SR', bg: '#7C3AED', text: '#FFFFFF', glow: '#A78BFA', weight: 22 },
   SSR: { label: 'SSR', bg: '#FFD60A', text: '#1A1A1F', glow: '#FFD60A', weight: 14 },
   UR: { label: 'UR', bg: '#FF3D9A', text: '#FFFFFF', glow: '#FF3D9A', weight: 6 },
-  LTD: { label: 'LTD', bg: '#181820', text: '#FFD60A', glow: '#FFD60A', weight: 0 },
+  LTD: { label: 'LTD', bg: '#1A1A1F', text: '#FFD60A', glow: '#FFD60A', weight: 0 },
 };
 
 export const HOLO_FOIL_LIST: {
   id: HoloFoilType;
   label: string;
   zhLabel: string;
+  descZh: string;
   swatchStyle: string;
 }[] = [
   {
     id: 'prism',
     label: '棱镜',
-    zhLabel: '棱镜虹彩',
+    zhLabel: '棱镜光带',
+    descZh: '宽方向光谱光带，转动时滑过卡面',
     swatchStyle:
-      'linear-gradient(125deg, #FF3D9A 0%, #FFD60A 25%, #00D4AA 50%, #38BDF8 75%, #7C3AED 100%)',
+      'linear-gradient(125deg, #7C3AED 0%, #00D4AA 32%, #FFD60A 64%, #FF5C2B 100%)',
   },
   {
     id: 'spark',
     label: '星尘',
-    zhLabel: '银色星尘',
+    zhLabel: '稀疏星尘',
+    descZh: '克制稀疏的冷银金属星点折射',
     swatchStyle:
-      'radial-gradient(circle at 25% 30%, #FFFFFF 0%, transparent 18%), radial-gradient(circle at 70% 65%, #FFFFFF 0%, transparent 15%), radial-gradient(circle at 50% 20%, #BAE6FD 0%, transparent 25%), linear-gradient(135deg, #CBD5E1 0%, #94A3B8 45%, #E2E8F0 70%, #64748B 100%)',
+      'radial-gradient(circle at 28% 32%, #FFFFFF 0%, transparent 18%), radial-gradient(circle at 72% 66%, #FFFFFF 0%, transparent 15%), linear-gradient(135deg, #CBD5E1 0%, #94A3B8 50%, #E2E8F0 100%)',
   },
   {
     id: 'cyber',
     label: '激光',
-    zhLabel: '青紫激光',
+    zhLabel: '定向激光',
+    descZh: '受控斜向光栅细纹，层次清晰',
     swatchStyle:
-      'repeating-linear-gradient(-45deg, rgba(0,245,212,0.8) 0px, rgba(0,245,212,0.8) 3px, rgba(124,58,237,0.9) 3px, rgba(124,58,237,0.9) 8px)',
+      'repeating-linear-gradient(-40deg, rgba(0,212,170,0.85) 0px, rgba(0,212,170,0.85) 3px, rgba(124,58,237,0.92) 3px, rgba(124,58,237,0.92) 8px)',
   },
   {
     id: 'chrome',
-    label: '液态银',
-    zhLabel: '液态金属',
+    label: '铬银',
+    zhLabel: '铬银流光',
+    descZh: '低色度冷金属光泽，凸显深色描边',
     swatchStyle:
-      'conic-gradient(from 40deg, #F8FAFC, #7DD3FC, #1E293B, #C084FC, #F8FAFC, #38BDF8, #F8FAFC)',
+      'conic-gradient(from 40deg, #F8FAFC, #CBD5E1, #334155, #E2E8F0, #F8FAFC)',
   },
   {
     id: 'gold',
     label: '金箔',
-    zhLabel: '金属金箔',
+    zhLabel: '温暖金箔',
+    descZh: '温暖黄铜压纹质感，典藏厚重',
     swatchStyle:
-      'linear-gradient(130deg, #FEF08A 0%, #F59E0B 35%, #FFFBEB 52%, #D97706 72%, #92400E 100%)',
+      'linear-gradient(130deg, #FEF08A 0%, #F59E0B 38%, #FFFBEB 55%, #B45309 100%)',
   },
 ];
 
@@ -114,7 +120,7 @@ export const SCALE_META: Record<
 };
 
 export const SOUND_CARDS: SoundCardDef[] = [
-  // === 街头律动 (Electric Purple #7C3AED) ===
+  // === 街头律动 (Purple #7C3AED) ===
   {
     id: 'card-01',
     code: '#01',
@@ -128,10 +134,10 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#4C1D95', '#7C3AED'],
     artId: 'bamboo-cat',
     stats: { punch: 86, shine: 78, vibe: 84 },
-    storyZh: '清晨弄堂口清脆竹板打出的低频节拍，戴上墨镜的潮玩猫搓盘手把市井节奏刻进黑胶。',
+    storyZh: '受清晨弄堂双片竹板击节启发的声音转译：红绳串起两片竹节，错落相击敲出扎实有弹性的街头底鼓。',
     pairingHintZh: '推荐搭配 #05 二八大杠车铃 + #09 像素街机投币，轻松搭出胡同放克律动',
-    synthFormula: '膜鸣低频底鼓 · 双重竹板木击瞬态',
-    recommendedBpm: 118,
+    synthFormula: '受市井声景启发的程序化合成 · 膜鸣低频底鼓 + 双重竹击瞬态',
+    recommendedBpm: 116,
     starter: true,
   },
   {
@@ -147,10 +153,10 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#1E1B4B', '#4338CA'],
     artId: 'arcade-bot',
     stats: { punch: 92, shine: 72, vibe: 76 },
-    storyZh: '像素老街机厅里连拍的弹性大按键，清脆微动开关与重低音底鼓融为一体。',
-    pairingHintZh: '推荐搭配 #06 冰镇汽水拉环 + #15 港风霓虹电流，打造 128 BPM 街机舞曲',
-    synthFormula: '厚重底鼓脉冲 · 高频微动按键瞬态',
-    recommendedBpm: 128,
+    storyZh: '受街角游戏厅弹性大拍键启发的声音转译：干脆微动开关与紧实低音鼓脉冲合二为一。',
+    pairingHintZh: '推荐搭配 #06 冰镇汽水拉环 + #15 港风霓虹电流，打造 124 BPM 街机舞曲',
+    synthFormula: '程序化合成 · 紧实膜鸣低频脉冲 + 高频微动按键瞬态',
+    recommendedBpm: 124,
   },
   {
     id: 'card-03',
@@ -165,9 +171,9 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#451A03', '#B45309'],
     artId: 'chestnut-pop',
     stats: { punch: 79, shine: 65, vibe: 88 },
-    storyZh: '冬日街头大铁锅黑砂翻炒的焦香噼啪，热腾腾的栗子爆壳瞬间化作酥脆低音鼓点。',
+    storyZh: '受冬日街头铁锅翻炒爆壳启发的声音转译：热裂瞬态化作带焦糖暖感的酥脆低音鼓点。',
     pairingHintZh: '推荐搭配 #07 麻将碰杠脆碰 + #14 梅雨铁皮雨棚，调低 BPM 玩出温暖慢拍',
-    synthFormula: '暖感超低频敲击 · 高通爆裂噪声脉冲',
+    synthFormula: '程序化合成 · 暖感超低频敲击 + 高通爆裂噪声脉冲',
     recommendedBpm: 108,
   },
   {
@@ -183,13 +189,13 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#7F1D1D', '#EA580C'],
     artId: 'lion-drum',
     stats: { punch: 98, shine: 92, vibe: 90 },
-    storyZh: '庙会街头震天响的国潮醒狮大鼓，厚实鼓皮共振自带燃炸全场的街头气场。',
-    pairingHintZh: '推荐搭配 #08 货郎拨浪鼓 + #11 赛博古筝拨弦，打造高燃国潮打击乐',
-    synthFormula: '深沉大鼓膜鸣共振 · 铜边泛音撞击',
-    recommendedBpm: 124,
+    storyZh: '受街头庙会大鼓意象启发的声音转译：厚实鼓皮低频共振叠合木槌敲击，自带燃炸开场重心。',
+    pairingHintZh: '推荐搭配 #08 货郎拨浪鼓 + #11 赛博古筝拨弦，打造高燃国潮鼓阵',
+    synthFormula: '程序化合成 · 深沉大鼓膜鸣共振 + 铜边木击瞬态',
+    recommendedBpm: 126,
   },
 
-  // === 市井脆响 (Persimmon Orange #FF5C2B) ===
+  // === 市井脆响 (Orange #FF5C2B) ===
   {
     id: 'card-05',
     code: '#05',
@@ -203,10 +209,10 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#431407', '#FF5C2B'],
     artId: 'street-bell',
     stats: { punch: 88, shine: 95, vibe: 74 },
-    storyZh: '穿梭在胡同与夜市间的经典铜制车铃，“叮铃铃”双音金属谐波点亮整条街的律动！',
+    storyZh: '受胡同二八自行车铜铃启发的声音转译：半球铃罩与拇指拨杆敲出清亮双音金属谐波，点亮整段律动。',
     pairingHintZh: '百搭反拍亮色打击乐，尤其适合 C 五声调式与弹珠碰撞机关',
-    synthFormula: '双谐波调频铜铃 · 明亮金属余韵衰减',
-    recommendedBpm: 120,
+    synthFormula: '程序化合成 · 双谐波调频铜铃 + 明亮金属余韵衰减',
+    recommendedBpm: 118,
     starter: true,
   },
   {
@@ -222,10 +228,10 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#064E3B', '#0EA5E9'],
     artId: 'soda-frog',
     stats: { punch: 72, shine: 84, vibe: 78 },
-    storyZh: '夏夜小卖部撬开玻璃瓶盖与拉环的“咔哧”气泡声，清爽脆亮的天然踩镲节拍。',
+    storyZh: '受夏夜小卖部拉开易拉罐启发的声音转译：短促金属起音接高频碳酸嘶声，充当清爽踩镲节拍。',
     pairingHintZh: '适合放在偶数步当清爽踩镲，搭配 #16 晚风胡同蝉鸣极具夏夜感',
-    synthFormula: '金属脆响起音 · 高通气泡白噪短衰减',
-    recommendedBpm: 122,
+    synthFormula: '程序化合成 · 金属脆响起音 + 高通气泡白噪短衰减',
+    recommendedBpm: 124,
   },
   {
     id: 'card-07',
@@ -240,9 +246,9 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#701A75', '#EC4899'],
     artId: 'mahjong-fox',
     stats: { punch: 91, shine: 86, vibe: 82 },
-    storyZh: '茶馆午后清脆落牌与碰杠的骨玉双响，极具东方打击乐辨识度的脆响军鼓替代音色。',
+    storyZh: '受茶馆午后清脆落牌启发的声音转译：骨玉牌块双连碰击，成为辨识度极高的东方军鼓替代音色。',
     pairingHintZh: '放在第 5、13 步作军鼓落点，配 #14 梅雨铁皮雨棚与 C 爵士调式超惬意',
-    synthFormula: '带通谐振滤波 · 骨玉双连脆碰脉冲',
+    synthFormula: '程序化合成 · 带通谐振滤波 + 骨玉双连脆碰脉冲',
     recommendedBpm: 116,
   },
   {
@@ -258,13 +264,13 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#7C2D12', '#F59E0B'],
     artId: 'street-rattle',
     stats: { punch: 81, shine: 77, vibe: 86 },
-    storyZh: '摇曳生风的货郎拨浪鼓，“咚哒”双连珠跳动为任何电子舞曲注入顽皮国潮灵魂。',
+    storyZh: '受街巷货郎摇鼓启发的声音转译：双侧悬珠左右交替敲打薄鼓腔，带来顽皮轻快的双连切分。',
     pairingHintZh: '配合 #04 舞狮咚咚大鼓形成一重一脆鼓阵，开启「街巷回声」更立体',
-    synthFormula: '交错双木鼓连击 · 带通清脆鼓腔共鸣',
+    synthFormula: '程序化合成 · 交错双木鼓连击 + 带通鼓腔共鸣',
     recommendedBpm: 126,
   },
 
-  // === 霓虹旋律 (Mint Cyan #00D4AA) ===
+  // === 霓虹旋律 (Mint #00D4AA) ===
   {
     id: 'card-09',
     code: '#09',
@@ -278,9 +284,9 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#065F46', '#00D4AA'],
     artId: 'lucky-coin',
     stats: { punch: 76, shine: 92, vibe: 89 },
-    storyZh: '金属游戏币落入投币口的标志性上行像素旋律，自动锁定调式音阶，随手一点即成好听乐句。',
-    pairingHintZh: '最适合弹珠台阶梯斜板，开启「像素碎音」秒变复古芯片旋律',
-    synthFormula: '调式锁定 · 脉冲波上行五度像素琶音',
+    storyZh: '受街机投币滑落瞬间启发的声音转译：黄铜币坠入薄荷投币槽，触发自动锁定调式的上行五度像素琶音。',
+    pairingHintZh: '最适合弹珠台阶梯斜板与主旋律 Hook，开启「像素碎音」秒变芯片音色',
+    synthFormula: '程序化合成 · 调式锁定脉冲波上行五度像素琶音',
     recommendedBpm: 120,
     starter: true,
   },
@@ -297,9 +303,9 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#713F12', '#FACC15'],
     artId: 'sugar-spoon',
     stats: { punch: 68, shine: 88, vibe: 91 },
-    storyZh: '大理石板上勾勒糖龙的琥珀糖勺轻敲声，晶莹剔透的玻璃铃音充满甜蜜光晕。',
-    pairingHintZh: '在弹珠旋转叶轮上绑定糖勺音色，可奏出晶莹剔透的八音盒轮指',
-    synthFormula: '调式锁定 · 晶透调频金属玻璃钟琴',
+    storyZh: '受老街糖画铜勺轻叩锅边启发的声音转译：倾斜铜勺倾出琥珀糖丝，流淌出晶莹剔透的玻璃钟琴旋律。',
+    pairingHintZh: '在弹珠旋转叶轮上绑定糖勺音色，可奏出晶莹剔透的轮指短句',
+    synthFormula: '程序化合成 · 调式锁定晶透调频玻璃钟琴',
     recommendedBpm: 112,
   },
   {
@@ -315,9 +321,9 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#0F172A', '#06B6D4'],
     artId: 'cyber-zither',
     stats: { punch: 85, shine: 96, vibe: 95 },
-    storyZh: '当东方五声古筝遇上赛博霓虹滤波器，清亮泛音拨弦在电光夜空中划出璀璨轨迹。',
-    pairingHintZh: 'C 五声与 C 小调皆惊艳，搭配 #15 港风霓虹电流极具东方赛博张力',
-    synthFormula: '调式锁定 · 三角波拨弦叠加八度装饰泛音',
+    storyZh: '受东方五声拨弦与现代合成滤波启发的声音转译：清亮三角波拨弦叠加八度泛音，在夜空中划出弧光。',
+    pairingHintZh: 'C 五声与 C 小调皆出色，搭配 #15 港风霓虹电流极具东方赛博张力',
+    synthFormula: '程序化合成 · 调式锁定三角波拨弦 + 八度装饰泛音',
     recommendedBpm: 124,
   },
   {
@@ -333,13 +339,13 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#312E81', '#EC4899'],
     artId: 'ferris-box',
     stats: { punch: 82, shine: 99, vibe: 98 },
-    storyZh: '传说级全息声卡！夜色摩天轮缓缓转动时流淌出的星尘八音盒泛音，梦幻治愈。',
-    pairingHintZh: '慢速 90-108 BPM 配高摇摆度，轻松做出治愈系夜间八音盒小品',
-    synthFormula: '调式锁定 · 双谐波星尘钢片琴八音盒',
-    recommendedBpm: 110,
+    storyZh: '受夜色游乐场旋转摩天轮启发的声音转译：发条钢片琴双谐波轻轻流转，营造清澈治愈的夜间乐句。',
+    pairingHintZh: '慢速 84–108 BPM 配轻摇摆度，轻松做出治愈系夜间八音盒小品',
+    synthFormula: '程序化合成 · 调式锁定双谐波星尘钢片琴八音盒',
+    recommendedBpm: 108,
   },
 
-  // === 烟火氛围 (Lemon Yellow #FFD60A) ===
+  // === 烟火氛围 (Yellow #FFD60A) ===
   {
     id: 'card-13',
     code: '#13',
@@ -353,10 +359,10 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#7C2D12', '#F59E0B'],
     artId: 'night-sizzle',
     stats: { punch: 75, shine: 89, vibe: 96 },
-    storyZh: '烟火升腾的街头铁板烧滋啦律动，叠入暖橘复古和弦铺底，把整条夜市装进口袋！',
-    pairingHintZh: '放在每小节正拍（第 1、5、9、13 步），瞬间托起整首曲子的和声厚度',
-    synthFormula: '带通粉红噪声滋响 · 低通模拟暖感和弦',
-    recommendedBpm: 120,
+    storyZh: '受夜市大铁板翻炒热浪启发的声音转译：双铲翻飞伴随热气滋响，叠入暖感复古模拟和弦托起整条街。',
+    pairingHintZh: '放在每小节正拍（第 1、9 步），瞬间托起整首曲子的烟火和声厚度',
+    synthFormula: '程序化合成 · 带通粉红噪声滋响 + 低通模拟暖感和弦',
+    recommendedBpm: 118,
     starter: true,
   },
   {
@@ -372,10 +378,10 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#1E3A8A', '#7C3AED'],
     artId: 'rain-cloud',
     stats: { punch: 64, shine: 81, vibe: 94 },
-    storyZh: '戴着星星墨镜的紫雨云滴答敲打老巷铁皮雨棚，伴随慵懒暖感电钢氛围。',
+    storyZh: '受江南梅雨滴答敲打波浪铁皮棚启发的声音转译：细密滤波雨声与慵懒暖感电钢和弦交织成松弛声床。',
     pairingHintZh: 'C 爵士调式绝配，适合雨巷氛围与茶馆慢拍场景',
-    synthFormula: '滤波雨滴轻敲 · 柔和三角波暖感电钢和声',
-    recommendedBpm: 96,
+    synthFormula: '程序化合成 · 滤波细密雨噪 + 柔和三角波电钢和声',
+    recommendedBpm: 92,
   },
   {
     id: 'card-15',
@@ -390,10 +396,10 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#581C87', '#F43F5E'],
     artId: 'neon-tape',
     stats: { punch: 71, shine: 92, vibe: 95 },
-    storyZh: '老霓虹招牌亮起时的复古模拟磁带电流与合成波微颤，瞬间把人拉进复古赛博夜市。',
-    pairingHintZh: '拧动音色旋钮扫频滤波，配 C 小调直接拉满蒸汽波氛围',
-    synthFormula: '微失谐厚锯齿合成和弦 · 低通动态扫频',
-    recommendedBpm: 115,
+    storyZh: '受街角霓虹灯箱与复古卡带启发的声音转译：微失谐厚锯齿合成和弦经低通扫频，带出宽广夜色氛围。',
+    pairingHintZh: '拧动音色旋钮扫频滤波，配 C 小调直接拉满复古赛博夜市氛围',
+    synthFormula: '程序化合成 · 微失谐厚锯齿合成和弦 + 低通动态扫频',
+    recommendedBpm: 120,
   },
   {
     id: 'card-16',
@@ -408,9 +414,9 @@ export const SOUND_CARDS: SoundCardDef[] = [
     bgGradient: ['#1E1B4B', '#10B981'],
     artId: 'cicada-moon',
     stats: { punch: 69, shine: 98, vibe: 99 },
-    storyZh: '传说级全息声卡！夏夜灯笼下的微风蝉鸣与空灵五声和声交织，留住最温柔的东方夏夜。',
+    storyZh: '受盛夏胡同傍晚晚风与树梢蝉鸣启发的声音转译：空灵泛音钟声与轻柔空气噪声交织，留住温柔夏夜。',
     pairingHintZh: '叠加 #12 摩天轮八音盒与轻微「街巷回声」，营造空灵夏夜音画',
-    synthFormula: '调式锁定 · 闪烁泛音钟声与晚风空气铺底',
+    synthFormula: '程序化合成 · 调式锁定闪烁泛音钟声 + 晚风空气铺底',
     recommendedBpm: 106,
   },
 ];

@@ -1,0 +1,54 @@
+/* ============================================================================
+   HOLOBEAT · 声卡造物局 Centralized Design & Motion Tokens (V3 Huacan Edition)
+   Palette Discipline: Cream Mechanical Toy Workbench + Crisp #1A1A1F Outline
+   + Controlled High-Saturation Accents (Magenta strictly reserved for UR/rare!)
+   ============================================================================ */
+
+:root {
+  /* Core Surfaces */
+  --bg-canvas: #F7F3E9;
+  --bg-panel: #FFFDF8;
+  --bg-tray: #EDE7D9;
+  --bg-oled: #14151B;
+  --bg-oled-elevated: #1D1F28;
+
+  /* Ink & Outline */
+  --ink-primary: #1A1A1F;
+  --ink-secondary: #3E3E4A;
+  --ink-muted: #5E5E6E;
+
+  /* Controlled High-Saturation Accents */
+  --accent-purple: #7C3AED;   /* BEAT 律动 */
+  --accent-orange: #FF5C2B;   /* PERC 脆响 */
+  --accent-mint: #00D4AA;     /* MELODY 旋律 */
+  --accent-yellow: #FFD60A;   /* VIBE 氛围 */
+  --accent-magenta: #FF3D9A;  /* Reserved exclusively for UR / rare collector accents */
+
+  /* Borders, Radii & Tactile Hard Shadows */
+  --border-panel: 2.5px;
+  --border-ctrl: 2px;
+  --radius-panel: 18px;
+  --radius-subpanel: 14px;
+  --radius-ctrl: 12px;
+  --shadow-panel: 5px 5px 0px 0px #1A1A1F;
+  --shadow-subpanel: 3px 3px 0px 0px #1A1A1F;
+  --shadow-btn: 3px 3px 0px 0px #1A1A1F;
+  --shadow-pad: 2px 2px 0px 0px #1A1A1F;
+
+  /* Spacing System */
+  --space-page: 14px;
+  --space-gap: 14px;
+  --space-panel: 14px;
+
+  /* Motion Timing Tokens (Section 13: Clear Hierarchy) */
+  --motion-tap: 120ms;          /* 操作反馈: 90–180ms */
+  --motion-transition: 300ms;   /* 结构转场: 220–450ms */
+  --motion-flight: 480ms;       /* 飞卡与空间转场: 380–650ms */
+  --motion-ceremony: 1900ms;    /* 抽卡/压印核心仪式: 1.5–3s (可跳过) */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Locally Bundled Typography (SIL OFL 1.1 Noto Sans SC + Space Grotesk + JetBrains Mono) */
+  --font-zh-sans: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Space Grotesk', sans-serif;
+  --font-mono-hw: 'JetBrains Mono', 'Noto Sans SC', ui-monospace, monospace;
+}

@@ -12,193 +12,165 @@ export interface ArtLayers {
  * Split into 3 distinct Z-depth layers (bg, mid, hero) for 3D parallax + offscreen PNG export!
  */
 export const ARTWORK_LAYERS: Record<string, ArtLayers> = {
-  // #05 STREET BELL — Iconic Coin-Head Street Kid with Red Cap, Giant Brass Bell & Red 鐘 Lantern
+  // #05 二八大杠车铃 — Benchmark #2: Hemispherical Brass Bell Dome + Thumb Lever + Handlebar Clamp
   'street-bell': {
     bg: `
       <defs>
-        <linearGradient id="sb-sky" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#38BDF8"/>
-          <stop offset="45%" stop-color="#C084FC"/>
+        <linearGradient id="sb-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#FFF4E6"/>
+          <stop offset="55%" stop-color="#FFE1CC"/>
           <stop offset="100%" stop-color="#FF5C2B"/>
         </linearGradient>
       </defs>
       <rect width="260" height="320" fill="url(#sb-sky)"/>
-      <rect x="8" y="48" width="52" height="190" fill="#1E1B4B" stroke="#1A1A1F" stroke-width="3"/>
-      <rect x="16" y="76" width="32" height="34" rx="4" fill="#7C3AED" stroke="#1A1A1F" stroke-width="2.5"/>
-      <rect x="23" y="84" width="18" height="14" rx="2" fill="#FFFDF8"/>
-      <rect x="26" y="88" width="4" height="4" fill="#1A1A1F"/>
-      <rect x="34" y="88" width="4" height="4" fill="#1A1A1F"/>
-      <rect x="195" y="130" width="58" height="140" fill="#312E81" stroke="#1A1A1F" stroke-width="3"/>
-      <ellipse cx="130" cy="272" rx="115" ry="26" fill="#EDE7D9" stroke="#1A1A1F" stroke-width="3"/>
+      <!-- Subtle Alley Brick Arch Silhouette -->
+      <path d="M18 290 V135 A112 112 0 0 1 242 135 V290 Z" fill="#FFFDF8" opacity="0.55" stroke="#1A1A1F" stroke-width="3"/>
+      <ellipse cx="130" cy="264" rx="92" ry="18" fill="#1A1A1F" opacity="0.14"/>
     `,
     mid: `
-      <g opacity="0.9">
-        <path d="M130 155 L20 20 M130 155 L245 30 M130 155 L255 180 M130 155 L5 190" stroke="#FFFDF8" stroke-width="4" opacity="0.45"/>
-        <polygon points="35,165 40,175 50,177 41,183 43,193 35,187 27,193 29,183 20,177 30,175" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5"/>
-        <polygon points="222,202 227,214 238,216 228,223 231,234 222,227 213,234 216,223 206,216 217,214" fill="#00D4AA" stroke="#1A1A1F" stroke-width="2.5"/>
-      </g>
-      <!-- Hanging Red Chinese Bell Lantern (top-right) -->
-      <g transform="translate(182, 54)">
-        <line x1="28" y1="-20" x2="28" y2="8" stroke="#1A1A1F" stroke-width="4"/>
-        <rect x="16" y="6" width="24" height="9" rx="3" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3"/>
-        <ellipse cx="28" cy="40" rx="26" ry="28" fill="#FF3B30" stroke="#1A1A1F" stroke-width="3.5"/>
-        <ellipse cx="28" cy="40" rx="13" ry="28" fill="none" stroke="#1A1A1F" stroke-width="2.2"/>
-        <rect x="16" y="66" width="24" height="8" rx="3" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3"/>
-        <line x1="28" y1="74" x2="28" y2="95" stroke="#FF3B30" stroke-width="5" stroke-linecap="round"/>
-        <text x="28" y="48" text-anchor="middle" font-size="22" font-weight="900" fill="#FFFDF8" font-family="sans-serif">鐘</text>
-      </g>
+      <!-- Crisp Acoustic Ring Waves around Bell Dome -->
+      <path d="M38 118 A98 98 0 0 1 78 52" fill="none" stroke="#FF5C2B" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M222 118 A98 98 0 0 0 182 52" fill="none" stroke="#00D4AA" stroke-width="4.5" stroke-linecap="round"/>
+      <circle cx="48" cy="72" r="6" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5"/>
+      <circle cx="212" cy="74" r="5.5" fill="#00D4AA" stroke="#1A1A1F" stroke-width="2.5"/>
     `,
     hero: `
-      <!-- Sneakers -->
-      <g>
-        <path d="M46 254 C46 238, 76 232, 95 238 L108 258 L104 274 L44 274 Z" fill="#FF3B30" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-        <rect x="44" y="266" width="64" height="10" rx="4" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3.5"/>
-        <path d="M150 258 L168 238 C186 232, 214 240, 214 256 L214 274 L152 274 Z" fill="#FF3B30" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-        <rect x="150" y="266" width="66" height="10" rx="4" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3.5"/>
-      </g>
-      <!-- Baggy Street Pants -->
-      <path d="M74 188 L184 188 L196 244 L148 248 L130 222 L110 248 L64 244 Z" fill="#2E294E" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-      <!-- Orange Street Jacket -->
-      <path d="M62 150 C62 132, 198 132, 198 150 L192 204 L68 204 Z" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-      <rect x="104" y="148" width="52" height="56" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3.5"/>
-      <!-- Left Peace Hand -->
-      <g transform="translate(22, 128)">
-        <path d="M22 44 C10 42, 8 24, 18 18 L24 4 C27 -2, 36 0, 35 10 L33 22 L46 20 C54 20, 56 30, 48 34 L50 42 C54 48, 44 56, 22 44 Z" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-      </g>
-      <!-- Golden Coin Head -->
-      <circle cx="132" cy="116" r="46" fill="#F59E0B" stroke="#1A1A1F" stroke-width="4.5"/>
-      <circle cx="136" cy="116" r="40" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3.5"/>
-      <circle cx="136" cy="116" r="32" fill="none" stroke="#D97706" stroke-width="2.5" stroke-dasharray="6 4"/>
-      <!-- Expressive Face -->
-      <path d="M114 98 L131 106 M158 98 L143 106" stroke="#1A1A1F" stroke-width="4.5" stroke-linecap="round"/>
-      <ellipse cx="124" cy="112" rx="4.5" ry="6" fill="#1A1A1F"/>
-      <ellipse cx="150" cy="112" rx="4.5" ry="6" fill="#1A1A1F"/>
-      <circle cx="122.5" cy="110" r="1.8" fill="#FFFDF8"/>
-      <circle cx="148.5" cy="110" r="1.8" fill="#FFFDF8"/>
-      <path d="M124 124 Q137 120 148 124 Q148 144 136 144 Q124 144 124 124 Z" fill="#1A1A1F"/>
-      <path d="M128 136 Q136 131 144 136 Q140 142 132 142 Z" fill="#FF3D9A"/>
-      <!-- Red Street Cap with Crown -->
-      <path d="M88 86 C90 50, 168 48, 174 86 Z" fill="#FF3B30" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M74 86 C96 72, 168 74, 186 92 C164 98, 92 98, 74 86 Z" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-      <polygon points="124,74 126,62 133,68 139,59 145,68 152,62 154,74" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5" stroke-linejoin="round"/>
-      <!-- Giant Brass Street Bell & Red Tassel Knot -->
-      <g transform="translate(110, 152) rotate(-14)">
-        <path d="M16 14 C16 2, 48 2, 48 14 L62 64 C66 74, -2 74, 2 64 Z" fill="#FFD60A" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-        <path d="M22 18 L14 58" stroke="#FFFBEB" stroke-width="5" stroke-linecap="round" opacity="0.75"/>
-        <ellipse cx="32" cy="68" rx="30" ry="11" fill="#92400E" stroke="#1A1A1F" stroke-width="3.5"/>
-        <circle cx="32" cy="72" r="9" fill="#F59E0B" stroke="#1A1A1F" stroke-width="3.5"/>
-      </g>
-      <!-- Red Chinese Knot -->
-      <circle cx="134" cy="158" r="10" fill="#FF3B30" stroke="#1A1A1F" stroke-width="3.5"/>
-      <ellipse cx="116" cy="156" rx="11" ry="7" fill="#FF3B30" stroke="#1A1A1F" stroke-width="3"/>
-      <ellipse cx="152" cy="158" rx="11" ry="7" fill="#FF3B30" stroke="#1A1A1F" stroke-width="3"/>
+      <!-- Curved Vintage Bicycle Handlebar Tube & Rubber Grips -->
+      <path d="M22 232 Q130 202 238 232" fill="none" stroke="#1A1A1F" stroke-width="22" stroke-linecap="round"/>
+      <path d="M22 232 Q130 202 238 232" fill="none" stroke="#E2E8F0" stroke-width="13" stroke-linecap="round"/>
+      <path d="M20 232 Q42 225 60 221" fill="none" stroke="#1A1A1F" stroke-width="24" stroke-linecap="round"/>
+      <path d="M240 232 Q218 225 200 221" fill="none" stroke="#1A1A1F" stroke-width="24" stroke-linecap="round"/>
+      <!-- Steel Handlebar Clamp Collar & Bolts -->
+      <rect x="104" y="196" width="52" height="44" rx="12" fill="#94A3B8" stroke="#1A1A1F" stroke-width="4.5"/>
+      <circle cx="116" cy="218" r="4.5" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="2.5"/>
+      <circle cx="144" cy="218" r="4.5" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="2.5"/>
+      <!-- Spring Thumb Striker Lever (Right Side — Key Sounding Action!) -->
+      <path d="M188 182 L226 154" stroke="#1A1A1F" stroke-width="12" stroke-linecap="round"/>
+      <path d="M188 182 L226 154" stroke="#CBD5E1" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="228" cy="152" r="14" fill="#00D4AA" stroke="#1A1A1F" stroke-width="4"/>
+      <circle cx="224" cy="148" r="4" fill="#FFFDF8"/>
+      <!-- Bell Lower Base Collar -->
+      <rect x="52" y="176" width="156" height="24" rx="12" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="4.5"/>
+      <line x1="72" y1="188" x2="188" y2="188" stroke="#FFFDF8" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+      <!-- Hemispherical Brass Bell Dome Character -->
+      <path d="M56 176 A74 74 0 0 1 204 176 Z" fill="#FFD60A" stroke="#1A1A1F" stroke-width="5" stroke-linejoin="round"/>
+      <!-- Crisp Hard-Edge Specular Arc -->
+      <path d="M84 128 A52 52 0 0 1 132 108" fill="none" stroke="#FFFDF8" stroke-width="8" stroke-linecap="round" opacity="0.85"/>
+      <!-- Top Finial Cap Nut -->
+      <rect x="116" y="88" width="28" height="16" rx="8" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="4"/>
+      <circle cx="130" cy="94" r="4" fill="#FFFDF8"/>
+      <!-- Witty Restrained Toy Expression Embedded on Dome -->
+      <ellipse cx="106" cy="146" rx="7" ry="8.5" fill="#1A1A1F"/>
+      <ellipse cx="154" cy="146" rx="7" ry="8.5" fill="#1A1A1F"/>
+      <circle cx="103.5" cy="143" r="2.6" fill="#FFFDF8"/>
+      <circle cx="151.5" cy="143" r="2.6" fill="#FFFDF8"/>
+      <circle cx="88" cy="158" r="7" fill="#FF5C2B" opacity="0.45"/>
+      <circle cx="172" cy="158" r="7" fill="#FF5C2B" opacity="0.45"/>
+      <path d="M118 158 Q130 168 142 158" fill="none" stroke="#1A1A1F" stroke-width="4.2" stroke-linecap="round"/>
     `,
   },
 
-  // #01 BAMBOO BEAT — DJ Cat with Cool Shades & Vinyl Turntable
+  // #01 弄堂竹板梆子 — Benchmark #1: Twin Bamboo Clapper Slats + Nodes + Red Cord Knot
   'bamboo-cat': {
     bg: `
       <defs>
-        <linearGradient id="bc-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#7C3AED"/>
-          <stop offset="55%" stop-color="#C084FC"/>
-          <stop offset="100%" stop-color="#38BDF8"/>
+        <linearGradient id="bc-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#F5F0FF"/>
+          <stop offset="55%" stop-color="#DDD6FE"/>
+          <stop offset="100%" stop-color="#7C3AED"/>
         </linearGradient>
       </defs>
       <rect width="260" height="320" fill="url(#bc-bg)"/>
-      <!-- Bamboo Silhouettes -->
-      <g stroke="#1A1A1F" stroke-width="3" fill="#00D4AA" opacity="0.55">
-        <rect x="18" y="20" width="18" height="240" rx="6"/>
-        <rect x="224" y="30" width="18" height="230" rx="6"/>
-      </g>
-      <circle cx="130" cy="155" r="95" fill="#EDE9FE" opacity="0.22"/>
+      <!-- Subtle Alley Window Lattice Backdrop -->
+      <rect x="26" y="34" width="208" height="232" rx="22" fill="#FFFDF8" opacity="0.52" stroke="#1A1A1F" stroke-width="3"/>
+      <line x1="130" y1="34" x2="130" y2="266" stroke="#7C3AED" stroke-width="2" opacity="0.22"/>
+      <ellipse cx="130" cy="268" rx="78" ry="14" fill="#1A1A1F" opacity="0.14"/>
     `,
     mid: `
-      <polygon points="36,80 42,92 54,94 44,101 47,112 36,105 25,112 28,101 18,94 30,92" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5"/>
-      <polygon points="218,88 223,98 234,100 225,106 228,116 218,110 208,116 211,106 202,100 213,98" fill="#FF3D9A" stroke="#1A1A1F" stroke-width="2.5"/>
-      <path d="M26 196 Q60 176 92 196" fill="none" stroke="#FFD60A" stroke-width="4" stroke-linecap="round"/>
-      <path d="M174 196 Q204 176 236 196" fill="none" stroke="#00D4AA" stroke-width="4" stroke-linecap="round"/>
+      <!-- Rhythmic Clapping Impact Sparks -->
+      <path d="M126 172 L106 164 M134 172 L154 164" stroke="#FFD60A" stroke-width="5" stroke-linecap="round"/>
+      <polygon points="44,86 49,96 60,98 51,104 54,114 44,108 34,114 37,104 28,98 39,96" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5"/>
+      <rect x="200" y="92" width="16" height="16" rx="4" fill="#00D4AA" stroke="#1A1A1F" stroke-width="2.5" transform="rotate(18 208 100)"/>
     `,
     hero: `
-      <!-- Headphones Band -->
-      <path d="M58 132 C58 58, 202 58, 202 132" fill="none" stroke="#7C3AED" stroke-width="14" stroke-linecap="round"/>
-      <path d="M58 132 C58 58, 202 58, 202 132" fill="none" stroke="#1A1A1F" stroke-width="4" stroke-linecap="round"/>
-      <!-- Cat Ears -->
-      <polygon points="74,98 68,54 110,80" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-      <polygon points="78,90 76,66 100,82" fill="#FF3D9A"/>
-      <polygon points="186,98 192,54 150,80" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
-      <polygon points="182,90 184,66 160,82" fill="#FF3D9A"/>
-      <!-- Cat Head -->
-      <ellipse cx="130" cy="132" rx="64" ry="54" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4.5"/>
-      <!-- Headphone Cups -->
-      <rect x="46" y="106" width="24" height="48" rx="11" fill="#FFD60A" stroke="#1A1A1F" stroke-width="4"/>
-      <rect x="190" y="106" width="24" height="48" rx="11" fill="#FFD60A" stroke="#1A1A1F" stroke-width="4"/>
-      <!-- Cool Shades -->
-      <path d="M74 116 H186 L176 146 H139 L130 132 L121 146 H84 Z" fill="#181820" stroke="#1A1A1F" stroke-width="3.5" stroke-linejoin="round"/>
-      <line x1="86" y1="124" x2="108" y2="140" stroke="#00D4AA" stroke-width="5" stroke-linecap="round"/>
-      <line x1="146" y1="124" x2="168" y2="140" stroke="#FF3D9A" stroke-width="5" stroke-linecap="round"/>
-      <!-- Cute Cat Mouth -->
-      <path d="M120 154 Q125 162 130 155 Q135 162 140 154" fill="none" stroke="#1A1A1F" stroke-width="3.5" stroke-linecap="round"/>
-      <!-- Hoodie Body -->
-      <path d="M72 180 C72 168, 188 168, 188 180 L198 228 L62 228 Z" fill="#7C3AED" stroke="#1A1A1F" stroke-width="4"/>
-      <!-- DJ Vinyl Turntable Deck -->
-      <rect x="28" y="206" width="204" height="68" rx="14" fill="#181820" stroke="#1A1A1F" stroke-width="4"/>
-      <ellipse cx="96" cy="240" rx="46" ry="22" fill="#312E81" stroke="#00D4AA" stroke-width="3"/>
-      <ellipse cx="96" cy="240" rx="14" ry="7" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5"/>
-      <rect x="158" y="220" width="58" height="40" rx="6" fill="#2E294E" stroke="#FFFDF8" stroke-width="2"/>
-      <rect x="166" y="228" width="14" height="12" rx="2" fill="#FF5C2B"/>
-      <rect x="184" y="228" width="14" height="12" rx="2" fill="#00D4AA"/>
-      <rect x="166" y="244" width="14" height="10" rx="2" fill="#FFD60A"/>
-      <rect x="184" y="244" width="14" height="10" rx="2" fill="#FF3D9A"/>
-      <!-- Cat Paws Scratching -->
-      <ellipse cx="82" cy="216" rx="18" ry="12" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3.5"/>
-      <ellipse cx="176" cy="214" rx="18" ry="12" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3.5"/>
+      <!-- Back Bamboo Clapper Slat (Angled Right in Clapping Stance) -->
+      <g transform="translate(148, 168) rotate(16)">
+        <rect x="-28" y="-96" width="56" height="192" rx="18" fill="#7C3AED" stroke="#1A1A1F" stroke-width="5"/>
+        <!-- Bamboo Node Rings -->
+        <rect x="-32" y="-36" width="64" height="11" rx="5.5" fill="#A78BFA" stroke="#1A1A1F" stroke-width="3.5"/>
+        <rect x="-32" y="34" width="64" height="11" rx="5.5" fill="#A78BFA" stroke="#1A1A1F" stroke-width="3.5"/>
+        <!-- Hard-edge highlight -->
+        <line x1="14" y1="-80" x2="14" y2="78" stroke="#FFFDF8" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+      </g>
+      <!-- Front Bamboo Clapper Slat (Angled Left with Character Expression) -->
+      <g transform="translate(110, 166) rotate(-13)">
+        <rect x="-30" y="-100" width="60" height="200" rx="18" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="5"/>
+        <!-- Warm Bamboo Grain Band -->
+        <rect x="-24" y="-92" width="14" height="184" rx="7" fill="#EDE7D9"/>
+        <!-- Distinct Bamboo Nodes -->
+        <rect x="-34" y="-32" width="68" height="12" rx="6" fill="#00D4AA" stroke="#1A1A1F" stroke-width="3.8"/>
+        <rect x="-34" y="36" width="68" height="12" rx="6" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3.8"/>
+        <!-- Cord Eyelet Hole -->
+        <circle cx="0" cy="-76" r="7" fill="#1A1A1F"/>
+        <!-- Witty Toy Expression in Upper Bamboo Segment -->
+        <circle cx="-11" cy="-54" r="5.5" fill="#1A1A1F"/>
+        <circle cx="13" cy="-54" r="5.5" fill="#1A1A1F"/>
+        <circle cx="-13" cy="-56" r="2" fill="#FFFDF8"/>
+        <circle cx="11" cy="-56" r="2" fill="#FFFDF8"/>
+        <path d="M-7 -42 Q1 -35 9 -42" fill="none" stroke="#1A1A1F" stroke-width="3.8" stroke-linecap="round"/>
+      </g>
+      <!-- Red Traditional Cord & Decorative Knot Binding the Twin Slats -->
+      <path d="M94 90 Q128 60 156 88" fill="none" stroke="#FF5C2B" stroke-width="8" stroke-linecap="round"/>
+      <path d="M94 90 Q128 60 156 88" fill="none" stroke="#1A1A1F" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="128" cy="70" r="11" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="3.8"/>
+      <path d="M122 59 Q114 42 128 46 Q142 42 134 59" fill="none" stroke="#FF5C2B" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M122 59 Q114 42 128 46 Q142 42 134 59" fill="none" stroke="#1A1A1F" stroke-width="2" stroke-linecap="round"/>
+      <!-- Crisp Clack Action Accent Lines -->
+      <path d="M132 198 L146 194 M130 212 L148 214" stroke="#FFD60A" stroke-width="4.5" stroke-linecap="round"/>
     `,
   },
 
-  // #02 ARCADE BOT — Retro CRT Pixel TV Robot
+  // #02 老式街机拍键 — Concave Mechanical Arcade Push-Button Character
   'arcade-bot': {
     bg: `
       <defs>
-        <linearGradient id="ab-bg" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id="ab-bg" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#1E1B4B"/>
-          <stop offset="55%" stop-color="#4F46E5"/>
-          <stop offset="100%" stop-color="#06B6D4"/>
+          <stop offset="60%" stop-color="#4C1D95"/>
+          <stop offset="100%" stop-color="#7C3AED"/>
         </linearGradient>
       </defs>
       <rect width="260" height="320" fill="url(#ab-bg)"/>
-      <g stroke="#00D4AA" stroke-width="1.5" opacity="0.3">
-        <line x1="0" y1="220" x2="260" y2="220"/>
-        <line x1="0" y1="250" x2="260" y2="250"/>
-        <line x1="0" y1="280" x2="260" y2="280"/>
+      <g stroke="#00D4AA" stroke-width="1.5" opacity="0.28">
+        <line x1="0" y1="226" x2="260" y2="226"/>
+        <line x1="0" y1="256" x2="260" y2="256"/>
         <line x1="65" y1="200" x2="20" y2="320"/>
         <line x1="130" y1="200" x2="130" y2="320"/>
         <line x1="195" y1="200" x2="240" y2="320"/>
       </g>
     `,
     mid: `
-      <polygon points="36,64 42,74 52,76 43,82 45,92 36,86 27,92 29,82 20,76 30,74" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2"/>
-      <rect x="206" y="72" width="24" height="24" rx="4" fill="#FF3D9A" stroke="#1A1A1F" stroke-width="3" transform="rotate(14 218 84)"/>
+      <polygon points="40,68 46,78 56,80 47,86 49,96 40,90 31,96 33,86 24,80 34,78" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5"/>
+      <rect x="202" y="76" width="20" height="20" rx="4" fill="#00D4AA" stroke="#1A1A1F" stroke-width="3" transform="rotate(14 212 86)"/>
     `,
     hero: `
-      <!-- Antenna -->
-      <line x1="130" y1="54" x2="130" y2="82" stroke="#1A1A1F" stroke-width="5"/>
-      <circle cx="130" cy="48" r="11" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3.5"/>
-      <!-- CRT Head -->
-      <rect x="52" y="78" width="156" height="118" rx="22" fill="#EDE9FE" stroke="#1A1A1F" stroke-width="5"/>
-      <rect x="68" y="94" width="124" height="86" rx="12" fill="#181820" stroke="#1A1A1F" stroke-width="4"/>
-      <!-- Glowing Pixel Face -->
-      <rect x="92" y="114" width="18" height="18" rx="3" fill="#00D4AA"/>
-      <rect x="150" y="114" width="18" height="18" rx="3" fill="#00D4AA"/>
-      <path d="M98 148 Q130 172 162 148" fill="none" stroke="#00D4AA" stroke-width="7" stroke-linecap="round"/>
-      <!-- Ear Phones -->
-      <rect x="34" y="112" width="20" height="48" rx="9" fill="#FFD60A" stroke="#1A1A1F" stroke-width="4"/>
-      <rect x="206" y="112" width="20" height="48" rx="9" fill="#FFD60A" stroke="#1A1A1F" stroke-width="4"/>
-      <!-- Arcade Body with Buttons -->
-      <rect x="74" y="198" width="112" height="72" rx="16" fill="#7C3AED" stroke="#1A1A1F" stroke-width="4.5"/>
-      <circle cx="106" cy="232" r="15" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="3.5"/>
-      <circle cx="144" cy="224" r="10" fill="#00D4AA" stroke="#1A1A1F" stroke-width="3"/>
-      <circle cx="164" cy="242" r="10" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3"/>
+      <!-- Microswitch Plinth Base -->
+      <rect x="78" y="212" width="104" height="54" rx="12" fill="#EDE7D9" stroke="#1A1A1F" stroke-width="4.5"/>
+      <rect x="102" y="248" width="12" height="24" rx="3" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3.5"/>
+      <rect x="146" y="248" width="12" height="24" rx="3" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3.5"/>
+      <!-- Stepped Bezel Collar -->
+      <ellipse cx="130" cy="204" rx="88" ry="28" fill="#1A1A1F"/>
+      <ellipse cx="130" cy="196" rx="86" ry="26" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4.5"/>
+      <!-- Tall Cylindrical Concave Arcade Button Cap -->
+      <path d="M58 134 V188 A72 22 0 0 0 202 188 V134 Z" fill="#7C3AED" stroke="#1A1A1F" stroke-width="5" stroke-linejoin="round"/>
+      <ellipse cx="130" cy="134" rx="72" ry="24" fill="#A78BFA" stroke="#1A1A1F" stroke-width="5"/>
+      <ellipse cx="130" cy="134" rx="54" ry="15" fill="#00D4AA" stroke="#1A1A1F" stroke-width="3.5"/>
+      <!-- Pixel Eyes on Button Skirt -->
+      <rect x="94" y="160" width="16" height="16" rx="3" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3"/>
+      <rect x="150" y="160" width="16" height="16" rx="3" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3"/>
+      <rect x="100" y="165" width="7" height="7" fill="#1A1A1F"/>
+      <rect x="156" y="165" width="7" height="7" fill="#1A1A1F"/>
+      <path d="M118 184 Q130 193 142 184" fill="none" stroke="#FFD60A" stroke-width="4.5" stroke-linecap="round"/>
     `,
   },
 
@@ -433,75 +405,106 @@ export const ARTWORK_LAYERS: Record<string, ArtLayers> = {
     `,
   },
 
-  // #09 LUCKY COIN — Lucky Fortune Cat / Frog holding Giant Gold Coin
+  // #09 像素街机投币 — Benchmark #3: Round Golden Arcade Coin Dropping Into Mint Slot
   'lucky-coin': {
     bg: `
       <defs>
-        <linearGradient id="lc-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#00D4AA"/>
-          <stop offset="50%" stop-color="#38BDF8"/>
-          <stop offset="100%" stop-color="#FFD60A"/>
+        <linearGradient id="lc-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#E6FFF8"/>
+          <stop offset="56%" stop-color="#99F6E4"/>
+          <stop offset="100%" stop-color="#00D4AA"/>
         </linearGradient>
       </defs>
       <rect width="260" height="320" fill="url(#lc-bg)"/>
-      <circle cx="130" cy="160" r="96" fill="#FFFDF8" opacity="0.22"/>
+      <!-- Pixel Grid Arcade Frame -->
+      <rect x="24" y="34" width="212" height="236" rx="20" fill="#FFFDF8" opacity="0.58" stroke="#1A1A1F" stroke-width="3"/>
+      <g fill="#00D4AA" opacity="0.35">
+        <rect x="38" y="48" width="10" height="10"/>
+        <rect x="52" y="48" width="10" height="10"/>
+        <rect x="200" y="48" width="10" height="10"/>
+        <rect x="214" y="48" width="10" height="10"/>
+      </g>
     `,
     mid: `
-      <polygon points="40,70 46,84 60,86 48,94 52,108 40,99 28,108 32,94 20,86 34,84" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5"/>
-      <polygon points="218,86 223,96 234,98 225,104 228,114 218,108 208,114 211,104 202,98 213,96" fill="#FF3D9A" stroke="#1A1A1F" stroke-width="2.5"/>
+      <!-- Pixel Sparkle Diamonds & Entry Chevrons -->
+      <path d="M118 188 L130 198 L142 188" fill="none" stroke="#FF5C2B" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="36" y="106" width="14" height="14" rx="2" fill="#7C3AED" stroke="#1A1A1F" stroke-width="2.5"/>
+      <rect x="210" y="122" width="14" height="14" rx="2" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5"/>
     `,
     hero: `
-      <!-- Fortune Cat Ears -->
-      <polygon points="74,104 66,54 114,84" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4.5" stroke-linejoin="round"/>
-      <polygon points="80,94 76,68 102,86" fill="#FF5C2B"/>
-      <polygon points="186,104 194,54 146,84" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4.5" stroke-linejoin="round"/>
-      <polygon points="180,94 184,68 158,86" fill="#FF5C2B"/>
-      <!-- Cat Head -->
-      <ellipse cx="130" cy="136" rx="64" ry="52" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4.5"/>
-      <!-- Headphones -->
-      <rect x="52" y="114" width="20" height="42" rx="9" fill="#FF3D9A" stroke="#1A1A1F" stroke-width="4"/>
-      <rect x="188" y="114" width="20" height="42" rx="9" fill="#FF3D9A" stroke="#1A1A1F" stroke-width="4"/>
-      <!-- Happy Arcade Eyes -->
-      <path d="M92 132 Q104 118 116 132" fill="none" stroke="#1A1A1F" stroke-width="5" stroke-linecap="round"/>
-      <path d="M144 132 Q156 118 168 132" fill="none" stroke="#1A1A1F" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="88" cy="148" r="9" fill="#FF3D9A" opacity="0.5"/>
-      <circle cx="172" cy="148" r="9" fill="#FF3D9A" opacity="0.5"/>
-      <path d="M120 150 Q130 160 140 150" fill="none" stroke="#1A1A1F" stroke-width="4" stroke-linecap="round"/>
-      <!-- Body + Red Collar -->
-      <rect x="76" y="184" width="108" height="80" rx="26" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4.5"/>
-      <rect x="82" y="182" width="96" height="16" rx="8" fill="#FF3B30" stroke="#1A1A1F" stroke-width="3.5"/>
-      <!-- Giant 8-Bit Gold Coin -->
-      <circle cx="164" cy="232" r="42" fill="#FFD60A" stroke="#1A1A1F" stroke-width="4.5"/>
-      <circle cx="164" cy="232" r="32" fill="none" stroke="#D97706" stroke-width="3.5"/>
-      <rect x="152" y="220" width="24" height="24" rx="3" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3.5"/>
+      <!-- Mint Arcade Coin-Slot Bezel Plate (Bottom Hero Anchor!) -->
+      <rect x="46" y="198" width="168" height="72" rx="16" fill="#00D4AA" stroke="#1A1A1F" stroke-width="5"/>
+      <rect x="58" y="210" width="144" height="48" rx="10" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3.5"/>
+      <!-- Corner Mounting Screws -->
+      <circle cx="70" cy="222" r="4" fill="#1A1A1F"/>
+      <circle cx="190" cy="222" r="4" fill="#1A1A1F"/>
+      <circle cx="70" cy="246" r="4" fill="#1A1A1F"/>
+      <circle cx="190" cy="246" r="4" fill="#1A1A1F"/>
+      <!-- Vertical Glowing Coin Slot Entry -->
+      <rect x="86" y="226" width="88" height="16" rx="8" fill="#1A1A1F"/>
+      <rect x="94" y="231" width="72" height="6" rx="3" fill="#7C3AED"/>
+      <!-- Round Golden Arcade Coin Character Poised to Drop In! -->
+      <g transform="translate(130, 122) rotate(-7)">
+        <!-- Coin Edge Thickness -->
+        <circle cx="-6" cy="4" r="62" fill="#D97706" stroke="#1A1A1F" stroke-width="5"/>
+        <!-- Main Coin Face -->
+        <circle cx="2" cy="0" r="62" fill="#FFD60A" stroke="#1A1A1F" stroke-width="5"/>
+        <circle cx="2" cy="0" r="48" fill="none" stroke="#1A1A1F" stroke-width="3" stroke-dasharray="10 6"/>
+        <!-- Hard-edge Specular Crescent -->
+        <path d="M-28 -32 A40 40 0 0 1 12 -40" fill="none" stroke="#FFFDF8" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+        <!-- Square Center Coin-Hole Motif + Playful Pixel Eyes -->
+        <rect x="-12" y="-12" width="24" height="24" rx="4" fill="#00D4AA" stroke="#1A1A1F" stroke-width="3.5"/>
+        <rect x="-32" y="-14" width="11" height="14" rx="3" fill="#1A1A1F"/>
+        <rect x="25" y="-14" width="11" height="14" rx="3" fill="#1A1A1F"/>
+        <rect x="-30" y="-11" width="4" height="4" fill="#FFFDF8"/>
+        <rect x="27" y="-11" width="4" height="4" fill="#FFFDF8"/>
+        <path d="M-12 24 Q2 34 16 24" fill="none" stroke="#1A1A1F" stroke-width="4.2" stroke-linecap="round"/>
+      </g>
     `,
   },
 
-  // #10 SUGAR SPOON — Golden Sugar Dragon Art
+  // #10 糖画铜勺叮当 — Tilted Brass Pouring Spoon & Flowing Amber Sugar Swirl
   'sugar-spoon': {
     bg: `
       <defs>
-        <linearGradient id="ss-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#F59E0B"/>
-          <stop offset="50%" stop-color="#FFD60A"/>
+        <linearGradient id="ss-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#FFFBEB"/>
+          <stop offset="55%" stop-color="#FDE68A"/>
           <stop offset="100%" stop-color="#00D4AA"/>
         </linearGradient>
       </defs>
       <rect width="260" height="320" fill="url(#ss-bg)"/>
+      <!-- Marble Sugar-Painting Slab -->
+      <path d="M24 226 L236 226 L248 286 L12 286 Z" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
     `,
     mid: `
-      <path d="M36 90 Q130 40 224 90" fill="none" stroke="#FFFBEB" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+      <circle cx="48" cy="76" r="7" fill="#00D4AA" stroke="#1A1A1F" stroke-width="2.5"/>
+      <polygon points="214,68 219,78 230,80 221,86 224,96 214,90 204,96 207,86 198,80 209,78" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5"/>
     `,
     hero: `
-      <!-- Bamboo Stick -->
-      <line x1="130" y1="190" x2="130" y2="286" stroke="#D97706" stroke-width="10" stroke-linecap="round"/>
-      <line x1="130" y1="190" x2="130" y2="286" stroke="#1A1A1F" stroke-width="3"/>
-      <!-- Golden Amber Sugar Swirl Dragon -->
-      <path d="M130 68 C186 68, 212 118, 190 162 C168 206, 86 210, 68 164 C52 120, 82 68, 130 68 Z" fill="#F59E0B" stroke="#1A1A1F" stroke-width="5"/>
-      <path d="M90 120 C110 90, 165 95, 168 134 C170 168, 118 182, 102 156 C90 138, 118 118, 138 134" fill="none" stroke="#FEF08A" stroke-width="10" stroke-linecap="round"/>
-      <circle cx="110" cy="128" r="8" fill="#1A1A1F"/>
-      <circle cx="150" cy="128" r="8" fill="#1A1A1F"/>
-      <path d="M116 154 Q130 168 144 154" fill="none" stroke="#1A1A1F" stroke-width="4" stroke-linecap="round"/>
+      <!-- Bamboo Skewer Resting on Marble Slab -->
+      <line x1="60" y1="258" x2="210" y2="258" stroke="#B45309" stroke-width="8" stroke-linecap="round"/>
+      <line x1="60" y1="258" x2="210" y2="258" stroke="#1A1A1F" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Flowing Amber Sugar Swirl Drawn on Marble Slab -->
+      <path d="M126 154 C126 194, 184 188, 178 228 C172 260, 82 264, 78 226 C75 196, 134 196, 140 226 C144 242, 114 246, 112 232" fill="none" stroke="#1A1A1F" stroke-width="17" stroke-linecap="round"/>
+      <path d="M126 154 C126 194, 184 188, 178 228 C172 260, 82 264, 78 226 C75 196, 134 196, 140 226 C144 242, 114 246, 112 232" fill="none" stroke="#F59E0B" stroke-width="10" stroke-linecap="round"/>
+      <path d="M126 154 C126 194, 184 188, 178 228" fill="none" stroke="#FEF08A" stroke-width="3.5" stroke-linecap="round"/>
+      <!-- Tilted Long-Handled Brass Copper Ladle (Hero Sound Object!) -->
+      <g transform="translate(132, 108) rotate(-26)">
+        <!-- Copper Handle -->
+        <rect x="26" y="-8" width="96" height="16" rx="8" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="4.5"/>
+        <circle cx="110" cy="0" r="4" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="2"/>
+        <!-- Ladle Pouring Bowl -->
+        <path d="M-54 -14 C-54 -36, 36 -36, 36 -14 C36 22, 14 42, -10 42 C-34 42, -54 22, -54 -14 Z" fill="#FFD60A" stroke="#1A1A1F" stroke-width="5" stroke-linejoin="round"/>
+        <!-- Glowing Molten Sugar Inside Bowl -->
+        <ellipse cx="-10" cy="-14" rx="34" ry="12" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="3.5"/>
+        <!-- Cute Ladle Eyes -->
+        <circle cx="-22" cy="12" r="5" fill="#1A1A1F"/>
+        <circle cx="4" cy="12" r="5" fill="#1A1A1F"/>
+        <circle cx="-23.5" cy="10" r="1.8" fill="#FFFDF8"/>
+        <circle cx="2.5" cy="10" r="1.8" fill="#FFFDF8"/>
+        <path d="M-15 23 Q-9 29 -3 23" fill="none" stroke="#1A1A1F" stroke-width="3.2" stroke-linecap="round"/>
+      </g>
     `,
   },
 
@@ -598,102 +601,112 @@ export const ARTWORK_LAYERS: Record<string, ArtLayers> = {
     `,
   },
 
-  // #13 NIGHT SIZZLE — Blazing Night Market Dragon Chef with Sizzle Grill & Flame Crest
+  // #13 夜市铁板滋啦 — Benchmark #4: Cast-Iron Teppan Griddle + Orange Stove + Twin Spatula Arms + 3 Steam Ribbons
   'night-sizzle': {
     bg: `
       <defs>
-        <linearGradient id="ns-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#450A0A"/>
-          <stop offset="48%" stop-color="#EA580C"/>
-          <stop offset="100%" stop-color="#7C3AED"/>
+        <linearGradient id="ns-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#FFFBEB"/>
+          <stop offset="52%" stop-color="#FFE4B5"/>
+          <stop offset="100%" stop-color="#FF5C2B"/>
         </linearGradient>
       </defs>
       <rect width="260" height="320" fill="url(#ns-bg)"/>
-      <!-- Night Market Canopy Stripes -->
-      <g opacity="0.22" fill="#FFD426">
-        <rect x="0" y="0" width="32" height="44"/>
-        <rect x="64" y="0" width="32" height="44"/>
-        <rect x="128" y="0" width="32" height="44"/>
-        <rect x="192" y="0" width="32" height="44"/>
+      <!-- Subtle Night Market Awning Header -->
+      <g opacity="0.22" fill="#FF5C2B">
+        <rect x="0" y="0" width="32" height="36"/>
+        <rect x="64" y="0" width="32" height="36"/>
+        <rect x="128" y="0" width="32" height="36"/>
+        <rect x="192" y="0" width="32" height="36"/>
       </g>
-      <circle cx="130" cy="148" r="96" fill="#FFD426" opacity="0.22"/>
+      <ellipse cx="130" cy="268" rx="94" ry="16" fill="#1A1A1F" opacity="0.14"/>
     `,
     mid: `
-      <!-- Dramatic Blazing Flame Halo -->
-      <path d="M32 232 C16 146, 56 98, 86 78 C78 106, 94 114, 102 90 C112 66, 124 44, 130 36 C138 46, 148 66, 158 90 C166 114, 182 106, 174 78 C204 98, 244 146, 228 232 Z" fill="#FF3B30" stroke="#17171C" stroke-width="4.5" stroke-linejoin="round"/>
-      <path d="M54 224 C44 156, 86 106, 130 68 C174 106, 216 156, 206 224 Z" fill="#FF7A00" opacity="0.85"/>
-      <polygon points="34,74 39,84 50,86 41,92 44,102 34,96 24,102 27,92 18,86 29,84" fill="#FFD426" stroke="#17171C" stroke-width="2.2"/>
-      <polygon points="226,86 230,94 239,96 232,101 234,110 226,105 218,110 220,101 213,96 222,94" fill="#00D4AA" stroke="#17171C" stroke-width="2.2"/>
+      <!-- 3 Clean Stylized Steam Ribbons Rising Above Griddle -->
+      <path d="M84 128 C74 106, 98 94, 86 70" fill="none" stroke="#FFFDF8" stroke-width="9" stroke-linecap="round"/>
+      <path d="M84 128 C74 106, 98 94, 86 70" fill="none" stroke="#1A1A1F" stroke-width="3" stroke-linecap="round"/>
+      <path d="M130 120 C118 94, 144 82, 130 52" fill="none" stroke="#FFD60A" stroke-width="10" stroke-linecap="round"/>
+      <path d="M130 120 C118 94, 144 82, 130 52" fill="none" stroke="#1A1A1F" stroke-width="3" stroke-linecap="round"/>
+      <path d="M176 128 C166 106, 190 94, 178 70" fill="none" stroke="#FFFDF8" stroke-width="9" stroke-linecap="round"/>
+      <path d="M176 128 C166 106, 190 94, 178 70" fill="none" stroke="#1A1A1F" stroke-width="3" stroke-linecap="round"/>
     `,
     hero: `
-      <!-- Dragon Teal Horns with Highlights -->
-      <path d="M84 98 L58 50 L110 82 Z" fill="#00D4AA" stroke="#17171C" stroke-width="4.5" stroke-linejoin="round"/>
-      <path d="M176 98 L202 50 L150 82 Z" fill="#00D4AA" stroke="#17171C" stroke-width="4.5" stroke-linejoin="round"/>
-      <!-- Chef Street Headband -->
-      <path d="M68 112 C94 94, 166 94, 192 112" fill="none" stroke="#FF3B30" stroke-width="14" stroke-linecap="round"/>
-      <!-- Dragon Head -->
-      <path d="M66 128 C66 80, 194 80, 194 128 C194 186, 168 214, 130 214 C92 214, 66 186, 66 128 Z" fill="#FFD426" stroke="#17171C" stroke-width="4.5"/>
-      <!-- Inner Warm Shading -->
-      <path d="M74 158 C84 192, 108 208, 130 208 C152 208, 176 192, 186 158" fill="none" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
-      <!-- Street Aviator Goggles -->
-      <rect x="64" y="122" width="132" height="14" rx="6" fill="#17171C"/>
-      <circle cx="99" cy="130" r="24" fill="#00D4AA" stroke="#17171C" stroke-width="4.5"/>
-      <circle cx="161" cy="130" r="24" fill="#00D4AA" stroke="#17171C" stroke-width="4.5"/>
-      <circle cx="99" cy="130" r="13" fill="#14151B"/>
-      <circle cx="161" cy="130" r="13" fill="#14151B"/>
-      <circle cx="94" cy="125" r="4" fill="#FFFDF8"/>
-      <circle cx="156" cy="125" r="4" fill="#FFFDF8"/>
-      <!-- Fierce Grin with Fangs -->
-      <path d="M88 172 Q130 206 172 172 Z" fill="#14151B" stroke="#17171C" stroke-width="4"/>
-      <polygon points="98,173 108,173 103,186" fill="#FFFDF8"/>
-      <polygon points="152,173 162,173 157,186" fill="#FFFDF8"/>
-      <path d="M114 188 Q130 181 146 188 Q138 197 122 197 Z" fill="#FF3D9A"/>
-      <!-- Street Sizzle Iron Grill Deck -->
-      <rect x="44" y="222" width="172" height="44" rx="14" fill="#181820" stroke="#17171C" stroke-width="4.5"/>
-      <line x1="56" y1="234" x2="204" y2="234" stroke="#52525B" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="82" cy="248" r="10" fill="#FF5526" stroke="#17171C" stroke-width="2.5"/>
-      <circle cx="130" cy="248" r="10" fill="#FFD426" stroke="#17171C" stroke-width="2.5"/>
-      <circle cx="178" cy="248" r="10" fill="#00D4AA" stroke="#17171C" stroke-width="2.5"/>
+      <!-- Left Spatula Arm -->
+      <g transform="translate(46, 178) rotate(-32)">
+        <rect x="-6" y="-22" width="12" height="44" rx="5" fill="#1A1A1F"/>
+        <path d="M-16 -52 H16 L12 -20 H-12 Z" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
+        <line x1="-8" y1="-44" x2="8" y2="-44" stroke="#1A1A1F" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+      <!-- Right Spatula Arm -->
+      <g transform="translate(214, 178) rotate(32)">
+        <rect x="-6" y="-22" width="12" height="44" rx="5" fill="#1A1A1F"/>
+        <path d="M-16 -52 H16 L12 -20 H-12 Z" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
+        <line x1="-8" y1="-44" x2="8" y2="-44" stroke="#1A1A1F" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+      <!-- Orange Stove Chassis Body (Character Face Integrated Cleanly!) -->
+      <rect x="54" y="168" width="152" height="84" rx="18" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="5"/>
+      <!-- Stove Feet -->
+      <rect x="70" y="250" width="24" height="16" rx="6" fill="#1A1A1F"/>
+      <rect x="166" y="250" width="24" height="16" rx="6" fill="#1A1A1F"/>
+      <!-- Stove Control Dial & Expressive Toy Face -->
+      <circle cx="96" cy="204" r="7.5" fill="#1A1A1F"/>
+      <circle cx="164" cy="204" r="7.5" fill="#1A1A1F"/>
+      <circle cx="93.5" cy="201.5" r="2.6" fill="#FFFDF8"/>
+      <circle cx="161.5" cy="201.5" r="2.6" fill="#FFFDF8"/>
+      <path d="M116 218 Q130 232 144 218" fill="none" stroke="#1A1A1F" stroke-width="4.5" stroke-linecap="round"/>
+      <!-- Flame Gauge Knobs -->
+      <circle cx="74" cy="232" r="8" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3"/>
+      <circle cx="186" cy="232" r="8" fill="#00D4AA" stroke="#1A1A1F" stroke-width="3"/>
+      <!-- Heavy Dark Cast-Iron Griddle Plate with Raised Bevel Rim -->
+      <path d="M32 142 H228 L220 174 H40 Z" fill="#1E202B" stroke="#1A1A1F" stroke-width="5" stroke-linejoin="round"/>
+      <rect x="44" y="148" width="172" height="8" rx="4" fill="#475569"/>
+      <!-- Sizzling Golden & Mint Sparks on Griddle -->
+      <circle cx="92" cy="136" r="6" fill="#FFD60A" stroke="#1A1A1F" stroke-width="2.5"/>
+      <circle cx="168" cy="136" r="5" fill="#00D4AA" stroke="#1A1A1F" stroke-width="2.5"/>
     `,
   },
 
-  // #14 RAIN CLOUD — Star-Shades Purple Cloud Vibe
+  // #14 梅雨铁皮雨棚 — Corrugated Striped Tin Awning + Mint Raindrops + Warm Window Glow
   'rain-cloud': {
     bg: `
       <defs>
-        <linearGradient id="rc-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#38BDF8"/>
-          <stop offset="55%" stop-color="#7C3AED"/>
-          <stop offset="100%" stop-color="#1E1B4B"/>
+        <linearGradient id="rc-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#E0F2FE"/>
+          <stop offset="55%" stop-color="#C4B5FD"/>
+          <stop offset="100%" stop-color="#7C3AED"/>
         </linearGradient>
       </defs>
       <rect width="260" height="320" fill="url(#rc-bg)"/>
+      <!-- Cozy Alley Window Behind Awning -->
+      <rect x="60" y="156" width="140" height="114" rx="12" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4.5"/>
+      <rect x="74" y="170" width="112" height="86" rx="8" fill="#FFD60A" opacity="0.45" stroke="#1A1A1F" stroke-width="3"/>
     `,
     mid: `
-      <!-- Neon Rain Drops -->
+      <!-- Falling Mint Raindrops -->
       <g fill="#00D4AA" stroke="#1A1A1F" stroke-width="2.5">
-        <path d="M64 222 Q70 236 64 244 Q58 236 64 222 Z"/>
-        <path d="M108 236 Q114 250 108 258 Q102 250 108 236 Z"/>
-        <path d="M156 232 Q162 246 156 254 Q150 246 156 232 Z"/>
-        <path d="M198 218 Q204 232 198 240 Q192 232 198 218 Z"/>
+        <path d="M56 218 Q62 232 56 240 Q50 232 56 218 Z"/>
+        <path d="M104 234 Q110 248 104 256 Q98 248 104 234 Z"/>
+        <path d="M158 232 Q164 246 158 254 Q152 246 158 232 Z"/>
+        <path d="M204 216 Q210 230 204 238 Q198 230 204 216 Z"/>
       </g>
     `,
     hero: `
-      <!-- Fluffy Purple Cloud Character -->
-      <g fill="#A78BFA" stroke="#1A1A1F" stroke-width="4.5" stroke-linejoin="round">
-        <circle cx="82" cy="148" r="40"/>
-        <circle cx="130" cy="116" r="48"/>
-        <circle cx="178" cy="148" r="40"/>
-        <rect x="74" y="138" width="112" height="52" rx="22" stroke="none"/>
+      <!-- Soft Cloud Resting Above Tin Roof -->
+      <g fill="#FFFDF8" stroke="#1A1A1F" stroke-width="4.5" stroke-linejoin="round">
+        <circle cx="96" cy="94" r="24"/>
+        <circle cx="132" cy="82" r="30"/>
+        <circle cx="168" cy="96" r="22"/>
       </g>
-      <path d="M74 188 H186" stroke="#1A1A1F" stroke-width="4.5" stroke-linecap="round"/>
-      <!-- Star Sunglasses -->
-      <polygon points="96,120 103,134 118,136 107,146 110,161 96,154 82,161 85,146 74,136 89,134" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3.5" stroke-linejoin="round"/>
-      <polygon points="164,120 171,134 186,136 175,146 178,161 164,154 150,161 153,146 142,136 157,134" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3.5" stroke-linejoin="round"/>
-      <line x1="116" y1="142" x2="144" y2="142" stroke="#1A1A1F" stroke-width="4.5"/>
-      <path d="M118 172 Q130 182 142 172" fill="none" stroke="#1A1A1F" stroke-width="4" stroke-linecap="round"/>
-      <!-- Tiny Lightning Bolt -->
-      <polygon points="136,204 116,238 132,238 124,268 152,228 136,228" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3.5" stroke-linejoin="round"/>
+      <!-- Corrugated Striped Tin Awning Roof Character -->
+      <path d="M36 168 L58 108 H202 L224 168 Z" fill="#7C3AED" stroke="#1A1A1F" stroke-width="5" stroke-linejoin="round"/>
+      <!-- Corrugation Rib Stripes -->
+      <path d="M84 108 L74 168 H106 L112 108 Z" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3"/>
+      <path d="M148 108 L154 168 H186 L176 108 Z" fill="#FFFDF8" stroke="#1A1A1F" stroke-width="3"/>
+      <!-- Scalloped Front Valance with Cozy Sleeping Eyes -->
+      <rect x="34" y="166" width="192" height="34" rx="10" fill="#00D4AA" stroke="#1A1A1F" stroke-width="4.5"/>
+      <path d="M86 182 Q96 190 106 182" fill="none" stroke="#1A1A1F" stroke-width="4" stroke-linecap="round"/>
+      <path d="M154 182 Q164 190 174 182" fill="none" stroke="#1A1A1F" stroke-width="4" stroke-linecap="round"/>
+      <path d="M122 188 Q130 194 138 188" fill="none" stroke="#1A1A1F" stroke-width="3.5" stroke-linecap="round"/>
     `,
   },
 

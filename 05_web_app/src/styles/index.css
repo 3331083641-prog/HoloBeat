@@ -1,22 +1,11 @@
 @import "tailwindcss";
+@import "@fontsource/noto-sans-sc/500.css";
+@import "@fontsource/noto-sans-sc/700.css";
+@import "@fontsource/noto-sans-sc/900.css";
 @import "@fontsource/space-grotesk/700.css";
 @import "@fontsource/jetbrains-mono/700.css";
+@import "./tokens.css";
 @import "./holo.css";
-
-:root {
-  /* Tactile Industrial Toy Palette (Teenage Engineering × Playdate × Street Holo) */
-  --bg-canvas: #F3EFE6;
-  --bg-panel: #FBF9F4;
-  --bg-tray: #E7E1D3;
-  --bg-oled: #14151B;
-  --ink-primary: #17171C;
-  --ink-muted: #626272;
-  --accent-purple: #7C3AED;
-  --accent-orange: #FF5526;
-  --accent-mint: #00D4AA;
-  --accent-yellow: #FFD426;
-  --accent-magenta: #FF3D9A;
-}
 
 * {
   box-sizing: border-box;
@@ -29,83 +18,86 @@ body,
   width: 100%;
   margin: 0;
   padding: 0;
-  font-family:
-    'HarmonyOS Sans SC',
-    'PingFang SC',
-    'Noto Sans SC',
-    'Microsoft YaHei',
-    'Space Grotesk',
-    sans-serif;
+  font-family: var(--font-zh-sans);
+  font-weight: 500;
   color: var(--ink-primary);
+  background-color: var(--bg-canvas);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 .font-mono-hw {
-  font-family:
-    'JetBrains Mono',
-    'HarmonyOS Sans SC',
-    'PingFang SC',
-    'Noto Sans SC',
-    'Microsoft YaHei',
-    ui-monospace,
-    monospace;
+  font-family: var(--font-mono-hw);
   font-variant-numeric: tabular-nums;
 }
 
+/* Clear Chinese Weight Hierarchy (never all font-black!) */
 .zh-display {
   font-weight: 900;
   letter-spacing: -0.02em;
 }
 
-/* Warm Architectural Paper Dot-Grid Canvas + Subtle Micro-Grain Tactile Finish */
+.zh-heading {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.zh-label {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.zh-body {
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+/* Warm Cream Mechanical Toy Paper Dot-Grid Canvas + Subtle Micro-Grain */
 .canvas-dot-grid {
   background-color: var(--bg-canvas);
   background-image:
-    radial-gradient(rgba(23, 23, 28, 0.13) 1.15px, transparent 1.15px),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='0.042'/%3E%3C/svg%3E");
+    radial-gradient(rgba(26, 26, 31, 0.11) 1.15px, transparent 1.15px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='0.036'/%3E%3C/svg%3E");
   background-size: 18px 18px, 160px 160px;
 }
 
-/* Recessed Stone Blueprint Dot-Grid (Pinball Arena / Trays) */
+/* Recessed Blueprint Dot-Grid Tray */
 .tray-dot-grid {
   background-color: var(--bg-tray);
-  background-image: radial-gradient(rgba(23, 23, 28, 0.16) 1.2px, transparent 1.2px);
+  background-image: radial-gradient(rgba(26, 26, 31, 0.14) 1.15px, transparent 1.15px);
   background-size: 18px 18px;
 }
 
-/* Injection-Molded Tactile Hardware Panels */
+/* Primary Matte Hardware Panel (2.5px border, 18px radius, 5px hard shadow) */
 .brutal-panel {
   background-color: var(--bg-panel);
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 28%);
-  border: 2.5px solid var(--ink-primary);
-  border-radius: 18px;
+  border: var(--border-panel) solid var(--ink-primary);
+  border-radius: var(--radius-panel);
   box-shadow:
     inset 0 1.5px 0 rgba(255, 255, 255, 0.92),
-    inset 0 -2px 0 rgba(23, 23, 28, 0.06),
-    4px 4px 0px 0px var(--ink-primary);
+    inset 0 -2px 0 rgba(26, 26, 31, 0.05),
+    var(--shadow-panel);
 }
 
+/* Secondary Recessed Sub-Panel (lighter 2px border, 14px radius, 3px shadow) */
 .brutal-panel-sm {
   background-color: var(--bg-panel);
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 32%);
-  border: 2.5px solid var(--ink-primary);
-  border-radius: 15px;
+  border: var(--border-ctrl) solid var(--ink-primary);
+  border-radius: var(--radius-subpanel);
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.9),
-    inset 0 -1.5px 0 rgba(23, 23, 28, 0.05),
-    3px 3px 0px 0px var(--ink-primary);
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    var(--shadow-subpanel);
 }
 
-/* Deep Obsidian Recessed OLED Cavity */
+/* Deep Obsidian OLED Stage Cavity */
 .brutal-oled {
   background-color: var(--bg-oled);
-  border: 2.5px solid var(--ink-primary);
-  border-radius: 18px;
+  border: var(--border-panel) solid var(--ink-primary);
+  border-radius: var(--radius-panel);
   box-shadow:
     inset 0 3px 14px rgba(0, 0, 0, 0.72),
     inset 0 -1px 0 rgba(255, 255, 255, 0.08),
-    4px 4px 0px 0px var(--ink-primary);
+    var(--shadow-panel);
 }
 
 .oled-scanlines::after {
@@ -115,39 +107,31 @@ body,
   pointer-events: none;
   background-image: repeating-linear-gradient(
     0deg,
-    rgba(255, 255, 255, 0.025) 0px,
-    rgba(255, 255, 255, 0.025) 1px,
+    rgba(255, 255, 255, 0.022) 0px,
+    rgba(255, 255, 255, 0.022) 1px,
     transparent 1px,
     transparent 3px
   );
   border-radius: inherit;
 }
 
-/* Chassis Hardware Silkscreen Micro-Label */
 .hw-silkscreen {
-  font-family:
-    'HarmonyOS Sans SC',
-    'PingFang SC',
-    'Noto Sans SC',
-    'Microsoft YaHei',
-    'JetBrains Mono',
-    sans-serif;
-  font-size: 10px;
+  font-family: var(--font-zh-sans);
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: var(--ink-muted);
   user-select: none;
 }
 
-/* Spring-Loaded Tactile Pressable Buttons (Zero Reflow) */
+/* Tactile Pressable Mechanical Controls (Reduced shadow weight vs panels!) */
 .brutal-btn {
-  border: 2.5px solid var(--ink-primary);
+  border: var(--border-ctrl) solid var(--ink-primary);
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.42),
-    inset 0 -1.5px 0 rgba(23, 23, 28, 0.12),
-    3px 3px 0px 0px var(--ink-primary);
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.38),
+    var(--shadow-btn);
   transition:
-    transform 110ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform var(--motion-tap) var(--ease-spring),
     box-shadow 90ms ease-out,
     filter 100ms ease-out,
     background-color 120ms ease-out;
@@ -156,11 +140,10 @@ body,
 }
 
 .brutal-btn:hover:not(:disabled) {
-  filter: brightness(1.035);
+  filter: brightness(1.03);
   transform: translate(-0.5px, -0.5px);
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1.5px 0 rgba(23, 23, 28, 0.12),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.48),
     3.5px 3.5px 0px 0px var(--ink-primary);
 }
 
@@ -168,18 +151,17 @@ body,
 .brutal-btn-pressed {
   transform: translate(3px, 3px) !important;
   box-shadow:
-    inset 0 2px 4px rgba(23, 23, 28, 0.18),
+    inset 0 2px 4px rgba(26, 26, 31, 0.18),
     0px 0px 0px 0px var(--ink-primary) !important;
 }
 
 .brutal-btn-lg {
-  border: 2.5px solid var(--ink-primary);
+  border: var(--border-panel) solid var(--ink-primary);
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.44),
-    inset 0 -2px 0 rgba(23, 23, 28, 0.14),
+    inset 0 2px 0 rgba(255, 255, 255, 0.42),
     4px 4px 0px 0px var(--ink-primary);
   transition:
-    transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform var(--motion-tap) var(--ease-spring),
     box-shadow 95ms ease-out,
     filter 100ms ease-out;
   cursor: pointer;
@@ -190,26 +172,24 @@ body,
   filter: brightness(1.03);
   transform: translate(-0.75px, -0.75px);
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.52),
-    inset 0 -2px 0 rgba(23, 23, 28, 0.14),
+    inset 0 2px 0 rgba(255, 255, 255, 0.5),
     4.75px 4.75px 0px 0px var(--ink-primary);
 }
 
 .brutal-btn-lg:active:not(:disabled) {
   transform: translate(4px, 4px) !important;
   box-shadow:
-    inset 0 2px 5px rgba(23, 23, 28, 0.22),
+    inset 0 2px 5px rgba(26, 26, 31, 0.22),
     0px 0px 0px 0px var(--ink-primary) !important;
 }
 
 .brutal-pad {
-  border: 2px solid var(--ink-primary);
+  border: var(--border-ctrl) solid var(--ink-primary);
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.36),
-    inset 0 -1.5px 0 rgba(23, 23, 28, 0.12),
-    2px 2px 0px 0px var(--ink-primary);
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    var(--shadow-pad);
   transition:
-    transform 90ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 90ms var(--ease-spring),
     box-shadow 75ms ease-out,
     background-color 75ms ease-out,
     filter 75ms ease-out;
@@ -218,21 +198,21 @@ body,
 }
 
 .brutal-pad:hover:not(:disabled) {
-  filter: brightness(1.04);
+  filter: brightness(1.035);
 }
 
-.brutal-pad:active {
+.brutal-pad:active:not(:disabled) {
   transform: translate(2px, 2px) scale(0.97);
   box-shadow:
-    inset 0 1.5px 3px rgba(23, 23, 28, 0.18),
+    inset 0 1.5px 3px rgba(26, 26, 31, 0.16),
     0px 0px 0px 0px var(--ink-primary);
 }
 
-/* Seamless Workspace Module Transition */
+/* Workspace Transition */
 @keyframes page-module-enter {
   0% {
     opacity: 0;
-    transform: translateY(8px) scale(0.992);
+    transform: translateY(7px) scale(0.994);
   }
   100% {
     opacity: 1;
@@ -241,51 +221,62 @@ body,
 }
 
 .animate-page-enter {
-  animation: page-module-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: page-module-enter var(--motion-transition) var(--ease-smooth) both;
 }
 
-/* Gacha Machine Tactile Shake & Capsule Bounce */
+/* Gacha Machine Tactile Shake */
 @keyframes gacha-shake {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  15% { transform: translate(-5px, 2px) rotate(-1.5deg); }
-  32% { transform: translate(5px, -3px) rotate(1.5deg); }
-  50% { transform: translate(-4px, 2px) rotate(-1deg); }
-  70% { transform: translate(3px, -1px) rotate(0.9deg); }
-  86% { transform: translate(-2px, 1px) rotate(-0.4deg); }
+  15% { transform: translate(-4px, 2px) rotate(-1.3deg); }
+  32% { transform: translate(4px, -2px) rotate(1.3deg); }
+  50% { transform: translate(-3px, 1.5px) rotate(-0.8deg); }
+  70% { transform: translate(2px, -1px) rotate(0.7deg); }
+  86% { transform: translate(-1.5px, 1px) rotate(-0.3deg); }
 }
 
 .animate-gacha-shake {
-  animation: gacha-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  animation: gacha-shake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 
-/* Hero Card Ceremonial Spring Unbox Pop */
+/* Hero Card Unbox Spring Pop */
 @keyframes card-pop-in {
-  0% { transform: scale(0.68) translateY(34px) rotate(-3deg); opacity: 0; }
-  58% { transform: scale(1.055) translateY(-6px) rotate(0.8deg); opacity: 1; }
-  82% { transform: scale(0.985) translateY(2px) rotate(-0.2deg); opacity: 1; }
+  0% { transform: scale(0.72) translateY(28px) rotate(-2.5deg); opacity: 0; }
+  58% { transform: scale(1.04) translateY(-5px) rotate(0.6deg); opacity: 1; }
+  82% { transform: scale(0.99) translateY(1.5px) rotate(-0.2deg); opacity: 1; }
   100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
 }
 
 .animate-card-pop {
-  animation: card-pop-in 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: card-pop-in 440ms var(--ease-smooth);
 }
 
-/* Beat Deck Rhythm Pad Impact Recoil */
+/* Beat Pad Impact Recoil */
 @keyframes pad-hit-recoil {
-  0% { transform: scale(1.13) translateY(-1.5px); filter: brightness(1.24); }
+  0% { transform: scale(1.12) translateY(-1.5px); filter: brightness(1.22); }
   65% { transform: scale(0.97); }
   100% { transform: scale(1); filter: brightness(1); }
 }
 
 .animate-pad-hit {
-  animation: pad-hit-recoil 190ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: pad-hit-recoil 170ms var(--ease-smooth);
 }
 
-/* Forge Ceremonial Laser Lamination Sweep */
+/* Cartridge Slot Lock-In Pulse */
+@keyframes cartridge-seat {
+  0% { transform: translateY(-6px) scale(0.96); }
+  55% { transform: translateY(2px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.animate-cartridge-seat {
+  animation: cartridge-seat 240ms var(--ease-spring);
+}
+
+/* Forge Ceremonial Foil Sweep */
 @keyframes forge-laser-scan {
   0% { transform: translateY(-100%); opacity: 0; }
-  12% { opacity: 1; }
-  88% { opacity: 1; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
   100% { transform: translateY(520%); opacity: 0; }
 }
 
@@ -293,17 +284,27 @@ body,
   animation: forge-laser-scan 640ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Forge Ceremonial Stamp Slam */
 @keyframes forge-stamp-slam {
-  0% { transform: scale(2.1) rotate(-14deg); opacity: 0; }
-  35% { transform: scale(0.92) rotate(-7deg); opacity: 1; }
-  55% { transform: scale(1.04) rotate(-8deg); opacity: 1; }
-  82% { transform: scale(1) rotate(-8deg); opacity: 1; }
-  100% { transform: scale(1.08) rotate(-8deg); opacity: 0; }
+  0% { transform: scale(1.9) rotate(-12deg); opacity: 0; }
+  38% { transform: scale(0.94) rotate(-6deg); opacity: 1; }
+  58% { transform: scale(1.03) rotate(-7deg); opacity: 1; }
+  84% { transform: scale(1) rotate(-7deg); opacity: 1; }
+  100% { transform: scale(1.05) rotate(-7deg); opacity: 0; }
 }
 
 .animate-forge-stamp {
-  animation: forge-stamp-slam 980ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: forge-stamp-slam 920ms var(--ease-smooth) forwards;
+}
+
+/* Newly Minted Card Arrival Highlight in Binder */
+@keyframes binder-slot-arrive {
+  0% { transform: scale(0.84); box-shadow: 0 0 0 0 rgba(0, 212, 170, 0.9); }
+  55% { transform: scale(1.04); box-shadow: 0 0 0 8px rgba(0, 212, 170, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 212, 170, 0); }
+}
+
+.animate-binder-arrive {
+  animation: binder-slot-arrive 720ms var(--ease-spring);
 }
 
 /* Subtle Hardware LED Pulse */
@@ -316,54 +317,6 @@ body,
   animation: led-pulse-soft 1.8s ease-in-out infinite;
 }
 
-@keyframes float-slow {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-5px) rotate(3deg); }
-}
-
-.animate-float-slow {
-  animation: float-slow 3.4s ease-in-out infinite;
-}
-
-/* Custom sleek scrollbar for binder & drawers */
-.holo-scroll::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.holo-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-.holo-scroll::-webkit-scrollbar-thumb {
-  background: rgba(23, 23, 28, 0.22);
-  border-radius: 999px;
-}
-.holo-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(23, 23, 28, 0.42);
-}
-
-/* Shared Element Card Flight Transition (Gacha -> Beat / Pinball) */
-@keyframes card-fly-across {
-  0% {
-    transform: translate(-50%, -50%) scale(0.95) rotate(-6deg);
-    opacity: 0;
-  }
-  18% {
-    opacity: 1;
-  }
-  60% {
-    transform: translate(-18%, -62%) scale(0.68) rotate(8deg);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-110%, -26%) scale(0.32) rotate(-4deg);
-    opacity: 0;
-  }
-}
-
-.animate-card-fly {
-  animation: card-fly-across 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
 /* Capsule Drop Into Gacha Chute */
 @keyframes capsule-chute-drop {
   0% { transform: translateY(-44px) scale(0.85) rotate(-18deg); opacity: 0; }
@@ -373,32 +326,66 @@ body,
 }
 
 .animate-capsule-chute {
-  animation: capsule-chute-drop 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: capsule-chute-drop 380ms var(--ease-smooth) both;
+}
+
+/* Custom sleek scrollbar */
+.holo-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.holo-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.holo-scroll::-webkit-scrollbar-thumb {
+  background: rgba(26, 26, 31, 0.24);
+  border-radius: 999px;
+}
+.holo-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 26, 31, 0.44);
 }
 
 /* Keyboard Focus Accessibility Ring */
 button:focus-visible,
 [role="slider"]:focus-visible,
-input:focus-visible {
-  outline: 2.5px solid #7C3AED;
+[tabindex]:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2.5px solid var(--accent-purple);
   outline-offset: 2px;
 }
 
-/* Respect System Reduced Motion Preference */
+/* Respect BOTH System prefers-reduced-motion AND In-App 精简动效 Toggle */
 @media (prefers-reduced-motion: reduce) {
   .animate-page-enter,
   .animate-gacha-shake,
   .animate-card-pop,
   .animate-pad-hit,
+  .animate-cartridge-seat,
   .animate-forge-laser,
   .animate-forge-stamp,
+  .animate-binder-arrive,
   .animate-led-soft,
-  .animate-float-slow,
-  .animate-card-fly,
   .animate-capsule-chute,
   .holo-stage-aura,
   .holo-shine-border {
     animation: none !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+[data-reduced-motion="true"] .animate-page-enter,
+[data-reduced-motion="true"] .animate-gacha-shake,
+[data-reduced-motion="true"] .animate-card-pop,
+[data-reduced-motion="true"] .animate-pad-hit,
+[data-reduced-motion="true"] .animate-cartridge-seat,
+[data-reduced-motion="true"] .animate-forge-laser,
+[data-reduced-motion="true"] .animate-forge-stamp,
+[data-reduced-motion="true"] .animate-binder-arrive,
+[data-reduced-motion="true"] .animate-led-soft,
+[data-reduced-motion="true"] .animate-capsule-chute,
+[data-reduced-motion="true"] .holo-stage-aura,
+[data-reduced-motion="true"] .holo-shine-border {
+  animation: none !important;
+  transition-duration: 0.01ms !important;
 }

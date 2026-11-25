@@ -1,11 +1,9 @@
 /* ============================================================================
-   HOLOBEAT Museum-Grade 3D Optical Holographic Card Engine
-   100% Offline Zero-Remote-Assets Pipeline
-   Features:
-   - Hooke's Law Spring 3D Tilt + Dynamic Cast Shadow
-   - Zero-Washout Black-Valley Spectral Diffraction Grating
-   - Dual Counter-Scrolling Crushed-Diamond Micro-Facets
-   - Unmistakable 6-Tier Rarity Hierarchy (N -> R -> SR -> SSR -> UR -> LTD)
+   HOLOBEAT Museum-Grade 3D Optical Holographic Card Engine (V3)
+   Core Optical Rules:
+   1. At rest (--hyp = 0): crisp undiluted artwork, minimal surface veil
+   2. On pointer movement (--hyp -> 1): distinct directional refraction per foil
+   3. Faces, text, badges, waveform & key dark ink contours remain protected!
    ============================================================================ */
 
 .holo-scene {
@@ -13,44 +11,48 @@
   position: relative;
 }
 
-/* Ambient Rarity Spotlight Aura behind Hero SSR / UR / LTD Cards */
+/* Localised subtle stage glow — ONLY on Hero Holo Card, never competing in sidebars */
 .holo-stage-aura {
   position: absolute;
-  inset: -14px;
-  border-radius: 28px;
+  inset: -12px;
+  border-radius: 26px;
   pointer-events: none;
   opacity: 0;
   filter: blur(22px);
-  transition: opacity 320ms ease, transform 240ms ease;
+  transition: opacity 300ms ease, transform 240ms ease;
   z-index: 0;
 }
 
 .holo-stage-aura[data-rarity="SR"] {
-  opacity: 0.26;
-  background: radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.7), rgba(56, 189, 248, 0.35), transparent 72%);
+  opacity: 0.22;
+  background: radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.55), rgba(0, 212, 170, 0.25), transparent 72%);
 }
 
 .holo-stage-aura[data-rarity="SSR"] {
-  opacity: 0.42;
-  background: conic-gradient(from 0deg, #FFD426, #FF5526, #FF3D9A, #FFD426);
-  animation: aura-spin 11s linear infinite;
+  opacity: 0.34;
+  background: conic-gradient(from 0deg, #FFD60A, #FF5C2B, #7C3AED, #FFD60A);
+  animation: aura-spin 14s linear infinite;
 }
 
 .holo-stage-aura[data-rarity="UR"] {
-  opacity: 0.56;
-  background: conic-gradient(from 45deg, #FF3D9A, #FFD426, #00D4AA, #38BDF8, #7C3AED, #FF3D9A);
-  animation: aura-spin 8s linear infinite;
+  opacity: 0.44;
+  background: conic-gradient(from 45deg, #FF3D9A, #FFD60A, #00D4AA, #7C3AED, #FF3D9A);
+  animation: aura-spin 11s linear infinite;
 }
 
 .holo-stage-aura[data-rarity="LTD"] {
-  opacity: 0.48;
-  background: conic-gradient(from 30deg, #FEF08A, #92400E, #FFD426, #181820, #FEF08A);
-  animation: aura-spin 12s linear infinite;
+  opacity: 0.38;
+  background: conic-gradient(from 30deg, #FEF08A, #92400E, #FFD60A, #1A1A1F, #FEF08A);
+  animation: aura-spin 14s linear infinite;
+}
+
+.holo-paused .holo-stage-aura {
+  animation-play-state: paused !important;
 }
 
 @keyframes aura-spin {
-  0% { filter: blur(24px) hue-rotate(0deg); }
-  100% { filter: blur(24px) hue-rotate(360deg); }
+  0% { filter: blur(22px) hue-rotate(0deg); }
+  100% { filter: blur(22px) hue-rotate(360deg); }
 }
 
 .holo-card-shell {
@@ -76,8 +78,8 @@
   transform: scale(var(--scale)) rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
   border-radius: 18px;
   box-shadow:
-    var(--shadow-x) var(--shadow-y) 36px rgba(0, 0, 0, 0.56),
-    0 2px 6px rgba(0, 0, 0, 0.35);
+    var(--shadow-x) var(--shadow-y) 34px rgba(0, 0, 0, 0.54),
+    0 2px 6px rgba(0, 0, 0, 0.32);
 }
 
 .holo-card-shell.holo-active {
@@ -86,7 +88,7 @@
 
 .holo-card-shell.holo-flipped {
   transform: scale(var(--scale)) rotateX(var(--rotate-x)) rotateY(calc(180deg + var(--rotate-y)));
-  transition: transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .holo-face {
@@ -96,7 +98,7 @@
   -webkit-backface-visibility: hidden;
   border-radius: 18px;
   overflow: hidden;
-  border: 2.5px solid #17171C;
+  border: 2.5px solid #1A1A1F;
 }
 
 .holo-face-back {
@@ -104,7 +106,7 @@
 }
 
 /* ============================================================================
-   RARITY-TIERED OUTER FRAMES (Unmistakable Visual Class Hierarchy)
+   RARITY-TIERED OUTER FRAMES
    ============================================================================ */
 
 .holo-card-frame {
@@ -113,14 +115,12 @@
   background-position: var(--bg-x) var(--bg-y);
 }
 
-/* N — Matte Archival Paper Stock (Clean, tactile, restrained) */
 .holo-card-frame[data-rarity="N"] {
   padding: 6px;
   background: linear-gradient(145deg, #EFE9DC 0%, #DFD6C3 52%, #EAE3D2 100%);
   background-size: 100% 100%;
 }
 
-/* R — Brushed Anodized Titanium Silver */
 .holo-card-frame[data-rarity="R"] {
   padding: 6.5px;
   background:
@@ -136,54 +136,48 @@
   background-position: center, var(--bg-x) var(--bg-y);
 }
 
-/* SR — Chromatic Violet-Cyan Metallic Prism */
 .holo-card-frame[data-rarity="SR"] {
   padding: 7px;
-  background: linear-gradient(125deg, #7C3AED 0%, #38BDF8 30%, #E0F2FE 50%, #A855F7 74%, #00D4AA 100%);
+  background: linear-gradient(125deg, #7C3AED 0%, #38BDF8 34%, #E0F2FE 50%, #7C3AED 74%, #00D4AA 100%);
 }
 
-/* SSR — Radiant Prismatic Gold-Rainbow Foil */
 .holo-card-frame[data-rarity="SSR"] {
   padding: 8px;
   background: linear-gradient(
     125deg,
     #FEF08A 0%,
-    #FF5526 22%,
-    #FF3D9A 42%,
-    #FFFBEB 55%,
-    #00D4AA 72%,
-    #FFD426 100%
+    #FF5C2B 28%,
+    #FFFBEB 52%,
+    #00D4AA 74%,
+    #FFD60A 100%
   );
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
 
-/* UR — Crushed-Diamond Master Iridescent Spectrum */
 .holo-card-frame[data-rarity="UR"] {
   padding: 8.5px;
   background:
     repeating-linear-gradient(
       45deg,
-      rgba(255, 255, 255, 0.25) 0px,
-      rgba(255, 255, 255, 0.25) 2px,
+      rgba(255, 255, 255, 0.22) 0px,
+      rgba(255, 255, 255, 0.22) 2px,
       transparent 2px,
       transparent 6px
     ),
     linear-gradient(
       120deg,
       #FF3D9A 0%,
-      #FFD426 18%,
-      #00D4AA 36%,
-      #38BDF8 54%,
-      #8B5CF6 72%,
-      #FF3D9A 90%,
-      #FFFBEB 100%
+      #FFD60A 22%,
+      #00D4AA 44%,
+      #38BDF8 64%,
+      #7C3AED 84%,
+      #FFFDF8 100%
     );
   background-size: 100% 100%, 300% 300%;
   background-position: center, var(--bg-x) var(--bg-y);
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.78);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.72);
 }
 
-/* LTD — Obsidian Carbon & Etched 24K Gold Collector Edition */
 .holo-card-frame[data-rarity="LTD"] {
   padding: 8.5px;
   background:
@@ -194,13 +188,13 @@
       transparent 1px,
       transparent 5px
     ),
-    linear-gradient(130deg, #17171C 0%, #3F2E0E 26%, #FEF08A 48%, #D97706 58%, #181820 82%, #F59E0B 100%);
+    linear-gradient(130deg, #1A1A1F 0%, #3F2E0E 26%, #FEF08A 48%, #D97706 58%, #181820 82%, #F59E0B 100%);
   background-size: 100% 100%, 280% 280%;
   background-position: center, var(--bg-x) var(--bg-y);
-  box-shadow: inset 0 0 0 1px rgba(254, 240, 138, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(254, 240, 138, 0.52);
 }
 
-/* Explicit Foil Frame Overrides for Custom Forge Finishes (SSR/UR/LTD) */
+/* Explicit Foil Frame Overrides */
 .holo-card-frame[data-rarity="SSR"][data-foil="gold"],
 .holo-card-frame[data-rarity="UR"][data-foil="gold"] {
   background: linear-gradient(130deg, #FEF08A 0%, #F59E0B 28%, #FFFBEB 50%, #B45309 74%, #FEF08A 100%);
@@ -210,40 +204,40 @@
 
 .holo-card-frame[data-rarity="SSR"][data-foil="cyber"],
 .holo-card-frame[data-rarity="UR"][data-foil="cyber"] {
-  background: linear-gradient(125deg, #00F5D4 0%, #1E1B4B 28%, #7C3AED 52%, #38BDF8 74%, #FF3D9A 100%);
+  background: linear-gradient(125deg, #00D4AA 0%, #1E1B4B 30%, #7C3AED 56%, #38BDF8 80%, #00D4AA 100%);
   background-size: 260% 260%;
   background-position: var(--bg-x) var(--bg-y);
 }
 
 .holo-card-frame[data-rarity="SSR"][data-foil="chrome"],
 .holo-card-frame[data-rarity="UR"][data-foil="chrome"] {
-  background: linear-gradient(130deg, #F8FAFC 0%, #64748B 26%, #E0F2FE 48%, #1E293B 68%, #C084FC 88%, #F8FAFC 100%);
+  background: linear-gradient(130deg, #F8FAFC 0%, #64748B 28%, #E2E8F0 50%, #1E293B 72%, #CBD5E1 92%, #F8FAFC 100%);
   background-size: 260% 260%;
   background-position: var(--bg-x) var(--bg-y);
 }
 
 .holo-card-frame[data-rarity="SSR"][data-foil="spark"],
 .holo-card-frame[data-rarity="UR"][data-foil="spark"] {
-  background: linear-gradient(135deg, #E2E8F0 0%, #BAE6FD 25%, #F5D0FE 50%, #FEF08A 75%, #F8FAFC 100%);
+  background: linear-gradient(135deg, #E2E8F0 0%, #BAE6FD 30%, #F8FAFC 55%, #CBD5E1 80%, #F8FAFC 100%);
   background-size: 260% 260%;
   background-position: var(--bg-x) var(--bg-y);
 }
 
-/* 3-Layer SVG Z-Depth Parallax (Driven Directly by Spring Vars) */
+/* 3-Layer SVG Z-Depth Parallax */
 .holo-layer-bg {
-  transform: translate3d(calc(var(--px) * 5px), calc(var(--py) * 5px), 0) scale(1.07);
+  transform: translate3d(calc(var(--px) * 4.5px), calc(var(--py) * 4.5px), 0) scale(1.06);
 }
 .holo-layer-mid {
-  transform: translate3d(calc(var(--px) * -4.5px), calc(var(--py) * -4.5px), 0) scale(1.04);
+  transform: translate3d(calc(var(--px) * -4px), calc(var(--py) * -4px), 0) scale(1.03);
 }
 .holo-layer-hero {
-  transform: translate3d(calc(var(--px) * -11.5px), calc(var(--py) * -11.5px), 0) scale(1.02);
-  filter: drop-shadow(calc(var(--px) * 6px) calc(var(--py) * 6px + 4px) 6px rgba(0, 0, 0, 0.28));
+  transform: translate3d(calc(var(--px) * -10px), calc(var(--py) * -10px), 0) scale(1.015);
+  filter: drop-shadow(calc(var(--px) * 5px) calc(var(--py) * 5px + 3px) 5px rgba(0, 0, 0, 0.24));
 }
 
 /* ============================================================================
-   OPTICAL LAYER 1: ZERO-WASHOUT BLACK-VALLEY DIFFRACTION FOIL
-   In 'color-dodge' / 'screen', #000 is 100% transparent -> art stays ultra-crisp!
+   5 DISTINCT FOIL MATERIALS (Zero Washout at Rest, Masked Directional Tilt!)
+   Placed strictly inside the art stage (below z-20 badges/stickers/nameplate!)
    ============================================================================ */
 .holo-foil-layer {
   position: absolute;
@@ -251,128 +245,130 @@
   z-index: 12;
   pointer-events: none;
   mix-blend-mode: color-dodge;
-  /* Crisp & restrained at rest (--hyp = 0); dramatic optical diffraction on pointer tilt! */
-  opacity: calc(var(--foil-intensity) * (0.14 + var(--hyp) * 0.82));
+  /* Calm & ultra-legible at rest (--hyp = 0 -> ~0.06); blossoms cleanly on pointer tilt! */
+  opacity: calc(var(--foil-intensity) * (0.06 + var(--hyp) * 0.72));
+  /* Soft radial spotlight mask protects character center/face from rainbow washout */
+  mask-image: radial-gradient(
+    ellipse 85% 80% at var(--pointer-x) var(--pointer-y),
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.52) 48%,
+    rgba(0, 0, 0, 0.14) 100%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 85% 80% at var(--pointer-x) var(--pointer-y),
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.52) 48%,
+    rgba(0, 0, 0, 0.14) 100%
+  );
 }
 
-/* 1. PRISM — Razor-Sharp Rainbow Laser Diffraction Shafts + Micro-Grating */
+/* 1. PRISM — 棱镜：宽方向光谱光带 */
 .holo-foil-prism {
   background-image:
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 255, 255, 0.08) 0px,
-      rgba(255, 255, 255, 0.08) 1px,
-      rgba(0, 0, 0, 0.35) 1px,
-      rgba(0, 0, 0, 0.35) 4px
-    ),
-    repeating-linear-gradient(
+    linear-gradient(
       118deg,
       #000000 0%,
-      #000000 10%,
-      rgba(255, 61, 154, 0.85) 17%,
-      rgba(255, 212, 38, 0.9) 24%,
-      rgba(0, 212, 170, 0.85) 31%,
-      rgba(56, 189, 248, 0.9) 38%,
-      rgba(124, 58, 237, 0.85) 45%,
-      #000000 54%,
+      #000000 18%,
+      rgba(124, 58, 237, 0.85) 28%,
+      rgba(0, 212, 170, 0.9) 39%,
+      rgba(255, 214, 10, 0.9) 50%,
+      rgba(255, 92, 43, 0.82) 60%,
       #000000 72%,
-      rgba(0, 212, 170, 0.75) 82%,
-      rgba(255, 61, 154, 0.8) 90%,
-      #000000 100%
-    );
-  background-size: 100% 100%, 300% 300%;
-  background-position: center, var(--bg-x) var(--bg-y);
-  filter: brightness(0.95) contrast(1.45) saturate(1.35);
-}
-
-/* 2. SPARK — Crushed Diamond Refraction + Cold Starburst Spectrum */
-.holo-foil-spark {
-  background-image:
-    linear-gradient(
-      128deg,
-      #000000 0%,
-      rgba(56, 189, 248, 0.65) 22%,
-      rgba(255, 255, 255, 0.72) 34%,
-      rgba(217, 70, 239, 0.65) 48%,
-      #000000 62%,
-      rgba(254, 240, 138, 0.72) 82%,
       #000000 100%
     );
   background-size: 280% 280%;
   background-position: var(--bg-x) var(--bg-y);
-  filter: brightness(0.92) contrast(1.5);
+  filter: brightness(0.92) contrast(1.38) saturate(1.22);
 }
 
-/* 3. CYBER — Precision Laser Scanline Diffraction Matrix */
+/* 2. SPARK — 星尘：稀疏冷银金属亮点 */
+.holo-foil-spark {
+  background-image:
+    linear-gradient(
+      132deg,
+      #000000 0%,
+      #000000 28%,
+      rgba(226, 232, 240, 0.78) 44%,
+      rgba(186, 230, 253, 0.65) 54%,
+      #000000 68%,
+      #000000 100%
+    );
+  background-size: 260% 260%;
+  background-position: var(--bg-x) var(--bg-y);
+  filter: brightness(0.9) contrast(1.45);
+}
+
+/* 3. CYBER — 激光：受控方向纹理 */
 .holo-foil-cyber {
   background-image:
     repeating-linear-gradient(
-      -35deg,
-      rgba(0, 245, 212, 0.72) 0px,
-      rgba(0, 245, 212, 0.72) 2px,
-      #000000 2px,
-      #000000 7px,
-      rgba(139, 92, 246, 0.65) 7px,
-      rgba(139, 92, 246, 0.65) 9px,
-      #000000 9px,
-      #000000 15px
+      -36deg,
+      rgba(0, 212, 170, 0.62) 0px,
+      rgba(0, 212, 170, 0.62) 1.5px,
+      #000000 1.5px,
+      #000000 8px,
+      rgba(124, 58, 237, 0.56) 8px,
+      rgba(124, 58, 237, 0.56) 9.5px,
+      #000000 9.5px,
+      #000000 18px
     ),
     linear-gradient(
       115deg,
       #000000 0%,
-      rgba(0, 245, 212, 0.8) 28%,
-      rgba(56, 189, 248, 0.85) 48%,
-      rgba(255, 61, 154, 0.8) 72%,
+      rgba(0, 212, 170, 0.68) 38%,
+      rgba(124, 58, 237, 0.68) 62%,
       #000000 100%
     );
-  background-size: 160% 160%, 280% 280%;
+  background-size: 160% 160%, 260% 260%;
   background-position: var(--bg-x2) var(--bg-y2), var(--bg-x) var(--bg-y);
-  filter: brightness(0.95) contrast(1.45);
+  filter: brightness(0.9) contrast(1.38);
 }
 
-/* 4. CHROME — Liquid Mercury Conic Anisotropic Reflection */
+/* 4. CHROME — 铬银：低色度冷金属流光 */
 .holo-foil-chrome {
   background-image:
     conic-gradient(
-      from 30deg at var(--pointer-x) var(--pointer-y),
+      from 25deg at var(--pointer-x) var(--pointer-y),
       #000000 0deg,
-      rgba(224, 242, 254, 0.92) 38deg,
-      rgba(56, 189, 248, 0.7) 70deg,
+      rgba(241, 245, 249, 0.85) 36deg,
+      rgba(148, 163, 184, 0.52) 68deg,
       #000000 120deg,
-      rgba(192, 132, 252, 0.78) 185deg,
-      rgba(248, 250, 252, 0.95) 225deg,
-      #000000 285deg,
-      rgba(0, 212, 170, 0.65) 330deg,
+      rgba(226, 232, 240, 0.78) 205deg,
+      #000000 280deg,
+      rgba(203, 213, 225, 0.6) 330deg,
       #000000 360deg
     );
-  background-size: 180% 180%;
+  background-size: 170% 170%;
   background-position: var(--bg-x) var(--bg-y);
-  filter: brightness(0.96) contrast(1.55);
+  filter: brightness(0.92) contrast(1.48) saturate(0.35);
 }
 
-/* 5. GOLD — Embossed Molten 24K Gold Foil Wave */
+/* 5. GOLD — 金箔：温暖压纹质感 */
 .holo-foil-gold {
   background-image:
     repeating-linear-gradient(
+      -45deg,
+      rgba(254, 240, 138, 0.14) 0px,
+      rgba(254, 240, 138, 0.14) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    linear-gradient(
       128deg,
       #000000 0%,
-      rgba(217, 119, 6, 0.72) 18%,
-      rgba(254, 240, 138, 0.95) 34%,
-      rgba(255, 251, 235, 0.95) 41%,
-      rgba(234, 88, 12, 0.65) 54%,
-      #000000 68%,
-      rgba(254, 240, 138, 0.82) 86%,
+      rgba(180, 83, 9, 0.62) 22%,
+      rgba(254, 240, 138, 0.88) 40%,
+      rgba(255, 251, 235, 0.86) 47%,
+      rgba(217, 119, 6, 0.55) 60%,
+      #000000 76%,
       #000000 100%
     );
-  background-size: 280% 280%;
-  background-position: var(--bg-x) var(--bg-y);
-  filter: brightness(0.96) contrast(1.42) saturate(1.25);
+  background-size: 100% 100%, 260% 260%;
+  background-position: center, var(--bg-x) var(--bg-y);
+  filter: brightness(0.94) contrast(1.36) saturate(1.18);
 }
 
-/* ============================================================================
-   OPTICAL LAYER 2: COUNTER-SCROLLING CRUSHED-DIAMOND SPARKLE FACETS
-   (Active on SSR, UR, LTD & Spark foil — authentic optical sparkle parallax!)
-   ============================================================================ */
+/* Sparse Metallic Sparkle Facets (only near pointer hotspot!) */
 .holo-sparkle-layer {
   position: absolute;
   inset: 0;
@@ -381,65 +377,58 @@
   mix-blend-mode: screen;
   opacity: 0;
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='%23FFFFFF'%3E%3Cpath d='M18 6 L20 14 L28 16 L20 18 L18 26 L16 18 L8 16 L16 14 Z' opacity='0.95'/%3E%3Cpath d='M72 28 L73.5 33.5 L79 35 L73.5 36.5 L72 42 L70.5 36.5 L65 35 L70.5 33.5 Z' fill='%23FEF08A' opacity='0.9'/%3E%3Cpath d='M38 66 L40 73 L47 75 L40 77 L38 84 L36 77 L29 75 L36 73 Z' fill='%237DD3FC' opacity='0.88'/%3E%3Ccircle cx='54' cy='18' r='1.6' opacity='0.75'/%3E%3Ccircle cx='82' cy='76' r='2' fill='%23F5D0FE' opacity='0.85'/%3E%3Ccircle cx='12' cy='58' r='1.5' fill='%2300D4AA' opacity='0.8'/%3E%3C/g%3E%3C/svg%3E"),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='68' height='68' viewBox='0 0 68 68'%3E%3Cg fill='%23FFFFFF'%3E%3Cpath d='M48 10 L49.5 15 L54.5 16.5 L49.5 18 L48 23 L46.5 18 L41.5 16.5 L46.5 15 Z' opacity='0.85'/%3E%3Cpath d='M16 42 L17.2 46 L21 47.2 L17.2 48.4 L16 52.4 L14.8 48.4 L11 47.2 L14.8 46 Z' fill='%23FEF08A' opacity='0.82'/%3E%3Ccircle cx='30' cy='26' r='1.4' opacity='0.7'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 96px 96px, 68px 68px;
-  background-position: var(--bg-x) var(--bg-y), var(--bg-x2) var(--bg-y2);
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cg fill='%23FFFFFF'%3E%3Cpath d='M22 10 L23.5 16 L29.5 17.5 L23.5 19 L22 25 L20.5 19 L14.5 17.5 L20.5 16 Z' opacity='0.9'/%3E%3Cpath d='M94 42 L95.2 46.5 L99.8 47.7 L95.2 48.9 L94 53.5 L92.8 48.9 L88.2 47.7 L92.8 46.5 Z' fill='%23FEF08A' opacity='0.85'/%3E%3Ccircle cx='58' cy='96' r='1.6' opacity='0.8'/%3E%3Ccircle cx='110' cy='102' r='1.4' fill='%23BAE6FD' opacity='0.82'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  background-position: var(--bg-x) var(--bg-y);
   mask-image: radial-gradient(
-    circle 155px at var(--pointer-x) var(--pointer-y),
-    rgba(0, 0, 0, 1) 0%,
-    rgba(0, 0, 0, 0.55) 48%,
-    rgba(0, 0, 0, 0.14) 100%
+    circle 130px at var(--pointer-x) var(--pointer-y),
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    rgba(0, 0, 0, 0) 100%
   );
   -webkit-mask-image: radial-gradient(
-    circle 155px at var(--pointer-x) var(--pointer-y),
-    rgba(0, 0, 0, 1) 0%,
-    rgba(0, 0, 0, 0.55) 48%,
-    rgba(0, 0, 0, 0.14) 100%
+    circle 130px at var(--pointer-x) var(--pointer-y),
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    rgba(0, 0, 0, 0) 100%
   );
 }
 
 .holo-sparkle-layer[data-active="soft"] {
-  opacity: calc(0.12 + var(--hyp) * 0.56);
+  opacity: calc(0.04 + var(--hyp) * 0.52);
 }
 
 .holo-sparkle-layer[data-active="strong"] {
-  opacity: calc(0.24 + var(--hyp) * 0.72);
+  opacity: calc(0.08 + var(--hyp) * 0.72);
 }
 
-/* ============================================================================
-   OPTICAL LAYER 3: MICRO-PAPER / FOIL GRAIN TEXTURE
-   ============================================================================ */
+/* Micro paper/foil grain */
 .holo-noise-layer {
   position: absolute;
   inset: 0;
   z-index: 14;
   pointer-events: none;
-  opacity: 0.14;
+  opacity: 0.1;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.85'/%3E%3C/svg%3E");
 }
 
-/* ============================================================================
-   OPTICAL LAYER 4: SPECULAR HOTSPOT + ANISOTROPIC LIGHT BAR
-   ============================================================================ */
+/* Subtle Specular Glint reacting to pointer */
 .holo-glare-layer {
   position: absolute;
   inset: 0;
   z-index: 15;
   pointer-events: none;
   mix-blend-mode: overlay;
-  opacity: calc(0.32 + var(--hyp) * 0.42);
-  background:
-    radial-gradient(
-      farthest-corner circle at var(--pointer-x) var(--pointer-y),
-      rgba(255, 255, 255, 0.85) 0%,
-      rgba(255, 255, 255, 0.24) 24%,
-      rgba(0, 0, 0, 0.14) 76%
-    );
+  opacity: calc(0.14 + var(--hyp) * 0.36);
+  background: radial-gradient(
+    farthest-corner circle at var(--pointer-x) var(--pointer-y),
+    rgba(255, 255, 255, 0.78) 0%,
+    rgba(255, 255, 255, 0.18) 26%,
+    rgba(0, 0, 0, 0.08) 76%
+  );
 }
 
-/* Subtle 3D Bevel Edge Rim Glint reacting to Pointer Position */
 .holo-rim-glint {
   position: absolute;
   inset: 0;
@@ -447,11 +436,11 @@
   pointer-events: none;
   border-radius: inherit;
   box-shadow:
-    inset calc(var(--px) * -2px) calc(var(--py) * -2px) 0 1px rgba(255, 255, 255, 0.45),
-    inset calc(var(--px) * 2px) calc(var(--py) * 2px) 0 1px rgba(0, 0, 0, 0.24);
+    inset calc(var(--px) * -2px) calc(var(--py) * -2px) 0 1px rgba(255, 255, 255, 0.38),
+    inset calc(var(--px) * 2px) calc(var(--py) * 2px) 0 1px rgba(0, 0, 0, 0.22);
 }
 
-/* Lightweight static + hover diagonal holo shimmer for thumbnails (60fps safe!) */
+/* Restrained matte thumbnail sheen (no noisy competition with hero card!) */
 .holo-thumb-sheen {
   position: relative;
   overflow: hidden;
@@ -464,25 +453,22 @@
   pointer-events: none;
   background: linear-gradient(
     118deg,
-    transparent 24%,
-    rgba(255, 61, 154, 0.24) 36%,
-    rgba(255, 212, 38, 0.3) 45%,
-    rgba(0, 212, 170, 0.28) 54%,
-    rgba(56, 189, 248, 0.24) 62%,
-    transparent 74%
+    transparent 30%,
+    rgba(255, 255, 255, 0.22) 48%,
+    rgba(255, 214, 10, 0.14) 56%,
+    transparent 70%
   );
   mix-blend-mode: screen;
-  opacity: 0.62;
-  transform: translateX(-18%);
-  transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease-out;
+  opacity: 0.28;
+  transform: translateX(-20%);
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease-out;
 }
 
 .holo-thumb-sheen:hover::after {
-  opacity: 1;
+  opacity: 0.78;
   transform: translateX(18%);
 }
 
-/* SSR / UR Animated Rainbow Shine Border */
 @keyframes shine-sweep {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -492,13 +478,12 @@
 .holo-shine-border {
   background: linear-gradient(
     90deg,
-    #FF3D9A,
-    #FFD426,
-    #00D4AA,
-    #38BDF8,
     #7C3AED,
-    #FF3D9A
+    #00D4AA,
+    #FFD60A,
+    #FF5C2B,
+    #7C3AED
   );
   background-size: 300% 300%;
-  animation: shine-sweep 4s linear infinite;
+  animation: shine-sweep 5s linear infinite;
 }
