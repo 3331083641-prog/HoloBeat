@@ -24,8 +24,8 @@ export const SharedCardFlightOverlay: React.FC = () => {
             <CardArtwork artId={card.artId} />
           </div>
           <div className="bg-[#FBF9F4] border-t-[2px] border-[#17171C] py-1 px-2 text-center">
-            <span className="text-[11px] font-black italic uppercase tracking-wide text-[#17171C] block truncate">
-              {card.title}
+            <span className="text-[11px] font-black tracking-wide text-[#17171C] block truncate">
+              {card.zhTitle}
             </span>
           </div>
         </div>

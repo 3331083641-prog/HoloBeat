@@ -72,7 +72,7 @@ export const BrutalKnob: React.FC<BrutalKnobProps> = ({
   return (
     <div className="relative flex flex-col items-center select-none" title={title}>
       {label && (
-        <span className="font-mono-hw text-[9.5px] font-bold tracking-[0.1em] uppercase text-[#17171C] mb-0.5 leading-none">
+        <span className="text-[10px] font-extrabold tracking-wide text-[#17171C] mb-0.5 leading-none whitespace-nowrap">
           {label}
         </span>
       )}

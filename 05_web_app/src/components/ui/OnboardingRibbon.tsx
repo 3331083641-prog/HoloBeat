@@ -41,14 +41,14 @@ export const OnboardingRibbon: React.FC = () => {
         }`}
       >
         <Compass className="w-3.5 h-3.5 text-[#7C3AED]" strokeWidth={2.6} />
-        <span>闭环 {completedCount}/5</span>
+        <span>创作闭环 {completedCount}/5</span>
       </button>
 
       {open && (
         <div className="absolute left-0 top-[42px] z-50 w-[268px] rounded-2xl bg-[#FBF9F4] border-[2.5px] border-[#17171C] shadow-[5px_5px_0px_#17171C] p-3 flex flex-col gap-2 animate-card-pop">
           <div className="flex items-center justify-between">
-            <span className="font-mono-hw text-[10px] font-black text-[#7C3AED] tracking-wider uppercase">
-              CREATIVE LOOP GUIDE · {completedCount}/5
+            <span className="text-[11px] font-black text-[#7C3AED] tracking-wide">
+              创作闭环引导 · {completedCount}/5
             </span>
             <button
               onClick={() => {

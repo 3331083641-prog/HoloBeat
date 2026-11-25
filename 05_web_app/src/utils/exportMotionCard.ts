@@ -45,9 +45,19 @@ function loadSvgImg(svgMarkup: string): Promise<HTMLImageElement> {
  * Combines live Canvas 2D holographic foil animation + real audio-event bouncing rhythm orbs
  * + synchronized real Tone.js audio captured via MediaStreamDestination into MediaRecorder!
  */
+const ZH_SANS = '"HarmonyOS Sans SC", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif';
+const HW_MONO = '"JetBrains Mono", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", monospace';
+
 export async function recordMotionCardWebm(opts: MotionCardExportOptions): Promise<Blob> {
   if (typeof MediaRecorder === 'undefined') {
-    throw new Error('当前浏览器不支持 MediaRecorder 视频录制');
+    throw new Error('当前浏览器不支持动态视频录制');
+  }
+  if (typeof document !== 'undefined' && document.fonts?.ready) {
+    try {
+      await document.fonts.ready;
+    } catch {
+      // Continue safely
+    }
   }
 
   const mimeCandidates = [
@@ -257,10 +267,10 @@ export async function recordMotionCardWebm(opts: MotionCardExportOptions): Promi
       ctx.stroke();
 
       ctx.fillStyle = isLtd ? '#FEF08A' : '#17171C';
-      ctx.font = 'italic 900 30px "Space Grotesk", sans-serif';
+      ctx.font = `900 28px ${ZH_SANS}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`✦ ${opts.title.toUpperCase()} ✦`, cardW / 2, pad + artH + ribH / 2 + 6);
+      ctx.fillText(`✦ ${opts.title} ✦`, cardW / 2, pad + artH + ribH / 2 + 4, iw - 40);
 
       // Animated Sweeping Black-Valley Holographic Diffraction Beam!
       ctx.save();
@@ -311,11 +321,11 @@ export async function recordMotionCardWebm(opts: MotionCardExportOptions): Promi
         ctx.fill();
       });
 
-      ctx.fillStyle = 'rgba(251, 249, 244, 0.72)';
-      ctx.font = '700 13px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(251, 249, 244, 0.78)';
+      ctx.font = `700 13.5px ${HW_MONO}`;
       ctx.textAlign = 'center';
       ctx.fillText(
-        `HOLOBEAT MOTION CARD · ${opts.code} · ${foilMeta.label} · ${opts.snapshot.bpm} BPM`,
+        `HOLOBEAT 动态闪卡 · ${opts.code} · ${foilMeta.zhLabel} · ${opts.snapshot.bpm} BPM`,
         W / 2,
         812
       );

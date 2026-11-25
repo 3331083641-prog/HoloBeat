@@ -46,12 +46,12 @@ import { recordMotionCardWebm } from '../utils/exportMotionCard';
 
 const MINT_STAGES = [
   '01/07 锁定作品音频快照...',
-  '02/07 离线渲染 16-bit PCM 声轨...',
-  '03/07 提取真实声纹振幅图谱...',
-  '04/07 演算专属几何声音纹章...',
-  '05/07 高温压印全息折射箔层...',
-  '06/07 永久写入本地档案馆...',
-  '07/07 ★ MINTED · 封印完成 ★',
+  '02/07 离线渲染无损声轨...',
+  '03/07 提取真实声纹振幅...',
+  '04/07 演算专属声音纹章...',
+  '05/07 高温压印全息箔层...',
+  '06/07 永久写入本地卡册...',
+  '07/07 ★ 压印完成 ★',
 ];
 
 export const ForgePage: React.FC = () => {
@@ -138,14 +138,14 @@ export const ForgePage: React.FC = () => {
 
   const lineageLabel = useMemo(() => {
     if (inspectedCard) {
-      if (inspectedCard.isDemo) return 'DEMO SAMPLE · 官方示范';
+      if (inspectedCard.isDemo) return '示例作品';
       if (inspectedCard.parentCode) {
-        return `REMIX OF ${inspectedCard.parentCode} · GEN ${inspectedCard.lineageDepth}`;
+        return `拆封重混 · 第 ${inspectedCard.lineageDepth} 代`;
       }
-      return 'ORIGINAL ARCHIVE · 原创首版';
+      return '原创首发';
     }
     if (forgeDraft.remixOrigin) {
-      return `REMIX OF ${forgeDraft.remixOrigin.parentCode} · GEN ${forgeDraft.remixOrigin.lineageDepth}`;
+      return `拆封重混 · 第 ${forgeDraft.remixOrigin.lineageDepth} 代`;
     }
     return undefined;
   }, [inspectedCard, forgeDraft.remixOrigin]);
@@ -308,7 +308,7 @@ export const ForgePage: React.FC = () => {
     playSfx('click', 0.85);
     try {
       const blob = await renderHoloCardToPngBlob({
-        title: activeTitle.trim() || 'HOLO MIX',
+        title: activeTitle.trim() || '胡同放克',
         code: displayCode,
         rarity: activeRarity,
         foil: activeFoil,
@@ -326,10 +326,10 @@ export const ForgePage: React.FC = () => {
       const safeName = (activeTitle.trim() || 'holobeat-card')
         .toLowerCase()
         .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-');
-      triggerBlobDownload(blob, `${safeName}-gallery-poster.png`);
+      triggerBlobDownload(blob, `${safeName}-展板海报.png`);
       fireHoloConfetti('normal');
       pushToast({
-        text: `✦ 已导出展板级 3× 超清藏品海报 PNG (1200×1600 · 含声音纹章)！`,
+        text: `✦ 已导出高清展板海报 PNG (1200×1600 · 含声音纹章)`,
         accent: '#00D4AA',
       });
     } catch {
@@ -351,7 +351,7 @@ export const ForgePage: React.FC = () => {
       setRealWaveformMap((prev) => ({ ...prev, [activeSnapshot.id]: res.waveformBars }));
       triggerBlobDownload(res.wavBlob, `${safeName}.wav`);
       pushToast({
-        text: `♪ 已导出 16-bit PCM 音频 WAV（与试听/声纹 100% 一致）！`,
+        text: `♪ 已导出无损音频 WAV（与试听及声纹完全一致）`,
         accent: '#7C3AED',
       });
     } catch {
@@ -368,7 +368,7 @@ export const ForgePage: React.FC = () => {
     playSfx('click', 0.85);
     try {
       const blob = await recordMotionCardWebm({
-        title: activeTitle.trim() || 'HOLO MIX',
+        title: activeTitle.trim() || '胡同放克',
         code: displayCode,
         rarity: activeRarity,
         foil: activeFoil,
@@ -381,10 +381,10 @@ export const ForgePage: React.FC = () => {
       const safeName = (activeTitle.trim() || 'holobeat-motion')
         .toLowerCase()
         .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-');
-      triggerBlobDownload(blob, `${safeName}-motion-card.webm`);
+      triggerBlobDownload(blob, `${safeName}-动态卡.webm`);
       fireHoloConfetti('normal');
       pushToast({
-        text: `✦ 已录制并导出含原声全息动态卡 (.webm)！`,
+        text: `✦ 已录制并导出含原声全息动态卡 WebM`,
         accent: '#00D4AA',
       });
     } catch (err) {
@@ -509,20 +509,17 @@ export const ForgePage: React.FC = () => {
 
       {/* ================= LEFT COLUMN: CUSTOMIZATION CONSOLE OR ARCHIVE INSPECTOR ================= */}
       <section className="flex flex-col gap-2 min-h-0 overflow-y-auto holo-scroll pr-0.5">
-        {/* Mode Status Bar: DRAFT vs. ARCHIVE INSPECT */}
+        {/* Mode Status Bar: 草稿编辑 vs 藏品鉴赏 */}
         <div
           className={`rounded-2xl border-[2.5px] border-[#17171C] px-3 py-2 flex items-center justify-between gap-2 shrink-0 shadow-[3px_3px_0px_#17171C] ${
             isInspectMode ? 'bg-[#14151B] text-[#FBF9F4]' : 'bg-[#FFD426] text-[#17171C]'
           }`}
         >
           <div className="min-w-0">
-            <div className="font-mono-hw text-[9.5px] font-bold tracking-[0.14em] opacity-80 uppercase">
-              {isInspectMode ? 'READ-ONLY ARCHIVE INSPECTOR' : 'LIVE FORGE DRAFT WORKBENCH'}
-            </div>
             <div className="text-xs font-black truncate">
               {isInspectMode
-                ? `正在鉴赏 ${inspectedCard.code} · 草稿已安全隔离`
-                : `草稿编辑模式 · 下张编号 ${displayCode}`}
+                ? `藏品鉴赏 · ${inspectedCard.code}`
+                : `草稿编辑 · 下张编号 ${displayCode}`}
             </div>
           </div>
 
@@ -532,47 +529,47 @@ export const ForgePage: React.FC = () => {
                 playSfx('tab');
                 returnToForgeDraft();
               }}
-              className="brutal-pad px-2.5 py-1 rounded-xl bg-[#FFD426] text-[#17171C] text-[10.5px] font-black flex items-center gap-1 shrink-0"
+              className="brutal-pad px-2.5 py-1 rounded-xl bg-[#FFD426] text-[#17171C] text-[10.5px] font-black flex items-center gap-1 shrink-0 whitespace-nowrap"
             >
               <ArrowLeft className="w-3 h-3" /> 返回草稿
             </button>
           ) : (
             <button
               onClick={() => fileInputRef.current?.click()}
-              title="导入 .holobeat.json 工程文件"
-              className="brutal-pad px-2.5 py-1 rounded-xl bg-[#FBF9F4] text-[#17171C] text-[10px] font-black flex items-center gap-1 shrink-0"
+              title="导入 JSON 工程文件"
+              className="brutal-pad px-2.5 py-1 rounded-xl bg-[#FBF9F4] text-[#17171C] text-[10.5px] font-black flex items-center gap-1 shrink-0 whitespace-nowrap"
             >
               <FolderOpen className="w-3 h-3" /> 导入工程
             </button>
           )}
         </div>
 
-        {/* Sound Sigil + Real PCM Acoustic Specimen Card (Obsidian High-Contrast) */}
+        {/* Sound Sigil + Real Acoustic Specimen Card (Obsidian High-Contrast) */}
         {activeSnapshot && (
           <div className="rounded-2xl border-[2.5px] border-[#17171C] shadow-[3px_3px_0px_#17171C] p-2.5 shrink-0 flex items-center gap-3 bg-[#14151B] text-[#FBF9F4]">
             <SoundSigil snapshot={activeSnapshot} size={74} />
             <div className="flex-1 min-w-0 flex flex-col gap-1">
               <div className="flex items-center justify-between gap-1">
-                <span className="font-mono-hw text-[9.5px] font-bold text-[#FFD426] tracking-wider uppercase">
-                  SOUND SIGIL · 声音纹章
+                <span className="text-[11px] font-black text-[#FFD426] tracking-wide">
+                  声音纹章
                 </span>
                 <span
-                  className={`px-1.5 py-0.5 rounded font-mono-hw text-[8.5px] font-black ${
+                  className={`px-1.5 py-0.5 rounded text-[9.5px] font-black whitespace-nowrap ${
                     isRealPcm
                       ? 'bg-[#00D4AA] text-[#17171C]'
                       : 'bg-white/15 text-white/85'
                   }`}
                 >
-                  {isRealPcm ? 'REAL PCM' : 'RENDERING...'}
+                  {isRealPcm ? '真实声纹' : '提取中...'}
                 </span>
               </div>
               <div className="font-mono-hw text-[11px] font-bold text-[#FBF9F4]">
-                {activeSourceType.toUpperCase()} · {activeSnapshot.bpm} BPM ·{' '}
+                {activeSourceType === 'beat' ? '节拍作品' : '弹珠作品'} · {activeSnapshot.bpm} BPM ·{' '}
                 {activeSnapshot.events.length} 音符
               </div>
-              <div className="text-[10px] font-bold text-white/65 truncate flex items-center gap-1">
+              <div className="text-[10.5px] font-bold text-white/65 truncate flex items-center gap-1">
                 <GitBranch className="w-3 h-3 text-[#00D4AA] shrink-0" />
-                <span>{lineageLabel ?? 'ORIGINAL DRAFT · 原创首发'}</span>
+                <span>{lineageLabel ?? '原创首发'}</span>
               </div>
             </div>
           </div>
@@ -582,17 +579,17 @@ export const ForgePage: React.FC = () => {
           /* ================= INSPECT ARCHIVE SPECIMEN CONTROLS ================= */
           <div className="brutal-panel-sm p-3 flex flex-col gap-2.5 shrink-0">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-black uppercase tracking-wide text-[#17171C]">
-                ARCHIVE SPEC · 藏品档案
+              <h2 className="text-xs zh-display text-[#17171C]">
+                藏品档案
               </h2>
-              <span className="font-mono-hw text-[10px] font-bold text-[#626272]">
+              <span className="font-mono-hw text-[10.5px] font-bold text-[#626272]">
                 {inspectedCard.code}
               </span>
             </div>
 
             <p className="text-[11px] font-bold text-[#626272] leading-relaxed">
               此藏品已永久封存原始音频快照与全息外观。点击下方「拆封重混」可将它的编曲或弹珠场景载入工作台创作第{' '}
-              {inspectedCard.lineageDepth + 1} 代变奏，原藏品保持 100% 完好！
+              {inspectedCard.lineageDepth + 1} 代变奏，原藏品保持完好。
             </p>
 
             <button
@@ -600,64 +597,66 @@ export const ForgePage: React.FC = () => {
                 playSfx('cartridgeLock');
                 unsealAndRemixCard(inspectedCard.id);
               }}
-              className="brutal-btn-lg w-full py-2.5 rounded-xl bg-[#7C3AED] text-white text-xs font-black tracking-wide uppercase flex items-center justify-center gap-1.5"
+              className="brutal-btn-lg w-full py-2.5 rounded-xl bg-[#7C3AED] text-white text-xs zh-display flex items-center justify-center gap-1.5 whitespace-nowrap"
             >
-              <Unlock className="w-4 h-4" />
-              <span>UNSEAL & REMIX · 拆封重混创作</span>
+              <Unlock className="w-4 h-4 shrink-0" />
+              <span>拆封重混创作</span>
             </button>
 
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleExportProjectJson}
-                className="brutal-btn py-2 px-2 rounded-xl bg-[#FBF9F4] text-[#17171C] text-[11px] font-black flex items-center justify-center gap-1"
+                className="brutal-btn py-2 px-2 rounded-xl bg-[#FBF9F4] text-[#17171C] text-[11px] font-black flex items-center justify-center gap-1 whitespace-nowrap"
               >
-                <FileJson className="w-3.5 h-3.5 text-[#7C3AED]" />
-                <span>导出工程 JSON</span>
+                <FileJson className="w-3.5 h-3.5 text-[#7C3AED] shrink-0" />
+                <span>导出 JSON</span>
               </button>
               <button
                 onClick={() => void handleBackendShare()}
                 disabled={syncingShare}
-                title="可选：若已启动本地 06_backend 服务，可同步并生成只读分享链接"
-                className="brutal-btn py-2 px-2 rounded-xl bg-[#FBF9F4] text-[#17171C] text-[11px] font-black flex items-center justify-center gap-1 disabled:opacity-50"
+                title="可选：若已启动本地归档后端，可同步并生成只读分享链接"
+                className="brutal-btn py-2 px-2 rounded-xl bg-[#FBF9F4] text-[#17171C] text-[11px] font-black flex items-center justify-center gap-1 disabled:opacity-50 whitespace-nowrap"
               >
-                <Share2 className="w-3.5 h-3.5 text-[#00D4AA]" />
-                <span>{syncingShare ? '同步中...' : '同步 / 分享'}</span>
+                <Share2 className="w-3.5 h-3.5 text-[#00D4AA] shrink-0" />
+                <span>{syncingShare ? '同步中...' : '同步分享'}</span>
               </button>
             </div>
 
-            {/* Technical Archive Specimen Sheet for vertical balance & curatorial depth */}
-            <div className="mt-1 rounded-xl bg-[#F3EFE6] border-[2px] border-[#17171C]/20 p-2.5 flex flex-col gap-1.5 font-mono-hw text-[10px]">
-              <div className="text-[9px] font-black tracking-widest text-[#626272] uppercase border-b border-[#17171C]/12 pb-1">
-                ACOUSTIC SPECIMEN LOG · 声学存证
+            {/* Technical Archive Specimen Sheet */}
+            <div className="mt-1 rounded-xl bg-[#F3EFE6] border-[2px] border-[#17171C]/20 p-2.5 flex flex-col gap-1.5 text-[10.5px]">
+              <div className="text-[10px] font-black tracking-wide text-[#626272] border-b border-[#17171C]/12 pb-1">
+                声学存证
               </div>
               <div className="flex justify-between">
-                <span className="text-[#626272]">SOURCE</span>
-                <span className="font-black text-[#17171C]">{inspectedCard.sourceType.toUpperCase()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#626272]">FOIL / RARITY</span>
+                <span className="text-[#626272] font-bold">作品来源</span>
                 <span className="font-black text-[#17171C]">
-                  {foilMeta.label} · {inspectedCard.rarity}
+                  {inspectedCard.sourceType === 'beat' ? '节拍编曲' : '弹珠录制'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#626272]">SCALE / BPM</span>
+                <span className="text-[#626272] font-bold">箔面稀有</span>
                 <span className="font-black text-[#17171C]">
-                  {SCALE_META[inspectedCard.snapshot.scale].label} · {inspectedCard.snapshot.bpm}
+                  {foilMeta.zhLabel} · {inspectedCard.rarity}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#626272]">LINEAGE</span>
+                <span className="text-[#626272] font-bold">调式速度</span>
+                <span className="font-mono-hw font-black text-[#17171C]">
+                  {SCALE_META[inspectedCard.snapshot.scale].label} · {inspectedCard.snapshot.bpm} BPM
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#626272] font-bold">创作谱系</span>
                 <span className="font-black text-[#7C3AED]">
                   {inspectedCard.parentCode
-                    ? `${inspectedCard.parentCode} → GEN ${inspectedCard.lineageDepth}`
-                    : 'GEN 0 · ORIGINAL'}
+                    ? `${inspectedCard.parentCode} → 第 ${inspectedCard.lineageDepth} 代`
+                    : '原创首发'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#626272]">SEALED AT</span>
-                <span className="font-bold text-[#17171C]">
-                  {new Date(inspectedCard.createdAt).toLocaleDateString()}
+                <span className="text-[#626272] font-bold">封存日期</span>
+                <span className="font-mono-hw font-bold text-[#17171C]">
+                  {new Date(inspectedCard.createdAt).toLocaleDateString('zh-CN')}
                 </span>
               </div>
             </div>
@@ -665,13 +664,13 @@ export const ForgePage: React.FC = () => {
         ) : (
           /* ================= DRAFT CUSTOMIZATION CONTROLS ================= */
           <>
-            {/* Block 1: AUDIO SOURCE */}
+            {/* Block 1: 声音来源 */}
             <div className="brutal-panel-sm p-2.5 shrink-0">
               <div className="flex items-center justify-between mb-1.5">
-                <h2 className="text-[12px] font-black tracking-wide uppercase text-[#17171C]">
-                  AUDIO SOURCE
+                <h2 className="text-[12.5px] zh-display text-[#17171C]">
+                  声音来源
                 </h2>
-                <span className="hw-silkscreen !text-[8px]">FROZEN SNAPSHOT</span>
+                <span className="text-[10px] font-bold text-[#626272]">快照已冻结</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
@@ -679,7 +678,7 @@ export const ForgePage: React.FC = () => {
                     playSfx('click', 0.7);
                     setForgeSource('beat');
                   }}
-                  className={`brutal-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black tracking-wide whitespace-nowrap ${
+                  className={`brutal-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black whitespace-nowrap ${
                     forgeDraft.sourceType === 'beat'
                       ? 'bg-[#FF5526] text-[#17171C]'
                       : 'bg-[#FBF9F4] text-[#17171C]'
@@ -692,7 +691,7 @@ export const ForgePage: React.FC = () => {
                     playSfx('click', 0.7);
                     setForgeSource('pinball');
                   }}
-                  className={`brutal-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black tracking-wide whitespace-nowrap ${
+                  className={`brutal-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black whitespace-nowrap ${
                     forgeDraft.sourceType === 'pinball'
                       ? 'bg-[#00D4AA] text-[#17171C]'
                       : 'bg-[#FBF9F4] text-[#17171C]'
@@ -701,21 +700,21 @@ export const ForgePage: React.FC = () => {
                   捕获弹珠
                 </button>
                 <button
-                  onClick={handleExportProjectJson}
-                  title="导出当前草稿为 .holobeat.json"
-                  className="brutal-btn ml-auto px-2.5 py-1.5 rounded-xl bg-[#FBF9F4] text-[10.5px] font-black flex items-center gap-1"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="导入 JSON 工程文件"
+                  className="brutal-btn ml-auto px-2.5 py-1.5 rounded-xl bg-[#FBF9F4] text-[10.5px] font-black flex items-center gap-1 whitespace-nowrap"
                 >
-                  <FileJson className="w-3.5 h-3.5 text-[#7C3AED]" />
-                  <span>JSON</span>
+                  <FileJson className="w-3.5 h-3.5 text-[#7C3AED] shrink-0" />
+                  <span>导入 JSON</span>
                 </button>
               </div>
             </div>
 
-            {/* Block 2: CARD TITLE & RARITY */}
+            {/* Block 2: 卡片名称 & 稀有度 */}
             <div className="brutal-panel-sm p-2.5 shrink-0">
               <div className="flex items-center justify-between mb-1.5">
-                <h2 className="text-[12px] font-black tracking-wide uppercase text-[#17171C]">
-                  CARD TITLE
+                <h2 className="text-[12.5px] zh-display text-[#17171C]">
+                  卡片名称
                 </h2>
                 <button
                   onClick={() => {
@@ -725,9 +724,9 @@ export const ForgePage: React.FC = () => {
                     setForgeArtId(next);
                   }}
                   title="切换卡面主视觉潮玩角色"
-                  className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#E7E1D3] border-[1.5px] border-[#17171C] hover:bg-[#FFD426] cursor-pointer flex items-center gap-1 transition-colors"
+                  className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#E7E1D3] border-[1.5px] border-[#17171C] hover:bg-[#FFD426] cursor-pointer flex items-center gap-1 transition-colors whitespace-nowrap"
                 >
-                  <Sparkles className="w-3 h-3" /> 换主角插画
+                  <Sparkles className="w-3 h-3 shrink-0" /> 换主角插画
                 </button>
               </div>
               <input
@@ -735,8 +734,8 @@ export const ForgePage: React.FC = () => {
                 value={forgeDraft.title}
                 onChange={(e) => setForgeTitle(e.target.value)}
                 maxLength={18}
-                placeholder="NEON NIGHT"
-                className="w-full px-3 py-1.5 rounded-xl bg-[#FBF9F4] border-[2.5px] border-[#17171C] text-[14px] font-black tracking-wide uppercase text-[#17171C] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+                placeholder="胡同放克"
+                className="w-full px-3 py-1.5 rounded-xl bg-[#FBF9F4] border-[2.5px] border-[#17171C] text-[14px] font-black tracking-wide text-[#17171C] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
               />
 
               <div className="grid grid-cols-3 gap-1.5 mt-2">
@@ -749,7 +748,7 @@ export const ForgePage: React.FC = () => {
                         playSfx('click', 0.78);
                         setForgeRarity(rar);
                       }}
-                      className={`brutal-pad py-1 rounded-xl text-[11px] font-black tracking-wider ${
+                      className={`brutal-pad py-1 rounded-xl text-[11px] font-black tracking-wider whitespace-nowrap ${
                         active
                           ? rar === 'UR'
                             ? 'bg-[#FF3D9A] text-white ring-2 ring-[#FFD426]'
@@ -766,13 +765,13 @@ export const ForgePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Block 3: HOLO FOIL (5) */}
+            {/* Block 3: 全息材质 (5) */}
             <div className="brutal-panel-sm p-2.5 shrink-0">
               <div className="flex items-center justify-between mb-1.5">
-                <h2 className="text-[12px] font-black tracking-wide uppercase text-[#17171C]">
-                  HOLO FOIL (5)
+                <h2 className="text-[12.5px] zh-display text-[#17171C]">
+                  全息材质 (5)
                 </h2>
-                <span className="font-mono-hw text-[9.5px] font-bold text-[#626272]">
+                <span className="text-[10.5px] font-bold text-[#626272]">
                   {foilMeta.zhLabel}
                 </span>
               </div>
@@ -797,7 +796,7 @@ export const ForgePage: React.FC = () => {
                         className="w-full aspect-square rounded-lg border-[2px] border-[#17171C] block shadow-[inset_0_0_8px_rgba(255,255,255,0.45)]"
                         style={{ background: f.swatchStyle }}
                       />
-                      <span className="font-mono-hw text-[8.5px] font-black text-[#17171C] leading-none">
+                      <span className="text-[9.5px] font-black text-[#17171C] leading-none whitespace-nowrap">
                         {f.label}
                       </span>
                     </button>
@@ -806,11 +805,11 @@ export const ForgePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Block 4: STICKER PACK with Undo/Redo */}
+            {/* Block 4: 卡面贴纸 */}
             <div className="brutal-panel-sm p-2.5 flex flex-col gap-1.5 shrink-0">
               <div className="flex items-center justify-between">
-                <h2 className="text-[12px] font-black tracking-wide uppercase text-[#17171C]">
-                  STICKER PACK
+                <h2 className="text-[12.5px] zh-display text-[#17171C]">
+                  卡面贴纸
                 </h2>
                 <div className="flex items-center gap-1">
                   <button
@@ -841,7 +840,7 @@ export const ForgePage: React.FC = () => {
                         playSfx('click', 0.25);
                         clearForgeStickers();
                       }}
-                      className="text-[9.5px] font-black px-1.5 py-0.5 rounded-lg bg-[#FBF9F4] border-[1.5px] border-[#17171C] hover:bg-[#FF5526] hover:text-white flex items-center gap-0.5 cursor-pointer"
+                      className="text-[10px] font-black px-1.5 py-0.5 rounded-lg bg-[#FBF9F4] border-[1.5px] border-[#17171C] hover:bg-[#FF5526] hover:text-white flex items-center gap-0.5 cursor-pointer whitespace-nowrap"
                     >
                       <Eraser className="w-2.5 h-2.5" /> 清空
                     </button>
@@ -868,7 +867,7 @@ export const ForgePage: React.FC = () => {
                   </button>
                 ))}
               </div>
-              <p className="text-[9.5px] font-bold text-[#626272] text-center leading-tight">
+              <p className="text-[10px] font-bold text-[#626272] text-center leading-tight">
                 拖拽自带中线吸附 · 点击置顶/缩放/旋转 · 双击移除
               </p>
             </div>
@@ -889,13 +888,13 @@ export const ForgePage: React.FC = () => {
           }}
         >
           {/* Top Forge Coordinate Strip + Card Flip Button */}
-          <div className="w-full flex items-center justify-between text-white/60 font-mono-hw text-[10px] tracking-[0.12em] shrink-0 z-10">
-            <span>
-              + {isInspectMode ? 'ARCHIVE VAULT' : 'FOIL PRESS'} // {displayCode}
+          <div className="w-full flex items-center justify-between text-white/65 text-[11px] font-bold tracking-wide shrink-0 z-10">
+            <span className="font-mono-hw whitespace-nowrap">
+              {isInspectMode ? '藏品赏析' : '压印预览'} · {displayCode}
             </span>
-            <div className="flex items-center gap-2">
-              <span className="text-[#FFD426] font-bold">
-                {activeRarity} · {foilMeta.label}
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[#FFD426] font-bold whitespace-nowrap">
+                {activeRarity} · {foilMeta.zhLabel}
               </span>
               <button
                 onClick={() => {
@@ -903,9 +902,9 @@ export const ForgePage: React.FC = () => {
                   setFlippedCard((f) => !f);
                 }}
                 title="翻转查看卡背声音纹章与创作谱系"
-                className="px-2 py-0.5 rounded-lg bg-white/10 hover:bg-[#FFD426] hover:text-[#17171C] text-white text-[9.5px] font-black cursor-pointer flex items-center gap-1 transition-colors"
+                className="px-2 py-0.5 rounded-lg bg-white/10 hover:bg-[#FFD426] hover:text-[#17171C] text-white text-[10px] font-black cursor-pointer flex items-center gap-1 transition-colors whitespace-nowrap"
               >
-                <RotateCcw className="w-3 h-3" /> {flippedCard ? '看正面' : '翻看卡背'}
+                <RotateCcw className="w-3 h-3 shrink-0" /> {flippedCard ? '看正面' : '翻看卡背'}
               </button>
             </div>
           </div>
@@ -913,10 +912,10 @@ export const ForgePage: React.FC = () => {
           {/* Center Oversized Live 3D Holographic Card */}
           <div className="flex-1 flex items-center justify-center relative z-10 py-1 min-h-0">
             <HoloCard
-              title={activeTitle.trim() || 'NEON NIGHT'}
+              title={activeTitle.trim() || '胡同放克'}
               code={displayCode}
               rarity={activeRarity}
-              specLabel={activeSourceType === 'beat' ? 'BEAT MIX' : 'PINBALL'}
+              specLabel={activeSourceType === 'beat' ? '节拍作品' : '弹珠作品'}
               foil={activeFoil}
               artId={activeArtId}
               recommendedBpm={activeSnapshot?.bpm ?? 116}
@@ -946,10 +945,10 @@ export const ForgePage: React.FC = () => {
               >
                 <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-transparent via-[#00D4AA]/75 to-transparent shadow-[0_0_28px_#00D4AA] animate-forge-laser" />
                 <div className="px-5 py-3 rounded-2xl bg-[#14151B]/95 border-[3px] border-[#FFD426] shadow-[0_0_32px_rgba(255,212,38,0.72)] animate-forge-stamp text-center">
-                  <div className="font-mono-hw text-[10px] font-bold text-[#00D4AA] tracking-[0.16em] mb-1">
-                    HOLOBEAT PRESS CEREMONY
+                  <div className="text-[10.5px] font-bold text-[#00D4AA] tracking-widest mb-1">
+                    全息压印仪式
                   </div>
-                  <div className="font-black italic text-base tracking-wide text-[#FFD426] whitespace-nowrap">
+                  <div className="zh-display text-base text-[#FFD426] whitespace-nowrap">
                     {MINT_STAGES[mintStageIdx]}
                   </div>
                 </div>
@@ -957,10 +956,9 @@ export const ForgePage: React.FC = () => {
             )}
           </div>
 
-          {/* Bottom Technical Alignment Strip */}
-          <div className="w-full flex items-center justify-between text-white/45 font-mono-hw text-[9.5px] tracking-[0.12em] shrink-0 z-10">
-            <span>+ 3X GALLERY POSTER · 16-BIT WAV · WEBM MOTION</span>
-            <span>{isRealPcm ? 'PCM VERIFIED +' : '1200×1600 HD +'}</span>
+          {/* Bottom Clean Specification Strip */}
+          <div className="w-full flex items-center justify-center text-white/50 text-[10.5px] font-bold tracking-wider shrink-0 z-10">
+            <span>高清展板海报 · 无损声纹音频 · 动态闪卡</span>
           </div>
         </div>
 
@@ -972,20 +970,20 @@ export const ForgePage: React.FC = () => {
                 playSfx('cartridgeLock');
                 unsealAndRemixCard(inspectedCard.id);
               }}
-              className="brutal-btn-lg w-full py-2.5 rounded-2xl bg-[#7C3AED] text-white text-[17px] font-black tracking-wide uppercase flex items-center justify-center gap-2"
+              className="brutal-btn-lg w-full py-2.5 rounded-2xl bg-[#7C3AED] text-white text-[17px] zh-display flex items-center justify-center gap-2 whitespace-nowrap"
             >
-              <Unlock className="w-5 h-5" strokeWidth={2.6} />
-              <span>UNSEAL & REMIX · 拆封进入再创作</span>
+              <Unlock className="w-5 h-5 shrink-0" strokeWidth={2.6} />
+              <span>拆封进入再创作</span>
             </button>
           ) : (
             <button
               onClick={() => void handleMint()}
               disabled={mintInFlight || mintStageIdx !== null}
-              className="brutal-btn-lg w-full py-2.5 rounded-2xl bg-[#FF5526] text-[#17171C] text-[17px] font-black tracking-wide uppercase flex items-center justify-center gap-2 disabled:opacity-65"
+              className="brutal-btn-lg w-full py-2.5 rounded-2xl bg-[#FF5526] text-[#17171C] text-[17px] zh-display flex items-center justify-center gap-2 disabled:opacity-65 whitespace-nowrap"
             >
-              <Stamp className="w-5 h-5" strokeWidth={2.8} />
+              <Stamp className="w-5 h-5 shrink-0" strokeWidth={2.8} />
               <span>
-                {mintStageIdx !== null ? MINT_STAGES[mintStageIdx] : 'MINT TO BINDER · 压印封印'}
+                {mintStageIdx !== null ? MINT_STAGES[mintStageIdx] : '压印入册'}
               </span>
             </button>
           )}
@@ -994,7 +992,7 @@ export const ForgePage: React.FC = () => {
             <button
               onClick={() => void handleExportPng()}
               disabled={exportingPng}
-              className="brutal-btn py-2 px-1.5 rounded-xl bg-[#00D4AA] text-[#17171C] text-[11px] font-black tracking-wide uppercase flex items-center justify-center gap-1 disabled:opacity-60"
+              className="brutal-btn py-2 px-1.5 rounded-xl bg-[#00D4AA] text-[#17171C] text-[11.5px] font-black flex items-center justify-center gap-1 disabled:opacity-60 whitespace-nowrap"
             >
               <Download className="w-3.5 h-3.5 shrink-0" strokeWidth={2.8} />
               <span>{exportingPng ? '导出中...' : 'PNG 海报'}</span>
@@ -1003,7 +1001,7 @@ export const ForgePage: React.FC = () => {
             <button
               onClick={() => void handleExportWav()}
               disabled={exportingWav}
-              className="brutal-btn py-2 px-1.5 rounded-xl bg-[#7C3AED] text-white text-[11px] font-black tracking-wide uppercase flex items-center justify-center gap-1 disabled:opacity-60"
+              className="brutal-btn py-2 px-1.5 rounded-xl bg-[#7C3AED] text-white text-[11.5px] font-black flex items-center justify-center gap-1 disabled:opacity-60 whitespace-nowrap"
             >
               <Music className="w-3.5 h-3.5 shrink-0" strokeWidth={2.8} />
               <span>{exportingWav ? '渲染中...' : 'WAV 音频'}</span>
@@ -1012,8 +1010,8 @@ export const ForgePage: React.FC = () => {
             <button
               onClick={() => void handleExportMotionCard()}
               disabled={exportingMotion}
-              title="录制含原声全息动态卡 (.webm)"
-              className="brutal-btn py-2 px-1.5 rounded-xl bg-[#14151B] text-[#FFD426] text-[11px] font-black tracking-wide uppercase flex items-center justify-center gap-1 disabled:opacity-60"
+              title="录制含原声全息动态卡 WebM"
+              className="brutal-btn py-2 px-1.5 rounded-xl bg-[#14151B] text-[#FFD426] text-[11.5px] font-black flex items-center justify-center gap-1 disabled:opacity-60 whitespace-nowrap"
             >
               <Film className="w-3.5 h-3.5 shrink-0" strokeWidth={2.6} />
               <span>{exportingMotion ? `${motionProgress}%` : '动态卡'}</span>
@@ -1021,17 +1019,17 @@ export const ForgePage: React.FC = () => {
 
             <button
               onClick={() => void handleTogglePlay()}
-              className={`brutal-btn py-2 px-1.5 rounded-xl text-[11px] font-black tracking-wide uppercase flex items-center justify-center gap-1 ${
+              className={`brutal-btn py-2 px-1.5 rounded-xl text-[11.5px] font-black flex items-center justify-center gap-1 whitespace-nowrap ${
                 isPlayingSnapshot ? 'bg-[#FFD426] text-[#17171C]' : 'bg-[#FBF9F4] text-[#17171C]'
               }`}
             >
               {isPlayingSnapshot ? (
                 <>
-                  <Pause className="w-3.5 h-3.5 fill-current" /> 停止
+                  <Pause className="w-3.5 h-3.5 fill-current shrink-0" /> 停止
                 </>
               ) : (
                 <>
-                  <Play className="w-3.5 h-3.5 fill-current" /> 试听
+                  <Play className="w-3.5 h-3.5 fill-current shrink-0" /> 试听
                 </>
               )}
             </button>
@@ -1043,29 +1041,35 @@ export const ForgePage: React.FC = () => {
       <section className="brutal-panel p-3 flex flex-col gap-2 min-h-0 overflow-hidden">
         <div className="shrink-0">
           <div className="flex items-center justify-between mb-1.5">
-            <h2 className="text-[16px] font-black tracking-wide uppercase text-[#17171C] leading-none">
-              MY BINDER
+            <h2 className="text-[16px] zh-display text-[#17171C] leading-none">
+              我的卡册
             </h2>
             <span className="font-mono-hw text-xs font-bold text-[#626272]">
-              {binderItems.length} CARDS
+              共 {binderItems.length} 张
             </span>
           </div>
 
           <div className="grid grid-cols-3 gap-1.5">
-            {(['ALL', 'MINTED', 'GACHA'] as const).map((tab) => {
-              const active = binderFilter === tab;
+            {(
+              [
+                { id: 'ALL' as const, label: '全部' },
+                { id: 'MINTED' as const, label: '自制' },
+                { id: 'GACHA' as const, label: '抽卡' },
+              ] as const
+            ).map((tab) => {
+              const active = binderFilter === tab.id;
               return (
                 <button
-                  key={tab}
+                  key={tab.id}
                   onClick={() => {
                     playSfx('click', 0.6);
-                    setBinderFilter(tab);
+                    setBinderFilter(tab.id);
                   }}
-                  className={`brutal-pad py-1 rounded-xl text-[11px] font-black tracking-wider ${
+                  className={`brutal-pad py-1 rounded-xl text-[11.5px] font-black whitespace-nowrap ${
                     active ? 'bg-[#FFD426] text-[#17171C]' : 'bg-[#FBF9F4] text-[#17171C]'
                   }`}
                 >
-                  {tab}
+                  {tab.label}
                 </button>
               );
             })}
@@ -1126,13 +1130,13 @@ export const ForgePage: React.FC = () => {
                           {rar.label}
                         </span>
                         {item.isDemo && (
-                          <span className="absolute bottom-1 left-1 px-1 py-[0.5px] rounded bg-[#14151B]/90 text-[#FFD426] font-mono-hw text-[7.5px] font-black border border-[#FFD426]/60">
-                            DEMO
+                          <span className="absolute bottom-1 left-1 px-1.5 py-[0.5px] rounded bg-[#14151B]/90 text-[#FFD426] text-[8.5px] font-black border border-[#FFD426]/60">
+                            示例
                           </span>
                         )}
                         {item.lineageDepth > 0 && (
-                          <span className="absolute bottom-1 left-1 px-1 py-[0.5px] rounded bg-[#7C3AED]/95 text-white font-mono-hw text-[7.5px] font-black">
-                            G{item.lineageDepth}
+                          <span className="absolute bottom-1 left-1 px-1.5 py-[0.5px] rounded bg-[#7C3AED]/95 text-white text-[8.5px] font-black">
+                            第{item.lineageDepth}代
                           </span>
                         )}
                         {item.kind === 'minted' && (
@@ -1171,7 +1175,7 @@ export const ForgePage: React.FC = () => {
                             : 'bg-[#FBF9F4] text-[#17171C]'
                         }`}
                       >
-                        <span className="block text-[9px] font-black italic tracking-tight truncate uppercase">
+                        <span className="block text-[9.5px] font-black truncate">
                           {item.shortTitle}
                         </span>
                       </div>

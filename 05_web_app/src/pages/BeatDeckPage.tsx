@@ -434,26 +434,26 @@ export const BeatDeckPage: React.FC = () => {
     <div className="w-full h-full p-3 flex flex-col gap-2.5 overflow-hidden">
       {/* ================= 1. TOP TRANSPORT & MASTER OLED DECK ================= */}
       <section className="brutal-panel px-3 py-2 flex items-center justify-between gap-2 shrink-0">
-        {/* Left: PLAY / STOP / REC CARD */}
+        {/* Left: 播放 / 停止 / 捕获作品 */}
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={() => {
               playSfx('click', 0.8);
               void holoAudio.togglePlay();
             }}
-            title="播放 / 暂停（快捷键 Space）"
-            className={`brutal-btn h-[46px] px-3.5 rounded-xl flex items-center gap-1.5 text-[13.5px] font-black tracking-wide ${
+            title="播放 / 暂停（快捷键空格）"
+            className={`brutal-btn h-[46px] px-3.5 rounded-xl flex items-center gap-1.5 text-[13.5px] zh-display whitespace-nowrap ${
               isPlaying
                 ? 'bg-[#FFD426] text-[#17171C] ring-2 ring-[#17171C]'
                 : 'bg-[#00D4AA] text-[#17171C]'
             }`}
           >
             {isPlaying ? (
-              <Pause className="w-4 h-4 fill-current" />
+              <Pause className="w-4 h-4 fill-current shrink-0" />
             ) : (
-              <Play className="w-4 h-4 fill-current" />
+              <Play className="w-4 h-4 fill-current shrink-0" />
             )}
-            <span>{isPlaying ? 'PAUSE' : 'PLAY'}</span>
+            <span>{isPlaying ? '暂停' : '播放'}</span>
           </button>
 
           <button
@@ -461,10 +461,10 @@ export const BeatDeckPage: React.FC = () => {
               playSfx('click', 0.35);
               holoAudio.stopTransport();
             }}
-            className="brutal-btn h-[46px] px-2.5 rounded-xl bg-[#FBF9F4] text-[#17171C] flex items-center gap-1 text-[13px] font-black tracking-wide"
+            className="brutal-btn h-[46px] px-2.5 rounded-xl bg-[#FBF9F4] text-[#17171C] flex items-center gap-1 text-[13px] font-black whitespace-nowrap"
           >
-            <Square className="w-3.5 h-3.5 fill-current" />
-            <span className="hidden xl:inline">STOP</span>
+            <Square className="w-3.5 h-3.5 fill-current shrink-0" />
+            <span className="hidden xl:inline">停止</span>
           </button>
 
           <button
@@ -472,15 +472,11 @@ export const BeatDeckPage: React.FC = () => {
               playSfx('mintStamp');
               sendBeatToForge();
             }}
-            title="立即冻结当前编曲快照送入 04 闪卡铸造屋"
-            className="brutal-btn h-[46px] px-3 rounded-xl bg-[#FF5526] text-[#17171C] flex items-center gap-1.5 text-[11.5px] font-black leading-tight text-left"
+            title="立即冻结当前编曲快照送入 04 闪卡铸造"
+            className="brutal-btn h-[46px] px-3 rounded-xl bg-[#FF5526] text-[#17171C] flex items-center gap-1.5 text-[12px] font-black whitespace-nowrap"
           >
-            <span className="w-3 h-3 rounded-full bg-[#FBF9F4] border-[2px] border-[#17171C] shrink-0" />
-            <span>
-              REC
-              <br />
-              CARD
-            </span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#FBF9F4] border-[2px] border-[#17171C] shrink-0" />
+            <span>捕获作品</span>
           </button>
         </div>
 
@@ -498,9 +494,9 @@ export const BeatDeckPage: React.FC = () => {
               setBeatBars(beatBars === 1 ? 2 : 1);
             }}
             title="切换导出与演出循环长度（1 小节 / 2 小节）"
-            className="relative z-10 h-7 px-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 font-mono-hw text-[10px] font-black text-[#FFD426] shrink-0 cursor-pointer"
+            className="relative z-10 h-7 px-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-[10.5px] font-black text-[#FFD426] shrink-0 cursor-pointer whitespace-nowrap"
           >
-            {beatBars} BAR
+            {beatBars} 小节
           </button>
           <button
             onClick={() => {
@@ -508,14 +504,14 @@ export const BeatDeckPage: React.FC = () => {
               cycleScale();
             }}
             title={`调式锁定：${SCALE_META[scale].zhLabel}（点击切换）`}
-            className="relative z-10 h-7 px-2.5 rounded-full bg-[#FBF9F4] border-[2px] border-[#17171C] font-mono-hw text-[10.5px] font-black text-[#17171C] flex items-center gap-0.5 shrink-0 cursor-pointer hover:bg-[#FFD426] transition-colors"
+            className="relative z-10 h-7 px-2.5 rounded-full bg-[#FBF9F4] border-[2px] border-[#17171C] text-[11px] font-black text-[#17171C] flex items-center gap-0.5 shrink-0 cursor-pointer hover:bg-[#FFD426] transition-colors whitespace-nowrap"
           >
             <span>{SCALE_META[scale].label}</span>
-            <ChevronDown className="w-3 h-3" strokeWidth={3} />
+            <ChevronDown className="w-3 h-3 shrink-0" strokeWidth={3} />
           </button>
         </div>
 
-        {/* Right: BPM + SWING + 5 Curated Oriental Presets + Undo/Redo/Rand/Clear */}
+        {/* Right: BPM + 摇摆 + 5 套东方市井预设 + 撤销/重做/随机/清空 */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="h-[40px] rounded-xl bg-[#FBF9F4] border-[2.5px] border-[#17171C] shadow-[2px_2px_0px_0px_#17171C] px-1 flex items-center gap-0.5">
             <button
@@ -524,7 +520,7 @@ export const BeatDeckPage: React.FC = () => {
                 setBpm(bpm - 4);
               }}
               className="p-0.5 hover:bg-[#E7E1D3] rounded-md cursor-pointer"
-              aria-label="decrease bpm"
+              aria-label="降低速度"
             >
               <ChevronLeft className="w-3.5 h-3.5 fill-current" />
             </button>
@@ -537,7 +533,7 @@ export const BeatDeckPage: React.FC = () => {
                 setBpm(bpm + 4);
               }}
               className="p-0.5 hover:bg-[#E7E1D3] rounded-md cursor-pointer"
-              aria-label="increase bpm"
+              aria-label="提高速度"
             >
               <ChevronRight className="w-3.5 h-3.5 fill-current" />
             </button>
@@ -548,8 +544,8 @@ export const BeatDeckPage: React.FC = () => {
             onChange={(v) => setSwing(v * 0.6)}
             color="#FFD426"
             size={32}
-            label="SWING"
-            title={`摇摆度 Swing: ${Math.round(swing * 100)}%`}
+            label="摇摆"
+            title={`摇摆度：${Math.round(swing * 100)}%`}
           />
 
           <div className="flex flex-col gap-1">
@@ -561,7 +557,7 @@ export const BeatDeckPage: React.FC = () => {
                     key={pid}
                     onClick={() => handleLoadPreset(pid)}
                     title={BEAT_PRESETS[pid].zhTitle}
-                    className={`brutal-pad px-1.5 py-0.5 rounded-md text-[9.5px] font-black tracking-wide whitespace-nowrap ${
+                    className={`brutal-pad px-2 py-0.5 rounded-md text-[10px] font-black whitespace-nowrap ${
                       isSel
                         ? 'bg-[#FFD426] text-[#17171C]'
                         : 'bg-[#FBF9F4] text-[#17171C] hover:bg-[#E7E1D3]'
@@ -580,9 +576,9 @@ export const BeatDeckPage: React.FC = () => {
                 }}
                 disabled={beatUndoLen === 0}
                 title="撤销上一步 (Ctrl+Z)"
-                className="brutal-pad px-1.5 py-0.5 rounded-md bg-[#FBF9F4] disabled:opacity-40 text-[9.5px] font-black flex items-center gap-0.5"
+                className="brutal-pad px-1.5 py-0.5 rounded-md bg-[#FBF9F4] disabled:opacity-40 text-[10px] font-black flex items-center gap-0.5 whitespace-nowrap"
               >
-                <Undo2 className="w-2.5 h-2.5" strokeWidth={2.8} />
+                <Undo2 className="w-2.5 h-2.5 shrink-0" strokeWidth={2.8} />
                 <span>撤销</span>
               </button>
               <button
@@ -592,9 +588,10 @@ export const BeatDeckPage: React.FC = () => {
                 }}
                 disabled={beatRedoLen === 0}
                 title="重做 (Ctrl+Y)"
-                className="brutal-pad px-1.5 py-0.5 rounded-md bg-[#FBF9F4] disabled:opacity-40 text-[9.5px] font-black flex items-center gap-0.5"
+                className="brutal-pad px-1.5 py-0.5 rounded-md bg-[#FBF9F4] disabled:opacity-40 text-[10px] font-black flex items-center gap-0.5 whitespace-nowrap"
               >
-                <Redo2 className="w-2.5 h-2.5" strokeWidth={2.8} />
+                <Redo2 className="w-2.5 h-2.5 shrink-0" strokeWidth={2.8} />
+                <span className="hidden xl:inline">重做</span>
               </button>
               <button
                 onClick={() => {
@@ -603,10 +600,10 @@ export const BeatDeckPage: React.FC = () => {
                   randomizeBeat();
                 }}
                 title="智能生成调式内随机街头律动"
-                className="brutal-pad flex-1 px-2 py-0.5 rounded-md bg-[#FBF9F4] hover:bg-[#00D4AA] text-[9.5px] font-black flex items-center justify-center gap-1"
+                className="brutal-pad flex-1 px-2 py-0.5 rounded-md bg-[#FBF9F4] hover:bg-[#00D4AA] text-[10px] font-black flex items-center justify-center gap-1 whitespace-nowrap"
               >
-                <Shuffle className="w-2.5 h-2.5" strokeWidth={2.8} />
-                <span>RAND</span>
+                <Shuffle className="w-2.5 h-2.5 shrink-0" strokeWidth={2.8} />
+                <span>随机</span>
               </button>
               <button
                 onClick={() => {
@@ -615,10 +612,10 @@ export const BeatDeckPage: React.FC = () => {
                   clearBeat();
                 }}
                 title="清空全部打击垫（支持 Ctrl+Z 撤销）"
-                className="brutal-pad flex-1 px-2 py-0.5 rounded-md bg-[#FBF9F4] hover:bg-[#FF5526] hover:text-white text-[9.5px] font-black flex items-center justify-center gap-1"
+                className="brutal-pad flex-1 px-2 py-0.5 rounded-md bg-[#FBF9F4] hover:bg-[#FF5526] hover:text-white text-[10px] font-black flex items-center justify-center gap-1 whitespace-nowrap"
               >
-                <Trash2 className="w-2.5 h-2.5" strokeWidth={2.8} />
-                <span>CLEAR</span>
+                <Trash2 className="w-2.5 h-2.5 shrink-0" strokeWidth={2.8} />
+                <span>清空</span>
               </button>
             </div>
           </div>
@@ -629,8 +626,8 @@ export const BeatDeckPage: React.FC = () => {
       {quantizePreview && (
         <section className="px-3.5 py-2 rounded-2xl bg-[#14151B] text-[#FBF9F4] border-[2.5px] border-[#00D4AA] shadow-[3px_3px_0px_#17171C] flex items-center justify-between gap-3 shrink-0 animate-card-pop">
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className="px-2 py-0.5 rounded-md bg-[#00D4AA] text-[#17171C] font-mono-hw text-[10px] font-black shrink-0">
-              QUANTIZE PREVIEW
+            <span className="px-2 py-0.5 rounded-md bg-[#00D4AA] text-[#17171C] text-[10.5px] font-black shrink-0 whitespace-nowrap">
+              量化预览
             </span>
             <span className="text-xs font-extrabold truncate">
               虚线发光格为弹珠录音量化预览（{quantizePreview.mappedCount} 步 · 原录音完整保留）
@@ -639,7 +636,7 @@ export const BeatDeckPage: React.FC = () => {
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => void holoAudio.playPinballRecording(quantizePreview.sourceEvents)}
-              className="brutal-pad px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[11px] font-black"
+              className="brutal-pad px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[11px] font-black whitespace-nowrap"
             >
               ▶ 听原弹珠录音
             </button>
@@ -648,7 +645,7 @@ export const BeatDeckPage: React.FC = () => {
                 playSfx('cartridgeLock');
                 applyPinballQuantize('merge');
               }}
-              className="brutal-pad px-2.5 py-1 rounded-lg bg-[#00D4AA] text-[#17171C] text-[11px] font-black"
+              className="brutal-pad px-2.5 py-1 rounded-lg bg-[#00D4AA] text-[#17171C] text-[11px] font-black whitespace-nowrap"
             >
               合并至当前轨
             </button>
@@ -657,7 +654,7 @@ export const BeatDeckPage: React.FC = () => {
                 playSfx('cartridgeLock');
                 applyPinballQuantize('replace');
               }}
-              className="brutal-pad px-2.5 py-1 rounded-lg bg-[#FFD426] text-[#17171C] text-[11px] font-black"
+              className="brutal-pad px-2.5 py-1 rounded-lg bg-[#FFD426] text-[#17171C] text-[11px] font-black whitespace-nowrap"
             >
               替换为量化轨
             </button>
@@ -666,7 +663,7 @@ export const BeatDeckPage: React.FC = () => {
                 playSfx('click', 0.3);
                 applyPinballQuantize('cancel');
               }}
-              className="brutal-pad px-2 py-1 rounded-lg bg-[#FF5526] text-white text-[11px] font-black"
+              className="brutal-pad px-2 py-1 rounded-lg bg-[#FF5526] text-white text-[11px] font-black whitespace-nowrap"
             >
               取消
             </button>
@@ -684,13 +681,11 @@ export const BeatDeckPage: React.FC = () => {
         >
           {!beatStageMode && (
             <div className="flex items-center justify-between pl-1">
-              <span className="hw-silkscreen">CARTRIDGES</span>
-              {beatRemixOrigin ? (
-                <span className="px-1.5 py-0.5 rounded bg-[#7C3AED] text-white font-mono-hw text-[8.5px] font-bold">
-                  REMIX {beatRemixOrigin.parentCode}·G{beatRemixOrigin.lineageDepth}
+              <span className="text-[11px] font-black text-[#626272] whitespace-nowrap">声卡卡槽</span>
+              {beatRemixOrigin && (
+                <span className="px-1.5 py-0.5 rounded bg-[#7C3AED] text-white text-[9.5px] font-bold whitespace-nowrap">
+                  重混 {beatRemixOrigin.parentCode} · 第{beatRemixOrigin.lineageDepth}代
                 </span>
-              ) : (
-                <span className="hw-silkscreen !text-[8px] opacity-70">UNIT 02</span>
               )}
             </div>
           )}
@@ -702,13 +697,13 @@ export const BeatDeckPage: React.FC = () => {
                   playSfx('click', 0.75);
                   setBeatBounceMode(!beatBounceMode);
                 }}
-                title="开启/关闭音乐驱动的 Holo Motion 音符跳跃动画"
-                className={`px-2 py-0.5 rounded-full border-[1.5px] border-[#17171C] font-mono-hw text-[9px] font-black flex items-center gap-1 cursor-pointer transition-colors ${
+                title="开启/关闭音乐驱动的音符跳跃动画"
+                className={`px-2 py-0.5 rounded-full border-[1.5px] border-[#17171C] text-[9.5px] font-black flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap ${
                   beatBounceMode ? 'bg-[#00D4AA] text-[#17171C]' : 'bg-[#EDE7D9] text-[#626272]'
                 }`}
               >
-                <Activity className="w-2.5 h-2.5" />
-                <span>音符跳跃 {beatBounceMode ? 'ON' : 'OFF'}</span>
+                <Activity className="w-2.5 h-2.5 shrink-0" />
+                <span>音符跳跃 {beatBounceMode ? '开' : '关'}</span>
               </button>
               <button
                 onClick={() => {
@@ -716,7 +711,7 @@ export const BeatDeckPage: React.FC = () => {
                   setBeatStageMode(!beatStageMode);
                 }}
                 title="切换动态演出宽屏视窗"
-                className="px-2 py-0.5 rounded-full border-[1.5px] border-[#17171C] bg-[#FBF9F4] hover:bg-[#FFD426] font-mono-hw text-[9px] font-black cursor-pointer"
+                className="px-2 py-0.5 rounded-full border-[1.5px] border-[#17171C] bg-[#FBF9F4] hover:bg-[#FFD426] text-[9.5px] font-black cursor-pointer whitespace-nowrap"
               >
                 演出视图
               </button>
@@ -827,7 +822,7 @@ export const BeatDeckPage: React.FC = () => {
                   <div className="flex items-stretch gap-1.5 h-full max-h-[76px] min-h-[60px]">
                     <button
                       onClick={() => void holoAudio.previewCard(card.id)}
-                      title={`点击试听：${card.title}（${card.zhTitle}）`}
+                      title={`点击试听：${card.zhTitle}（${catMeta.zhLabel}）`}
                       className={`flex-1 rounded-xl bg-[#14151B] border-[2.5px] border-[#17171C] p-[3px] flex flex-col overflow-hidden cursor-pointer group transition-transform duration-100 ${
                         isRowFiring ? 'scale-[1.02] ring-2 ring-[#FFD426]' : 'hover:brightness-105'
                       }`}
@@ -835,6 +830,7 @@ export const BeatDeckPage: React.FC = () => {
                       <div
                         className="border-b-[1.5px] border-[#17171C] rounded-t-[6px] px-2 py-[2px] flex items-center justify-between"
                         style={{ backgroundColor: catMeta.color, color: catMeta.textColor }}
+                        title={catMeta.zhLabel}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full border border-[#17171C]/50 transition-all ${
@@ -843,8 +839,8 @@ export const BeatDeckPage: React.FC = () => {
                               : 'bg-[#17171C]/35'
                           }`}
                         />
-                        <span className="text-[10.5px] font-black tracking-wider leading-none">
-                          {track.category}
+                        <span className="text-[10.5px] font-black tracking-wide leading-none whitespace-nowrap">
+                          {catMeta.label}
                         </span>
                         <span className="font-mono-hw text-[9px] font-black opacity-85 leading-none">
                           {card.code}
@@ -857,17 +853,14 @@ export const BeatDeckPage: React.FC = () => {
                         <div className="flex-1 px-2 py-0.5 flex flex-col justify-center gap-0.5 h-full text-left min-w-0">
                           <div className="flex items-center gap-1">
                             <span
-                              className="px-1 py-[0.5px] rounded text-[8.5px] font-black border border-[#17171C]"
+                              className="px-1 py-[0.5px] rounded text-[8.5px] font-black border border-[#17171C] shrink-0"
                               style={{ backgroundColor: rarMeta.bg, color: rarMeta.text }}
                             >
                               {rarMeta.label}
                             </span>
-                            <span className="text-[9px] font-bold text-white/60 truncate">
-                              {card.zhTitle}
-                            </span>
                           </div>
-                          <div className="text-[12px] font-black italic tracking-tight text-[#FBF9F4] truncate leading-none">
-                            {card.shortTitle}
+                          <div className="text-[11.5px] font-black text-[#FBF9F4] truncate leading-tight">
+                            {card.zhTitle}
                           </div>
                         </div>
                       </div>
@@ -898,28 +891,28 @@ export const BeatDeckPage: React.FC = () => {
                           playSfx('click', 0.4);
                           toggleTrackMute(trackIdx);
                         }}
-                        title="静音该轨 (Mute)"
-                        className={`w-6.5 h-6 rounded-md border-[2px] border-[#17171C] font-mono-hw text-[10.5px] font-black cursor-pointer transition-colors ${
+                        title="静音"
+                        className={`w-6.5 h-6 rounded-md border-[2px] border-[#17171C] text-[10.5px] font-black cursor-pointer transition-colors ${
                           track.mute
                             ? 'bg-[#FF5526] text-white'
                             : 'bg-[#FBF9F4] text-[#17171C] hover:bg-[#E7E1D3]'
                         }`}
                       >
-                        M
+                        静
                       </button>
                       <button
                         onClick={() => {
                           playSfx('click', 0.7);
                           toggleTrackSolo(trackIdx);
                         }}
-                        title="独奏该轨 (Solo)"
-                        className={`w-6.5 h-6 rounded-md border-[2px] border-[#17171C] font-mono-hw text-[10.5px] font-black cursor-pointer transition-colors ${
+                        title="独奏"
+                        className={`w-6.5 h-6 rounded-md border-[2px] border-[#17171C] text-[10.5px] font-black cursor-pointer transition-colors ${
                           track.solo
                             ? 'bg-[#FFD426] text-[#17171C]'
                             : 'bg-[#FBF9F4] text-[#17171C] hover:bg-[#E7E1D3]'
                         }`}
                       >
-                        S
+                        独
                       </button>
                     </div>
 
@@ -928,7 +921,7 @@ export const BeatDeckPage: React.FC = () => {
                       onChange={(val) => setTrackTone(trackIdx, val)}
                       color={catMeta.color}
                       size={32}
-                      label="TONE"
+                      label="音色"
                       title="上下拖拽或滚轮调节滤波明亮度与音高"
                     />
 
@@ -936,7 +929,7 @@ export const BeatDeckPage: React.FC = () => {
                       value={track.volume}
                       onChange={(val) => setTrackVolume(trackIdx, val)}
                       color={catMeta.color}
-                      label="VOL"
+                      label="音量"
                       height={12}
                       className="flex-1 min-w-[50px]"
                     />
@@ -1055,9 +1048,9 @@ export const BeatDeckPage: React.FC = () => {
       <section className="flex items-center gap-2.5 shrink-0">
         <div className="flex-1 grid grid-cols-3 gap-2.5">
           {[
-            { key: 'bitcrush' as const, label: 'BITCRUSH', zh: '像素碎音', bg: '#7C3AED', text: '#FFFFFF' },
-            { key: 'echo' as const, label: 'STREET ECHO', zh: '弄堂回声', bg: '#FF5526', text: '#FFFFFF' },
-            { key: 'stutter' as const, label: 'STUTTER', zh: '鬼畜切拍', bg: '#00D4AA', text: '#17171C' },
+            { key: 'bitcrush' as const, label: '像素碎音', bg: '#7C3AED', text: '#FFFFFF' },
+            { key: 'echo' as const, label: '街巷回声', bg: '#FF5526', text: '#FFFFFF' },
+            { key: 'stutter' as const, label: '切拍重复', bg: '#00D4AA', text: '#17171C' },
           ].map((fx) => {
             const active = liveFx[fx.key];
             return (
@@ -1067,20 +1060,20 @@ export const BeatDeckPage: React.FC = () => {
                   playSfx('click', active ? 0.35 : 0.9);
                   setLiveFx(fx.key, !active);
                 }}
-                title={`${fx.zh}（点击开关叠加 DJ 现场特效，导出 WAV 时同步保留！）`}
+                title={`${fx.label}（点击开关叠加实时特效，导出 WAV 时同步保留）`}
                 style={{ backgroundColor: fx.bg, color: fx.text }}
-                className={`brutal-btn-lg h-[46px] px-3.5 rounded-2xl flex items-center justify-between ${
+                className={`brutal-btn-lg h-[46px] px-3.5 rounded-2xl flex items-center justify-between whitespace-nowrap ${
                   active ? 'brutal-btn-pressed ring-2 ring-[#FFD426]' : ''
                 }`}
               >
                 <span
-                  className={`w-3.5 h-3.5 rounded-full border-[2px] border-[#17171C] transition-all ${
+                  className={`w-3.5 h-3.5 rounded-full border-[2px] border-[#17171C] transition-all shrink-0 ${
                     active ? 'bg-[#A3E635] shadow-[0_0_10px_#A3E635]' : 'bg-[#FBF9F4]/70'
                   }`}
                 />
-                <span className="text-[14px] font-black tracking-wider uppercase">{fx.label}</span>
-                <span className="font-mono-hw text-[9.5px] font-bold opacity-85 hidden sm:inline">
-                  {active ? 'ON' : fx.zh}
+                <span className="text-[14.5px] zh-display">{fx.label}</span>
+                <span className="text-[10.5px] font-black opacity-85">
+                  {active ? '开' : '关'}
                 </span>
               </button>
             );
@@ -1089,18 +1082,17 @@ export const BeatDeckPage: React.FC = () => {
 
         <div className="h-8 w-[1.5px] bg-[#17171C]/20 shrink-0" />
 
-        {/* NEW V2.0 Creative Bridge: PERFORM IN PINBALL */}
         <button
           onClick={() => {
             playSfx('portalWarp');
             holoAudio.stopTransport();
             performBeatInPinball();
           }}
-          title="将当前编曲冻结为确定性音乐事件，送入 03 PINBALL 观看音画同步弹珠剧场演出！"
-          className="brutal-btn-lg h-[46px] px-4 rounded-2xl bg-[#14151B] text-[#00D4AA] text-[13.5px] font-black tracking-wide uppercase flex items-center gap-1.5 shrink-0"
+          title="将当前编曲冻结为确定性音乐事件，送入 03 弹珠剧场观看音画同步演出"
+          className="brutal-btn-lg h-[46px] px-4 rounded-2xl bg-[#14151B] text-[#00D4AA] text-[13.5px] zh-display flex items-center gap-1.5 shrink-0 whitespace-nowrap"
         >
-          <Disc3 className="w-4 h-4" />
-          <span>PERFORM IN PINBALL</span>
+          <Disc3 className="w-4 h-4 shrink-0" />
+          <span>进入弹珠剧场</span>
         </button>
 
         <button
@@ -1108,10 +1100,10 @@ export const BeatDeckPage: React.FC = () => {
             playSfx('mintStamp');
             sendBeatToForge();
           }}
-          className="brutal-btn-lg h-[46px] px-5 rounded-2xl bg-[#FFD426] text-[#17171C] text-[14px] font-black tracking-wide uppercase flex items-center gap-1.5 shrink-0"
+          className="brutal-btn-lg h-[46px] px-5 rounded-2xl bg-[#FFD426] text-[#17171C] text-[14px] zh-display flex items-center gap-1.5 shrink-0 whitespace-nowrap"
         >
-          <Sparkles className="w-4 h-4" />
-          <span>MINT THIS BEAT →</span>
+          <Sparkles className="w-4 h-4 shrink-0" />
+          <span>铸造这张节拍卡 →</span>
         </button>
       </section>
 
@@ -1127,15 +1119,16 @@ export const BeatDeckPage: React.FC = () => {
           >
             <div className="px-4 py-3 bg-[#FFD426] border-b-[2.5px] border-[#17171C] flex items-center justify-between">
               <div>
-                <h3 className="text-base font-black uppercase text-[#17171C]">
-                  SWAP CARTRIDGE · 更换 {tracks[swapTrackIdx].category} 卡槽声卡
+                <h3 className="text-base zh-display text-[#17171C]">
+                  更换「{CATEGORY_META[tracks[swapTrackIdx].category].zhLabel}」轨道声卡
                 </h3>
                 <p className="text-xs font-bold text-[#17171C]/75">
-                  选择已收集的市井声卡插入卡槽（支持跨轨混搭实验！）
+                  选择已收集的市井声卡插入卡槽（支持跨轨混搭实验）
                 </p>
               </div>
               <button
                 onClick={() => setSwapTrackIdx(null)}
+                aria-label="关闭换卡窗口"
                 className="brutal-btn w-8 h-8 rounded-lg bg-[#FBF9F4] flex items-center justify-center"
               >
                 <X className="w-4 h-4" strokeWidth={3} />
@@ -1172,16 +1165,18 @@ export const BeatDeckPage: React.FC = () => {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <span
-                            className="px-1.5 py-0.5 rounded text-[9px] font-black border border-[#17171C]"
+                            className="px-1.5 py-0.5 rounded text-[9.5px] font-black border border-[#17171C]"
                             style={{ backgroundColor: cat.color, color: cat.textColor }}
                           >
                             {cat.label}
                           </span>
                           <span className="font-mono-hw text-[10px] font-black">{c.code}</span>
                         </div>
-                        <div className="text-xs font-black truncate mt-1">{c.title}</div>
-                        <div className="text-[10px] font-bold text-[#626272] truncate">
+                        <div className="text-[12.5px] font-black truncate mt-1 text-[#17171C]">
                           {c.zhTitle}
+                        </div>
+                        <div className="text-[10px] font-bold text-[#626272] truncate">
+                          {cat.zhLabel} · 推荐 {c.recommendedBpm} BPM
                         </div>
                       </div>
                     </button>

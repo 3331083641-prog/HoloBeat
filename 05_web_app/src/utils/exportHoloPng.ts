@@ -132,7 +132,18 @@ function drawSoundSigilOnCanvas(
  * - Deterministic Generative Sound Sigil + Remix Lineage + PCM Audio Spec Plate
  * - Strictly 100% anonymous competition-safe metadata
  */
+const ZH_SANS = '"HarmonyOS Sans SC", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif';
+const HW_MONO = '"JetBrains Mono", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", monospace';
+
 export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promise<Blob> {
+  if (typeof document !== 'undefined' && document.fonts?.ready) {
+    try {
+      await document.fonts.ready;
+    } catch {
+      // Continue safely with fallback fonts
+    }
+  }
+
   const PW = 1200;
   const PH = 1600;
   const canvas = document.createElement('canvas');
@@ -182,16 +193,17 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   drawCrosshair(64, PH - 64);
   drawCrosshair(PW - 64, PH - 64);
 
-  ctx.fillStyle = 'rgba(251, 249, 244, 0.78)';
-  ctx.font = '700 20px "JetBrains Mono", monospace';
+  ctx.fillStyle = 'rgba(251, 249, 244, 0.8)';
+  ctx.font = `700 22px ${ZH_SANS}`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText('HOLOBEAT STUDIO // COLLECT SOUND · FORGE MEMORIES', 92, 72);
+  ctx.fillText('HOLOBEAT · 声卡造物局', 92, 72);
 
   ctx.fillStyle = '#FFD426';
+  ctx.font = `700 20px ${HW_MONO}`;
   ctx.textAlign = 'right';
   ctx.fillText(
-    `${opts.isDemo ? 'DEMO EDITION' : 'ARCHIVE EDITION'} · ${opts.code}`,
+    `${opts.isDemo ? '示例版' : '典藏版'} · ${opts.code}`,
     PW - 92,
     72
   );
@@ -389,26 +401,26 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.lineTo(pad + innerW, pad + artH);
   ctx.stroke();
 
-  ctx.fillStyle = isLtd ? 'rgba(254, 240, 138, 0.58)' : 'rgba(98, 98, 114, 0.78)';
-  ctx.font = '700 18px "JetBrains Mono", monospace';
+  ctx.fillStyle = isLtd ? 'rgba(254, 240, 138, 0.68)' : 'rgba(98, 98, 114, 0.85)';
+  ctx.font = `700 20px ${ZH_SANS}`;
   ctx.textAlign = 'left';
   ctx.fillText(
-    `${(opts.sourceType ?? 'beat').toUpperCase()} · ${foilMeta.label} FOIL`,
+    `${opts.sourceType === 'pinball' ? '弹珠作品' : '节拍作品'} · ${foilMeta.zhLabel}`,
     pad + 34,
     pad + artH + 34
   );
   ctx.textAlign = 'right';
   ctx.fillText(
-    opts.lineageLabel ? opts.lineageLabel.toUpperCase() : 'HB-V2 // SOUND ARCHIVE',
+    opts.lineageLabel ? opts.lineageLabel : '原创首发',
     pad + innerW - 34,
     pad + artH + 34
   );
 
   ctx.fillStyle = isLtd ? '#FEF08A' : '#17171C';
-  ctx.font = 'italic 900 54px "Space Grotesk", sans-serif';
+  ctx.font = `900 50px ${ZH_SANS}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(`✦ ${opts.title.toUpperCase()} ✦`, W / 2, pad + artH + ribbonH / 2 + 16);
+  ctx.fillText(`✦ ${opts.title} ✦`, W / 2, pad + artH + ribbonH / 2 + 16, innerW - 72);
 
   // Black-Valley Holographic Diffraction Pass
   ctx.save();
@@ -573,31 +585,31 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   }
 
   ctx.fillStyle = '#FBF9F4';
-  ctx.font = 'italic 900 42px "Space Grotesk", sans-serif';
+  ctx.font = `900 40px ${ZH_SANS}`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillText(opts.title.toUpperCase(), textStartX, plateY + 26);
+  ctx.fillText(opts.title, textStartX, plateY + 26, plateW - 410);
 
   const sourceDesc =
     opts.sourceType === 'pinball'
-      ? `PINBALL SYNTH · ${opts.scaleLabel ?? 'PENTA C'}`
-      : `BEAT MIX · ${opts.bpm ?? 116} BPM · ${opts.scaleLabel ?? 'PENTA C'}`;
+      ? `弹珠作品 · ${opts.scaleLabel ?? 'C 五声'}`
+      : `节拍作品 · ${opts.bpm ?? 116} BPM · ${opts.scaleLabel ?? 'C 五声'}`;
 
   ctx.fillStyle = '#00D4AA';
-  ctx.font = '700 21px "JetBrains Mono", monospace';
-  ctx.fillText(sourceDesc, textStartX, plateY + 84, plateW - 420);
+  ctx.font = `700 21px ${HW_MONO}`;
+  ctx.fillText(sourceDesc, textStartX, plateY + 86, plateW - 420);
 
   const shortLineage = opts.isDemo
-    ? 'DEMO EDITION'
+    ? '示例作品'
     : opts.lineageLabel
-      ? opts.lineageLabel.split('·')[0].trim()
-      : 'ORIGINAL';
+      ? opts.lineageLabel
+      : '原创首发';
 
-  ctx.fillStyle = 'rgba(251, 249, 244, 0.56)';
-  ctx.font = '700 16.5px "JetBrains Mono", monospace';
+  ctx.fillStyle = 'rgba(251, 249, 244, 0.6)';
+  ctx.font = `700 17px ${ZH_SANS}`;
   ctx.fillText(
-    `FOIL: ${foilMeta.label} (${foilMeta.zhLabel}) · ${shortLineage} · ${
-      opts.waveformIsRealPcm ? 'REAL PCM' : 'SPECTRUM'
+    `材质：${foilMeta.zhLabel} · ${shortLineage} · ${
+      opts.waveformIsRealPcm ? '真实声纹' : '声学图谱'
     }`,
     textStartX,
     plateY + 136,
@@ -606,7 +618,7 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
 
   // Right: Collector Serial Stamp + Micro-Waveform
   ctx.fillStyle = '#FFD426';
-  ctx.font = '900 30px "JetBrains Mono", monospace';
+  ctx.font = `900 28px ${HW_MONO}`;
   ctx.textAlign = 'right';
   ctx.fillText(opts.code, plateX + plateW - 34, plateY + 30);
 

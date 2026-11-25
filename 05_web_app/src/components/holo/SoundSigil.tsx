@@ -29,7 +29,7 @@ export const SoundSigil: React.FC<SoundSigilProps> = ({
       height={size}
       viewBox="0 0 100 100"
       className={`shrink-0 select-none ${className}`}
-      aria-label="Sound Sigil Emblem"
+      aria-label="声音纹章"
     >
       <circle cx={cx} cy={cy} r="46" fill="#14151B" stroke="#2D2F3B" strokeWidth="2" />
 

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-25 13:54:22",
+  "timestamp": "2026-11-25 17:53:12",
   "baseUrl": "http://localhost:5173",
   "chrome": {
     "consoleErrors": [],
@@ -7,14 +7,15 @@
     "checks": {
       "audioUnlock": true,
       "gachaPullAndReveal": true,
+      "cardBackLocalized": true,
       "gachaSendToBeat": true,
       "beatPlaybackAndHoloMotion": true,
       "beatToPinballChoreographedShow": true,
-      "pinballRealRecordingText": "8S REC · 43 音符 (4.4s)",
+      "pinballRealRecordingText": "8 秒录音 · 43 音符 (4.3s)",
       "pinballQuantizePreview": true,
       "emptyPinballGuardRejected": true,
       "realPcmWaveformRendered": false,
-      "snapshotImmutabilityVerified": "BEAT · 116 BPM · 74 音符 == BEAT · 116 BPM · 74 音符",
+      "snapshotImmutabilityVerified": "节拍作品 · 116 BPM · 76 音符 == 节拍作品 · 116 BPM · 76 音符",
       "mintedCardMY01": true,
       "indexedDbReloadPersistence": true,
       "unsealAndRemixLineage": true,
@@ -30,94 +31,94 @@
   },
   "responsive": {
     "1920x1080": {
-      "GACHA": {
+      "声卡盲盒": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "BEAT": {
+      "插卡编曲": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "PINBALL": {
+      "弹珠剧场": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "FORGE": {
+      "闪卡铸造": {
         "horizOverflow": false,
         "vertOverflow": false
       }
     },
     "1440x900": {
-      "GACHA": {
+      "声卡盲盒": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "BEAT": {
+      "插卡编曲": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "PINBALL": {
+      "弹珠剧场": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "FORGE": {
+      "闪卡铸造": {
         "horizOverflow": false,
         "vertOverflow": false
       }
     },
     "1366x768": {
-      "GACHA": {
+      "声卡盲盒": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "BEAT": {
+      "插卡编曲": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "PINBALL": {
+      "弹珠剧场": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "FORGE": {
+      "闪卡铸造": {
         "horizOverflow": false,
         "vertOverflow": false
       }
     },
     "1280x720": {
-      "GACHA": {
+      "声卡盲盒": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "BEAT": {
+      "插卡编曲": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "PINBALL": {
+      "弹珠剧场": {
         "horizOverflow": false,
         "vertOverflow": false
       },
-      "FORGE": {
+      "闪卡铸造": {
         "horizOverflow": false,
         "vertOverflow": false
       }
     }
   },
   "performance": {
-    "initialLoadMs": 1829.9,
+    "initialLoadMs": 976.8,
     "beatHoloMotionFps": {
-      "fps": 123.1,
-      "frames": 247,
-      "durationMs": 2007
+      "fps": 147,
+      "frames": 294,
+      "durationMs": 2000
     },
     "pinballFreeJamFps": {
-      "fps": 132.1,
-      "frames": 265,
-      "durationMs": 2007
+      "fps": 158.1,
+      "frames": 317,
+      "durationMs": 2005
     }
   },
   "exports": {
     "png": {
-      "bytes": 1174137,
+      "bytes": 1156670,
       "width": 1200,
       "height": 1600
     },
@@ -126,14 +127,15 @@
       "channels": 2,
       "sampleRate": 48000,
       "bitsPerSample": 16,
-      "peakAmplitude": 24991,
+      "peakAmplitude": 26754,
       "nonSilent": true
     },
     "json": {
-      "bytes": 30500,
+      "bytes": 31161,
       "schema": "holobeat.project.v2",
       "kind": "minted-card",
-      "code": "#MY-01"
+      "code": "#MY-01",
+      "title": "胡同放克"
     }
   },
   "screenshots": [

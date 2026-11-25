@@ -8,7 +8,7 @@ export interface StickerDef {
 export const STICKER_PACK: StickerDef[] = [
   {
     id: 'bolt',
-    label: 'BOLT',
+    label: '闪电',
     zhLabel: '闪电',
     svgInner: `
       <polygon points="36,4 12,35 29,35 23,60 52,27 34,27" fill="#FFD60A" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
@@ -17,7 +17,7 @@ export const STICKER_PACK: StickerDef[] = [
   },
   {
     id: 'note',
-    label: 'NOTE',
+    label: '音符',
     zhLabel: '笑脸音符',
     svgInner: `
       <path d="M26 44 V14 L52 10 V38" fill="none" stroke="#1A1A1F" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -31,7 +31,7 @@ export const STICKER_PACK: StickerDef[] = [
   },
   {
     id: 'cassette',
-    label: 'TAPE',
+    label: '磁带',
     zhLabel: '复古磁带',
     svgInner: `
       <rect x="6" y="14" width="52" height="36" rx="6" fill="#C084FC" stroke="#1A1A1F" stroke-width="4"/>
@@ -46,7 +46,7 @@ export const STICKER_PACK: StickerDef[] = [
   },
   {
     id: 'starburst',
-    label: 'BOOM',
+    label: '星芒',
     zhLabel: '星芒',
     svgInner: `
       <polygon points="32,4 39,20 56,12 46,28 60,38 43,42 48,59 32,48 16,59 21,42 4,38 18,28 8,12 25,20" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3.5" stroke-linejoin="round"/>
@@ -55,7 +55,7 @@ export const STICKER_PACK: StickerDef[] = [
   },
   {
     id: 'heart',
-    label: 'HEART',
+    label: '爱心',
     zhLabel: '像素爱心',
     svgInner: `
       <path d="M16 12 H26 V18 H38 V12 H48 V18 H54 V32 H48 V38 H42 V44 H36 V50 H28 V44 H22 V38 H16 V32 H10 V18 H16 Z" fill="#FF3D9A" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="miter"/>
@@ -64,7 +64,7 @@ export const STICKER_PACK: StickerDef[] = [
   },
   {
     id: 'lantern',
-    label: 'LANTERN',
+    label: '灯笼',
     zhLabel: '市井灯笼',
     svgInner: `
       <rect x="24" y="6" width="16" height="7" rx="2" fill="#FFD60A" stroke="#1A1A1F" stroke-width="3"/>
@@ -77,7 +77,7 @@ export const STICKER_PACK: StickerDef[] = [
   },
   {
     id: 'flame',
-    label: 'HOT',
+    label: '火焰',
     zhLabel: '火焰',
     svgInner: `
       <path d="M34 5 C37 18, 52 22, 51 39 C50 51, 42 58, 32 58 C20 58, 12 49, 13 37 C14 27, 21 22, 23 14 C26 20, 29 22, 31 19 C31 13, 32 8, 34 5 Z" fill="#FF5C2B" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>
@@ -86,7 +86,7 @@ export const STICKER_PACK: StickerDef[] = [
   },
   {
     id: 'crown',
-    label: 'KING',
+    label: '皇冠',
     zhLabel: '潮玩皇冠',
     svgInner: `
       <polygon points="8,48 12,18 24,31 32,12 40,31 52,18 56,48" fill="#FFD60A" stroke="#1A1A1F" stroke-width="4" stroke-linejoin="round"/>

@@ -28,8 +28,8 @@ export const QuickDeckDrawer: React.FC = () => {
       >
         <div className="p-4 border-b-[2.5px] border-[#17171C] flex items-center justify-between bg-[#FFD426]">
           <div>
-            <h2 className="text-lg font-black uppercase tracking-wide text-[#17171C]">
-              SOUND CARD DECK · 声卡图鉴
+            <h2 className="text-lg font-black tracking-wide text-[#17171C]">
+              全息声卡图鉴
             </h2>
             <p className="text-xs font-bold text-[#17171C]/80">
               已收集 {collection.length} / {SOUND_CARDS.length} 张市井全息声卡
@@ -40,6 +40,7 @@ export const QuickDeckDrawer: React.FC = () => {
               playSfx('click');
               setOpen(false);
             }}
+            aria-label="关闭图鉴"
             className="brutal-btn w-9 h-9 rounded-xl bg-[#FBF9F4] flex items-center justify-center"
           >
             <X className="w-5 h-5" strokeWidth={2.8} />
@@ -87,7 +88,7 @@ export const QuickDeckDrawer: React.FC = () => {
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-white/45 gap-1">
                       <Lock className="w-5 h-5" />
-                      <span className="font-mono-hw text-[10px] font-bold">{card.code} LOCKED</span>
+                      <span className="font-mono-hw text-[10px] font-bold">{card.code} 未解锁</span>
                     </div>
                   )}
                 </div>
@@ -95,10 +96,10 @@ export const QuickDeckDrawer: React.FC = () => {
                 <div className="flex items-center justify-between gap-1">
                   <div className="min-w-0">
                     <div className="text-xs font-black truncate text-[#1A1A1F]">
-                      {unlocked ? card.title : '??? 盲盒未解锁'}
+                      {unlocked ? card.zhTitle : '盲盒未解锁'}
                     </div>
                     <div className="text-[10px] font-bold text-[#5C5C6B] truncate">
-                      {unlocked ? card.zhTitle : `${cat.label} · 前往抽卡机解锁`}
+                      {unlocked ? cat.zhLabel : `${cat.zhLabel} · 前往盲盒机解锁`}
                     </div>
                   </div>
                 </div>
@@ -107,16 +108,17 @@ export const QuickDeckDrawer: React.FC = () => {
                   <div className="flex gap-1.5 mt-0.5">
                     <button
                       onClick={() => void holoAudio.previewCard(card.id)}
-                      className="brutal-pad flex-1 py-1 rounded-lg bg-[#00D4AA] text-[10px] font-black flex items-center justify-center gap-1"
+                      className="brutal-pad flex-1 py-1 rounded-lg bg-[#00D4AA] text-[10px] font-black flex items-center justify-center gap-1 whitespace-nowrap"
                     >
                       <Play className="w-3 h-3 fill-current" /> 试听
                     </button>
                     <button
                       onClick={() => {
                         playSfx('cartridgeLock');
+                        setOpen(false);
                         sendCardToBeat(card.id);
                       }}
-                      className="brutal-pad flex-1 py-1 rounded-lg bg-[#7C3AED] text-white text-[10px] font-black"
+                      className="brutal-pad flex-1 py-1 rounded-lg bg-[#7C3AED] text-white text-[10px] font-black whitespace-nowrap"
                     >
                       装入节拍
                     </button>
@@ -128,9 +130,9 @@ export const QuickDeckDrawer: React.FC = () => {
                       setActivePage('gacha');
                       setOpen(false);
                     }}
-                    className="brutal-pad w-full py-1 rounded-lg bg-[#FFD60A] text-[10px] font-black flex items-center justify-center gap-1"
+                    className="brutal-pad w-full py-1 rounded-lg bg-[#FFD60A] text-[10px] font-black flex items-center justify-center gap-1 whitespace-nowrap"
                   >
-                    <Sparkles className="w-3 h-3" /> 去抽盲盒
+                    <Sparkles className="w-3 h-3" /> 去扭盲盒
                   </button>
                 )}
               </div>

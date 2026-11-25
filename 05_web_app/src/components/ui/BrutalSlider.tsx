@@ -41,10 +41,10 @@ export const BrutalSlider: React.FC<BrutalSliderProps> = ({
     <div className={`flex flex-col select-none ${className}`}>
       {label && (
         <div className="flex items-center justify-between mb-1 leading-none">
-          <span className="font-mono-hw text-[9.5px] font-bold tracking-[0.1em] uppercase text-[#17171C]">
+          <span className="text-[10px] font-extrabold tracking-wide text-[#17171C] whitespace-nowrap">
             {label}
           </span>
-          <span className="font-mono-hw text-[9px] font-bold text-[#626272]">
+          <span className="font-mono-hw text-[9.5px] font-bold text-[#626272]">
             {Math.round(value * 100)}
           </span>
         </div>

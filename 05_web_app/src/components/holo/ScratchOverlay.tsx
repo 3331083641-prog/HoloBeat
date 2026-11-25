@@ -84,11 +84,11 @@ export const ScratchOverlay: React.FC<ScratchOverlayProps> = ({ width, height, o
     ctx.save();
     ctx.translate(width / 2, height / 2);
     ctx.rotate(-0.34);
-    ctx.font = '900 12px "JetBrains Mono", monospace';
+    ctx.font = '800 12px "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
     ctx.fillStyle = 'rgba(23, 23, 28, 0.22)';
     ctx.textAlign = 'center';
     for (let y = -height; y < height; y += 34) {
-      ctx.fillText('✦ SCRATCH FOIL ✦ 刮开盲盒涂层 ✦', 0, y);
+      ctx.fillText('✦ 刮开全息涂层 ✦ 揭晓市井声卡 ✦', 0, y);
     }
     ctx.restore();
 
@@ -107,12 +107,12 @@ export const ScratchOverlay: React.FC<ScratchOverlayProps> = ({ width, height, o
     ctx.stroke();
 
     ctx.fillStyle = '#FFD426';
-    ctx.font = '900 14px "Space Grotesk", sans-serif';
+    ctx.font = '900 15px "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('✦ SCRATCH TO UNBOX ✦', width / 2, by + 29);
+    ctx.fillText('✦ 刮开全息银膜 ✦', width / 2, by + 30);
     ctx.fillStyle = '#FBF9F4';
-    ctx.font = '700 12px "HarmonyOS Sans SC", "PingFang SC", sans-serif';
-    ctx.fillText('按住滑动刮开全息银膜', width / 2, by + 52);
+    ctx.font = '700 12px "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
+    ctx.fillText('按住滑动揭晓盲盒声卡', width / 2, by + 53);
     ctx.restore();
   }, [width, height]);
 
@@ -263,8 +263,8 @@ export const ScratchOverlay: React.FC<ScratchOverlayProps> = ({ width, height, o
       />
       {/* Live Scratch Progress Indicator Pill */}
       {progressPct > 0 && (
-        <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 pointer-events-none px-2.5 py-0.5 rounded-full bg-[#14151B]/90 border border-[#FFD426] font-mono-hw text-[10px] font-bold text-[#FFD426] shadow-md">
-          UNBOXING {progressPct}%
+        <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 pointer-events-none px-2.5 py-0.5 rounded-full bg-[#14151B]/90 border border-[#FFD426] font-mono-hw text-[10px] font-bold text-[#FFD426] shadow-md whitespace-nowrap">
+          正在刮开 {progressPct}%
         </div>
       )}
     </div>

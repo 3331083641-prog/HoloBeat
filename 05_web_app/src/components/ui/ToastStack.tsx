@@ -38,7 +38,7 @@ export const ToastStack: React.FC = () => {
           <button
             onClick={() => dismissToast(t.id)}
             className="p-0.5 text-[#5C5C6B] hover:text-[#1A1A1F] cursor-pointer"
-            aria-label="close"
+            aria-label="关闭提示"
           >
             <X className="w-3.5 h-3.5" strokeWidth={2.75} />
           </button>

@@ -10,16 +10,15 @@ import { OnboardingRibbon } from '../ui/OnboardingRibbon';
 const NAV_TABS: {
   id: PageId;
   num: string;
-  label: string;
   zhLabel: string;
   activeBg: string;
   activeText: string;
   dotColor: string;
 }[] = [
-  { id: 'gacha', num: '01', label: 'GACHA', zhLabel: '盲盒抽卡', activeBg: '#7C3AED', activeText: '#FFFFFF', dotColor: '#FFD426' },
-  { id: 'beat', num: '02', label: 'BEAT', zhLabel: '插卡节拍', activeBg: '#FF5526', activeText: '#FFFFFF', dotColor: '#FFD426' },
-  { id: 'pinball', num: '03', label: 'PINBALL', zhLabel: '物理弹珠', activeBg: '#00D4AA', activeText: '#17171C', dotColor: '#17171C' },
-  { id: 'forge', num: '04', label: 'FORGE', zhLabel: '闪卡铸造', activeBg: '#FFD426', activeText: '#17171C', dotColor: '#FF5526' },
+  { id: 'gacha', num: '01', zhLabel: '声卡盲盒', activeBg: '#7C3AED', activeText: '#FFFFFF', dotColor: '#FFD426' },
+  { id: 'beat', num: '02', zhLabel: '插卡编曲', activeBg: '#FF5526', activeText: '#FFFFFF', dotColor: '#FFD426' },
+  { id: 'pinball', num: '03', zhLabel: '弹珠剧场', activeBg: '#00D4AA', activeText: '#17171C', dotColor: '#17171C' },
+  { id: 'forge', num: '04', zhLabel: '闪卡铸造', activeBg: '#FFD426', activeText: '#17171C', dotColor: '#FF5526' },
 ];
 
 const QUICK_BPMS = [92, 116, 126, 140];
@@ -103,8 +102,8 @@ export const TopNavbar: React.FC = () => {
             <span className="text-[20px] font-black tracking-tight leading-none text-[#17171C]">
               HOLOBEAT
             </span>
-            <span className="hw-silkscreen !text-[8.5px] mt-0.5 leading-none">
-              HB-04 · 声卡造物局
+            <span className="text-[10px] font-bold tracking-[0.12em] text-[#626272] mt-0.5 leading-none">
+              声卡造物局
             </span>
           </div>
         </button>
@@ -145,10 +144,7 @@ export const TopNavbar: React.FC = () => {
                 />
               )}
               <span className="font-mono-hw text-[11px] opacity-75">{tab.num}</span>
-              <span>{tab.label}</span>
-              <span className="hidden xl:inline text-[10px] font-bold opacity-75 ml-0.5">
-                {tab.zhLabel}
-              </span>
+              <span className="zh-display">{tab.zhLabel}</span>
             </button>
           );
         })}

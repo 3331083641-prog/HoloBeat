@@ -10,6 +10,7 @@ import {
   quantizePinballToBeatPreview,
 } from '../audio/compositionEngine';
 import {
+  CATEGORY_META,
   RARITY_META,
   SCALE_META,
   SOUND_CARDS,
@@ -73,8 +74,8 @@ export const BEAT_PRESETS: Record<
   }
 > = {
   MARKET: {
-    label: 'MARKET',
-    zhTitle: '胡同早市 Funk',
+    label: '早市',
+    zhTitle: '胡同早市律动',
     bpm: 116,
     swing: 0.16,
     scale: 'PENTA_C',
@@ -123,8 +124,8 @@ export const BEAT_PRESETS: Record<
     ],
   },
   NIGHT: {
-    label: 'NIGHT',
-    zhTitle: '霓虹夜市 Groove',
+    label: '夜市',
+    zhTitle: '霓虹夜市节奏',
     bpm: 126,
     swing: 0.1,
     scale: 'MINOR_C',
@@ -173,8 +174,8 @@ export const BEAT_PRESETS: Record<
     ],
   },
   LOFI: {
-    label: 'LO-FI',
-    zhTitle: '茶馆 Lo-Fi',
+    label: '茶馆',
+    zhTitle: '茶馆午后慢拍',
     bpm: 92,
     swing: 0.34,
     scale: 'DORIAN_C',
@@ -223,8 +224,8 @@ export const BEAT_PRESETS: Record<
     ],
   },
   RAIN: {
-    label: 'RAIN',
-    zhTitle: '雨巷 Ambient',
+    label: '雨巷',
+    zhTitle: '雨巷氛围小品',
     bpm: 84,
     swing: 0.22,
     scale: 'DORIAN_C',
@@ -273,8 +274,8 @@ export const BEAT_PRESETS: Record<
     ],
   },
   LION: {
-    label: 'LION',
-    zhTitle: '街头舞狮 Percussion',
+    label: '舞狮',
+    zhTitle: '街头舞狮鼓阵',
     bpm: 132,
     swing: 0.08,
     scale: 'PENTA_C',
@@ -368,9 +369,9 @@ const DEMO_BEAT_SNAPSHOT: CompositionSnapshot = createBeatCompositionSnapshot(
 const INITIAL_DEMO_CARD: MintedCard = {
   id: 'demo-card-neon-night',
   serialNumber: 0,
-  code: '#DEMO-01',
+  code: '#示例-01',
   idempotencyKey: 'demo::neon-night',
-  title: 'NEON NIGHT',
+  title: '霓虹之夜',
   rarity: 'UR',
   foil: 'prism',
   artId: 'neon-dj',
@@ -388,7 +389,7 @@ const INITIAL_DEMO_CARD: MintedCard = {
 const INITIAL_FORGE_DRAFT: ForgeDraft = {
   snapshot: DEMO_BEAT_SNAPSHOT,
   sourceType: 'beat',
-  title: 'HUTONG FUNK',
+  title: '胡同放克',
   rarity: 'UR',
   foil: 'prism',
   artId: 'neon-dj',
@@ -780,9 +781,9 @@ export const useHoloStore = create<HoloState>()(
         }
 
         get().pushToast({
-          text: `已将 ${card.code} ${card.title}（${card.zhTitle}）真实装入 ${categoryOrder[trackIdx]} 轨道卡槽`,
+          text: `已将 ${card.code}「${card.zhTitle}」装入「${CATEGORY_META[categoryOrder[trackIdx]].zhLabel}」轨道卡槽`,
           accent: card.accentColor,
-          actionLabel: navigate ? undefined : '前往节拍台 →',
+          actionLabel: navigate ? undefined : '前往编曲台 →',
           actionPage: navigate ? undefined : 'beat',
         });
       },
@@ -797,7 +798,7 @@ export const useHoloStore = create<HoloState>()(
           get().triggerSharedTransition(card.id, 'pinball');
         }
         get().pushToast({
-          text: `已绑定 ${card.code} ${card.title} 至物理弹珠台音色槽`,
+          text: `已将 ${card.code}「${card.zhTitle}」绑定至弹珠剧场音色槽`,
           accent: '#00D4AA',
         });
       },
@@ -1017,8 +1018,8 @@ export const useHoloStore = create<HoloState>()(
           remixOrigin: s.beatRemixOrigin,
           title:
             s.beatRemixOrigin
-              ? `${s.beatRemixOrigin.parentTitle.slice(0, 13)} V${s.beatRemixOrigin.lineageDepth}`
-              : s.forgeDraft.title || 'STREET GROOVE',
+              ? `${s.beatRemixOrigin.parentTitle.slice(0, 12)} 变奏${s.beatRemixOrigin.lineageDepth}`
+              : s.forgeDraft.title || '胡同放克',
         };
 
         void holoDb.saveForgeDraft(nextDraft);
@@ -1030,7 +1031,7 @@ export const useHoloStore = create<HoloState>()(
         });
 
         get().pushToast({
-          text: `已冻结当前节拍作品快照（${frozen.events.length} 个音符 · ${frozen.bpm} BPM），后续修改编曲不会影响此草稿！`,
+          text: `已冻结当前节拍作品快照（${frozen.events.length} 个音符 · ${frozen.bpm} BPM），后续修改编曲不会影响此草稿`,
           accent: '#FFD60A',
         });
 
@@ -1213,8 +1214,8 @@ export const useHoloStore = create<HoloState>()(
           sourceType: 'pinball',
           title:
             s.pinballRemixOrigin
-              ? `${s.pinballRemixOrigin.parentTitle.slice(0, 13)} V${s.pinballRemixOrigin.lineageDepth}`
-              : 'PINBALL LOOP',
+              ? `${s.pinballRemixOrigin.parentTitle.slice(0, 12)} 变奏${s.pinballRemixOrigin.lineageDepth}`
+              : '弹珠回响',
           remixOrigin: s.pinballRemixOrigin,
         };
 
@@ -1262,9 +1263,9 @@ export const useHoloStore = create<HoloState>()(
         if (sourceType === 'pinball') {
           if (s.pinballRecordedEvents.length === 0 && s.forgeDraft.snapshot?.sourceType !== 'pinball') {
             get().pushToast({
-              text: '当前暂无已录制的弹珠作品，请先前往 03 PINBALL 录制真实碰撞音乐！',
+              text: '当前暂无已录制的弹珠作品，请先前往 03 弹珠剧场录制真实碰撞音符',
               accent: '#FF5C2B',
-              actionLabel: '去弹珠台 →',
+              actionLabel: '去弹珠剧场 →',
               actionPage: 'pinball',
             });
             return;
@@ -1451,7 +1452,7 @@ export const useHoloStore = create<HoloState>()(
         set((s) => {
           const forgeDraft: ForgeDraft = {
             ...s.forgeDraft,
-            title: card.title,
+            title: card.zhTitle,
             rarity: card.rarity === 'UR' ? 'UR' : 'SSR',
             foil: card.foil,
             artId: card.artId,
@@ -1502,7 +1503,7 @@ export const useHoloStore = create<HoloState>()(
           return null;
         }
 
-        const cleanTitle = (s.forgeDraft.title.trim() || 'HOLO MIX').toUpperCase();
+        const cleanTitle = s.forgeDraft.title.trim() || '胡同放克';
         const idempotencyKey = buildMintIdempotencyKey({
           snapshotId: snapshot.id,
           title: cleanTitle,
@@ -1654,7 +1655,7 @@ export const useHoloStore = create<HoloState>()(
 
       importProjectFile: async (project) => {
         if (!project || project.schema !== 'holobeat.project.v2') {
-          get().pushToast({ text: '无效的 .holobeat.json 工程文件格式', accent: '#FF5C2B' });
+          get().pushToast({ text: '无效的工程 JSON 文件格式', accent: '#FF5C2B' });
           return false;
         }
         const s = get();

@@ -192,7 +192,7 @@ export const GachaPage: React.FC = () => {
         pushToast({
           text: hitPity
             ? `✨ 保底高阶胶囊已落槽！动手刮开银膜揭晓稀有声卡`
-            : `🎁 扭蛋已落入出卡槽！按住刮开全息银膜，或点 QUICK UNBOX 秒拆`,
+            : `🎁 扭蛋已落入出球舱口！按住刮开全息银膜，或点击「快速拆封」`,
           accent: '#7C3AED',
         });
       }
@@ -221,7 +221,7 @@ export const GachaPage: React.FC = () => {
     burstEnergyRef.current = 1;
     void holoAudio.previewCard(revealed.id);
     pushToast({
-      text: `${isNew ? 'NEW! ' : ''}${hitPity ? '保底出金 · ' : ''}${revealed.rarity} ${revealed.code} ${revealed.title}（${revealed.zhTitle}）`,
+      text: `${isNew ? '新收录 · ' : ''}${hitPity ? '保底出金 · ' : ''}${revealed.rarity} ${revealed.code}「${revealed.zhTitle}」`,
       accent: RARITY_META[revealed.rarity].bg,
     });
   };
@@ -265,11 +265,11 @@ export const GachaPage: React.FC = () => {
             <span className="absolute right-2.5 top-2 w-1.5 h-1.5 rounded-full bg-[#17171C]" />
             <span className="absolute left-2.5 bottom-2 w-1.5 h-1.5 rounded-full bg-[#17171C]" />
             <span className="absolute right-2.5 bottom-2 w-1.5 h-1.5 rounded-full bg-[#17171C]" />
-            <h1 className="text-[19px] font-black tracking-wide text-[#17171C] leading-none">
-              HOLO GACHA
+            <h1 className="text-[19px] zh-display text-[#17171C] leading-none">
+              声卡扭蛋机
             </h1>
-            <span className="hw-silkscreen !text-[8px] mt-0.5 leading-none">
-              UNIT 01 // DISCOVER SOUND
+            <span className="text-[10px] font-bold tracking-wider text-[#626272] mt-1 leading-none">
+              发现市井之声
             </span>
           </div>
 
@@ -380,15 +380,15 @@ export const GachaPage: React.FC = () => {
             <div className="absolute -top-6 -left-10 w-20 h-[140%] bg-white/14 rotate-[22deg] pointer-events-none" />
             <div className="absolute -top-6 left-11 w-5 h-[140%] bg-white/10 rotate-[22deg] pointer-events-none" />
 
-            <div className="absolute top-2 left-2.5 px-2 py-0.5 rounded-md bg-black/55 border border-white/15 font-mono-hw text-[9px] font-bold text-white/75 tracking-wider pointer-events-none">
-              TAP TO SHAKE
+            <div className="absolute top-2 left-2.5 px-2 py-0.5 rounded-md bg-black/55 border border-white/15 text-[10px] font-bold text-white/80 tracking-wide pointer-events-none">
+              轻点摇晃
             </div>
           </div>
 
           {/* Physical Capsule Dispensing Chute (Shows Real Dropped Capsule on Pull!) */}
           <div className="relative h-9 rounded-xl bg-[#14151B] border-[2.5px] border-[#17171C] shadow-[inset_0_4px_10px_rgba(0,0,0,0.85)] px-3 flex items-center justify-between overflow-hidden shrink-0">
-            <span className="font-mono-hw text-[9px] font-bold tracking-[0.14em] text-white/45">
-              DISPENSE CHUTE
+            <span className="text-[10.5px] font-bold tracking-wider text-white/55">
+              出球舱口
             </span>
             {chuteCapsuleColor ? (
               <div
@@ -398,8 +398,8 @@ export const GachaPage: React.FC = () => {
                 <div className="absolute inset-x-0 top-0 h-1/2 bg-white/50 border-b border-[#17171C]" />
               </div>
             ) : (
-              <span className="font-mono-hw text-[9px] font-bold text-[#00D4AA]/70">
-                READY ●
+              <span className="text-[10.5px] font-bold text-[#00D4AA]/80">
+                就绪 ●
               </span>
             )}
           </div>
@@ -411,18 +411,18 @@ export const GachaPage: React.FC = () => {
               <span className="absolute right-0 top-1.5 w-1.5 h-1.5 rounded-full bg-[#17171C]/50" />
               <button
                 onClick={() => handlePull(false)}
-                className="brutal-btn-lg w-full py-2.5 rounded-[15px] bg-[#FF5526] text-[#17171C] text-[19px] font-black tracking-wide uppercase flex items-center justify-center gap-2"
+                className="brutal-btn-lg w-full py-2.5 rounded-[15px] bg-[#FF5526] text-[#17171C] text-[18px] zh-display flex items-center justify-center gap-2 whitespace-nowrap"
               >
-                <span>PULL CARD</span>
+                <span>扭取声卡</span>
               </button>
             </div>
 
             <div className="px-4">
               <button
                 onClick={() => handlePull(true)}
-                className="brutal-btn w-full py-1.5 rounded-full bg-[#00D4AA] text-[#17171C] text-xs font-black tracking-wider uppercase"
+                className="brutal-btn w-full py-1.5 rounded-full bg-[#00D4AA] text-[#17171C] text-xs font-black tracking-wide whitespace-nowrap"
               >
-                {needsScratch ? '✦ QUICK UNBOX · 立即刮开' : 'QUICK UNBOX · 秒开盲盒'}
+                {needsScratch ? '立即刮开' : '快速拆封'}
               </button>
             </div>
 
@@ -434,7 +434,7 @@ export const GachaPage: React.FC = () => {
                   }`}
                 />
                 <span className="font-mono-hw text-[11px] font-black text-[#17171C] whitespace-nowrap">
-                  SSR PITY {pityCount}/5
+                  SSR 保底 {pityCount}/5
                 </span>
               </div>
               <div className="flex-1 h-3.5 rounded-full bg-[#E7E1D3] border-[2px] border-[#17171C] p-[2px] grid grid-cols-5 gap-[2px] shadow-[inset_0_1px_2px_rgba(0,0,0,0.16)]">
@@ -515,16 +515,10 @@ export const GachaPage: React.FC = () => {
           backgroundSize: '100% 100%, 28px 28px, 28px 28px',
         }}
       >
-        <div className="w-full flex items-center justify-between gap-2 text-white/55 font-mono-hw text-[10px] tracking-[0.14em] shrink-0 z-10">
-          <span className="flex items-center gap-1.5 whitespace-nowrap truncate">
-            <span className="text-white/75 text-sm leading-none">+</span>
-            <span>VAULT 01 // 3D HOLO</span>
-          </span>
-          <span className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
-            <span className="px-2 py-0.5 rounded-full bg-white/8 border border-white/15 text-[#FFD426] font-bold whitespace-nowrap">
-              {foilMeta.label} · {card.rarity}
-            </span>
-            <span className="text-white/75 text-sm leading-none">+</span>
+        <div className="w-full flex items-center justify-between gap-2 text-white/60 text-[11px] font-bold tracking-wider shrink-0 z-10">
+          <span className="whitespace-nowrap truncate">全息赏析</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-white/8 border border-white/15 text-[#FFD426] font-bold whitespace-nowrap shrink-0">
+            {foilMeta.zhLabel} · {card.rarity}
           </span>
         </div>
 
@@ -560,11 +554,11 @@ export const GachaPage: React.FC = () => {
             <div className="absolute bottom-2 inset-x-2 z-30 rounded-2xl bg-[#14151B]/96 border-[2px] border-[#FFD426] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.75)] animate-card-pop">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <span className="font-mono-hw text-[10px] font-bold tracking-widest text-[#FFD426] uppercase">
-                    A/B PREVIEW & SLOT ROUTING · 选择装入轨道
+                  <span className="text-[11px] font-black tracking-wide text-[#FFD426]">
+                    选择装入轨道
                   </span>
                   <p className="text-[11px] font-bold text-white/80">
-                    对比旧卡与新卡「{card.zhTitle}」，点击装入即飞入节拍台
+                    对比旧卡与新卡「{card.zhTitle}」，点击装入即飞入编曲台
                   </p>
                 </div>
                 <button
@@ -591,28 +585,28 @@ export const GachaPage: React.FC = () => {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1">
                           <span
-                            className="px-1.5 py-[1px] rounded text-[9px] font-black"
+                            className="px-1.5 py-[1px] rounded text-[9.5px] font-black"
                             style={{ backgroundColor: cm.color, color: cm.textColor }}
                           >
-                            {cat}
+                            {cm.label}
                           </span>
                           {isRecommended && (
-                            <span className="font-mono-hw text-[8.5px] font-bold text-[#FFD426]">
+                            <span className="text-[9px] font-bold text-[#FFD426]">
                               推荐
                             </span>
                           )}
                         </div>
                         <div className="text-[10.5px] font-bold text-white/80 truncate mt-0.5">
-                          当前: {currTrackCard.zhTitle}
+                          当前：{currTrackCard.zhTitle}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => void holoAudio.previewCard(currTrackCard.id)}
-                          title="试听轨道当前旧音色 (A)"
-                          className="px-1.5 py-1 rounded-md bg-white/10 hover:bg-white/20 font-mono-hw text-[9.5px] font-bold text-white cursor-pointer"
+                          title="试听轨道当前旧音色"
+                          className="px-1.5 py-1 rounded-md bg-white/10 hover:bg-white/20 text-[10px] font-bold text-white cursor-pointer whitespace-nowrap"
                         >
-                          听旧A
+                          听旧音
                         </button>
                         <button
                           onClick={() => {
@@ -620,7 +614,7 @@ export const GachaPage: React.FC = () => {
                             setSlotPickerOpen(false);
                             sendCardToBeat(card.id, idx, true);
                           }}
-                          className="px-2 py-1 rounded-md bg-[#00D4AA] hover:brightness-110 text-[#17171C] text-[10px] font-black cursor-pointer"
+                          className="px-2 py-1 rounded-md bg-[#00D4AA] hover:brightness-110 text-[#17171C] text-[10px] font-black cursor-pointer whitespace-nowrap"
                         >
                           装入→
                         </button>
@@ -638,30 +632,30 @@ export const GachaPage: React.FC = () => {
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={handlePreviewSound}
-              className="brutal-btn py-2 px-2 rounded-xl bg-[#00D4AA] text-[#17171C] text-[12px] font-black tracking-wide uppercase flex items-center justify-center gap-1.5"
+              className="brutal-btn py-2 px-2 rounded-xl bg-[#00D4AA] text-[#17171C] text-[12.5px] font-black tracking-wide flex items-center justify-center gap-1.5 whitespace-nowrap"
             >
-              <Volume2 className="w-3.5 h-3.5" strokeWidth={2.8} />
-              <span>PLAY SOUND</span>
+              <Volume2 className="w-3.5 h-3.5 shrink-0" strokeWidth={2.8} />
+              <span>试听音色</span>
             </button>
             <button
               onClick={() => {
                 playSfx('click', 0.8);
                 setSlotPickerOpen((v) => !v);
               }}
-              className="brutal-btn py-2 px-2 rounded-xl bg-[#7C3AED] text-white text-[12px] font-black tracking-wide uppercase flex items-center justify-center gap-1.5"
+              className="brutal-btn py-2 px-2 rounded-xl bg-[#7C3AED] text-white text-[12.5px] font-black tracking-wide flex items-center justify-center gap-1.5 whitespace-nowrap"
             >
-              <Send className="w-3.5 h-3.5" strokeWidth={2.8} />
-              <span>SEND TO BEAT</span>
+              <Send className="w-3.5 h-3.5 shrink-0" strokeWidth={2.8} />
+              <span>装入节拍台</span>
             </button>
             <button
               onClick={() => {
                 playSfx('cardFlip');
                 setFlipped((f) => !f);
               }}
-              className="brutal-btn py-2 px-2 rounded-xl bg-[#FBF9F4] text-[#17171C] text-[12px] font-black tracking-wide uppercase flex items-center justify-center gap-1.5"
+              className="brutal-btn py-2 px-2 rounded-xl bg-[#FBF9F4] text-[#17171C] text-[12.5px] font-black tracking-wide flex items-center justify-center gap-1.5 whitespace-nowrap"
             >
-              <RotateCw className="w-3.5 h-3.5" strokeWidth={2.8} />
-              <span>{flipped ? 'SHOW FRONT' : 'FLIP INFO'}</span>
+              <RotateCw className="w-3.5 h-3.5 shrink-0" strokeWidth={2.8} />
+              <span>{flipped ? '查看正面' : '翻看卡背'}</span>
             </button>
           </div>
 
@@ -672,20 +666,20 @@ export const GachaPage: React.FC = () => {
                 playSfx('cartridgeLock');
                 sendCardToPinball(card.id, true);
               }}
-              className="flex-1 py-1 px-2.5 rounded-lg bg-white/8 hover:bg-white/15 border border-white/15 text-[10.5px] font-bold text-[#00D4AA] flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+              className="flex-1 py-1 px-2.5 rounded-lg bg-white/8 hover:bg-white/15 border border-white/15 text-[11px] font-bold text-[#00D4AA] flex items-center justify-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
             >
-              <Disc3 className="w-3 h-3" />
-              <span>SEND TO PINBALL · 绑定弹珠机关</span>
+              <Disc3 className="w-3 h-3 shrink-0" />
+              <span>送入弹珠台</span>
             </button>
             <button
               onClick={() => {
                 playSfx('tab');
                 setActivePage('forge');
               }}
-              className="py-1 px-2.5 rounded-lg bg-white/8 hover:bg-white/15 border border-white/15 text-[10.5px] font-bold text-white/80 flex items-center justify-center gap-1 cursor-pointer transition-colors"
+              className="py-1 px-3 rounded-lg bg-white/8 hover:bg-white/15 border border-white/15 text-[11px] font-bold text-white/85 flex items-center justify-center gap-1 cursor-pointer transition-colors whitespace-nowrap"
             >
-              <FolderHeart className="w-3 h-3 text-[#FFD426]" />
-              <span>VIEW BINDER</span>
+              <FolderHeart className="w-3 h-3 text-[#FFD426] shrink-0" />
+              <span>查看卡册</span>
             </button>
           </div>
         </div>
@@ -696,12 +690,12 @@ export const GachaPage: React.FC = () => {
         <div className="brutal-panel p-3.5 flex flex-col gap-2 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <span
-              className="px-2.5 py-0.5 rounded-full border-[2px] border-[#17171C] font-mono-hw text-[11px] font-black tracking-wider shadow-[2px_2px_0px_0px_#17171C]"
+              className="px-2.5 py-0.5 rounded-full border-[2px] border-[#17171C] text-[11px] font-black tracking-wide shadow-[2px_2px_0px_0px_#17171C] whitespace-nowrap shrink-0"
               style={{ backgroundColor: rarInfo.bg, color: rarInfo.text }}
             >
-              {rarInfo.label} · {catInfo.label}
+              {rarInfo.label} · {catInfo.zhLabel}
             </span>
-            <span className="text-xs font-extrabold text-[#17171C] truncate">
+            <span className="text-[13px] zh-display text-[#17171C] truncate">
               {card.zhTitle}
             </span>
           </div>
@@ -712,24 +706,26 @@ export const GachaPage: React.FC = () => {
             className="relative oled-scanlines w-full h-[70px] rounded-xl bg-[#14151B] border-[2.5px] border-[#17171C] shadow-[inset_0_3px_10px_rgba(0,0,0,0.65)] overflow-hidden cursor-pointer group"
           >
             <canvas ref={waveCanvasRef} width={280} height={70} className="w-full h-full block" />
-            <span className="absolute top-1.5 right-2 font-mono-hw text-[8.5px] font-bold tracking-widest text-white/45 group-hover:text-[#00D4AA] transition-colors">
-              AUDITION ♪
+            <span className="absolute top-1.5 right-2 text-[9.5px] font-bold tracking-wider text-white/55 group-hover:text-[#00D4AA] transition-colors">
+              试听声波
             </span>
           </div>
 
           {/* Explicitly labeled artistic style profile tags */}
           <div className="flex items-center justify-between">
-            <span className="hw-silkscreen !text-[8px]">STYLE PROFILE · 音色风格特征</span>
-            <span className="hw-silkscreen !text-[8px]">REC {card.recommendedBpm} BPM</span>
+            <span className="text-[10.5px] font-extrabold text-[#626272]">音色特征</span>
+            <span className="font-mono-hw text-[10.5px] font-bold text-[#626272]">
+              推荐 {card.recommendedBpm} BPM
+            </span>
           </div>
           <div className="flex flex-col gap-1.5">
             {[
-              { label: 'PUNCH', val: card.stats.punch, color: '#FF5526' },
-              { label: 'SHINE', val: card.stats.shine, color: '#FFD426' },
-              { label: 'VIBE', val: card.stats.vibe, color: '#7C3AED' },
+              { label: '冲击', val: card.stats.punch, color: '#FF5526' },
+              { label: '光泽', val: card.stats.shine, color: '#FFD426' },
+              { label: '氛围', val: card.stats.vibe, color: '#7C3AED' },
             ].map((stat) => (
               <div key={stat.label} className="flex items-center gap-2">
-                <span className="w-[56px] py-0.5 text-center rounded-full bg-[#FBF9F4] border-[2px] border-[#17171C] font-mono-hw text-[9.5px] font-black text-[#17171C] shrink-0">
+                <span className="w-[48px] py-0.5 text-center rounded-full bg-[#FBF9F4] border-[2px] border-[#17171C] text-[10.5px] font-black text-[#17171C] shrink-0 whitespace-nowrap">
                   {stat.label}
                 </span>
                 <div className="flex-1 h-3.5 rounded-full bg-[#E7E1D3] border-[2px] border-[#17171C] shadow-[inset_0_1px_2px_rgba(0,0,0,0.12)] overflow-hidden">
@@ -753,10 +749,10 @@ export const GachaPage: React.FC = () => {
         <div className="brutal-panel p-3.5 flex-1 flex flex-col min-h-0">
           <div className="flex items-center justify-between mb-2 shrink-0">
             <div>
-              <h2 className="text-[14.5px] font-black tracking-wide uppercase text-[#17171C] leading-none">
-                RECENT DECK
+              <h2 className="text-[14.5px] zh-display text-[#17171C] leading-none">
+                近期抽到
               </h2>
-              <span className="hw-silkscreen !text-[8.5px]">点击卡面切卡试听</span>
+              <span className="text-[10px] font-bold text-[#626272]">点击卡面切换试听</span>
             </div>
             {totalPages > 1 && (
               <div className="flex items-center gap-1">
@@ -795,7 +791,7 @@ export const GachaPage: React.FC = () => {
                     className="rounded-xl bg-[#E7E1D3]/75 border-[2px] border-dashed border-[#17171C]/30 flex flex-col items-center justify-center gap-1 text-[#626272] hover:bg-[#E7E1D3] hover:text-[#17171C] transition-colors cursor-pointer"
                   >
                     <Lock className="w-3.5 h-3.5 opacity-60" />
-                    <span className="font-mono-hw text-[9.5px] font-bold">PULL TO UNLOCK</span>
+                    <span className="text-[10.5px] font-bold">扭取解锁</span>
                   </button>
                 );
               }

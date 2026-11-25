@@ -827,10 +827,10 @@ export const PinballPage: React.FC = () => {
 
       // Architectural Concert Track Lanes
       const laneLabels: { cat: TrackCategory; y: number; name: string }[] = [
-        { cat: 'VIBE', y: 175, name: 'VIBE · 氛围' },
-        { cat: 'MELODY', y: 300, name: 'MELODY · 旋律' },
-        { cat: 'PERC', y: 440, name: 'PERC · 打击' },
-        { cat: 'BEAT', y: 558, name: 'BEAT · 低鼓' },
+        { cat: 'VIBE', y: 175, name: '烟火氛围' },
+        { cat: 'MELODY', y: 300, name: '霓虹旋律' },
+        { cat: 'PERC', y: 440, name: '市井脆响' },
+        { cat: 'BEAT', y: 558, name: '街头律动' },
       ];
 
       laneLabels.forEach((l) => {
@@ -845,7 +845,7 @@ export const PinballPage: React.FC = () => {
         ctx.setLineDash([]);
 
         ctx.fillStyle = prof.color;
-        ctx.font = '800 10px "JetBrains Mono", monospace';
+        ctx.font = '800 11px "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'bottom';
         ctx.fillText(l.name, 22, l.y - 6);
@@ -1032,10 +1032,10 @@ export const PinballPage: React.FC = () => {
         });
 
         ctx.fillStyle = '#FFD426';
-        ctx.font = '900 14px "JetBrains Mono", monospace';
+        ctx.font = '900 15px "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('✦ SHOW FINALE · SOUND SIGIL ✦', 0, 148);
+        ctx.fillText('✦ 演出终场 · 声音纹章 ✦', 0, 148);
         ctx.restore();
       }
     };
@@ -1157,10 +1157,10 @@ export const PinballPage: React.FC = () => {
       ctx.fill();
 
       ctx.fillStyle = '#17171C';
-      ctx.font = '900 15px "Space Grotesk", sans-serif';
+      ctx.font = '900 15px "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('DROPPER', 0, -2);
+      ctx.fillText('发球器', 0, -2);
       ctx.restore();
 
       // Draw All Placed Musical Physics Toys
@@ -1439,10 +1439,10 @@ export const PinballPage: React.FC = () => {
         ctx.stroke();
 
         ctx.fillStyle = '#FBF9F4';
-        ctx.font = '900 10.5px "JetBrains Mono", monospace';
+        ctx.font = '900 10.5px "JetBrains Mono", "HarmonyOS Sans SC", "PingFang SC", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(v.kind === 'warp' ? '✦ WARP' : `♪ ${v.note}`, 0, floatY + 0.5);
+        ctx.fillText(v.kind === 'warp' ? '✦ 传送' : `♪ ${v.note}`, 0, floatY + 0.5);
 
         ctx.restore();
       }
@@ -1637,12 +1637,19 @@ export const PinballPage: React.FC = () => {
       : '0.0';
 
   const comboTitle =
-    combo >= 30 ? 'SYMPHONY!' : combo >= 15 ? 'ON FIRE!' : combo >= 6 ? 'GROOVING' : 'LIVE HIT';
+    combo >= 30 ? '交响共鸣' : combo >= 15 ? '火热连击' : combo >= 6 ? '律动起势' : '实时碰撞';
+
+  const TOY_TYPE_ZH: Record<PinballToyType, string> = {
+    block: '声音斜板',
+    bumper: '弹簧碰珠',
+    spinner: '旋转叶轮',
+    portal: '传送门',
+  };
 
   const TOOL_ITEMS: { id: PinballToyType; label: string; icon: React.ReactNode }[] = [
     {
       id: 'block',
-      label: 'BLOCK',
+      label: '声音斜板',
       icon: (
         <svg viewBox="0 0 36 28" className="w-8 h-6">
           <rect x="4" y="16" width="6" height="10" rx="1.5" fill="#17171C" />
@@ -1653,7 +1660,7 @@ export const PinballPage: React.FC = () => {
     },
     {
       id: 'bumper',
-      label: 'BUMPER',
+      label: '弹簧碰珠',
       icon: (
         <svg viewBox="0 0 36 30" className="w-8 h-6">
           <rect
@@ -1681,7 +1688,7 @@ export const PinballPage: React.FC = () => {
     },
     {
       id: 'spinner',
-      label: 'SPINNER',
+      label: '旋转叶轮',
       icon: (
         <svg viewBox="0 0 36 32" className="w-8 h-6">
           <g transform="translate(18,16)">
@@ -1728,7 +1735,7 @@ export const PinballPage: React.FC = () => {
     },
     {
       id: 'portal',
-      label: 'PORTAL',
+      label: '传送门',
       icon: (
         <svg viewBox="0 0 40 28" className="w-9 h-6">
           <line
@@ -1794,11 +1801,11 @@ export const PinballPage: React.FC = () => {
         <section className="brutal-panel p-3 flex flex-col justify-between gap-2 min-h-0 overflow-hidden">
           {pinballMode === 'free' ? (
             <>
-              {/* BLOCKS 2x2 Grid */}
+              {/* 声学机关 2x2 Grid */}
               <div className="shrink-0">
                 <div className="flex items-center justify-between mb-1.5">
-                  <h2 className="text-[13px] font-black tracking-wide uppercase text-[#17171C]">
-                    BLOCKS
+                  <h2 className="text-[13.5px] zh-display text-[#17171C]">
+                    声学机关
                   </h2>
                   <div className="flex items-center gap-1">
                     <button
@@ -1835,25 +1842,25 @@ export const PinballPage: React.FC = () => {
                           playSfx('click', 0.72);
                           setPinballTool(item.id);
                         }}
-                        className={`brutal-btn py-1.5 px-1 rounded-xl flex flex-col items-center justify-center gap-0.5 ${
+                        className={`brutal-btn py-1.5 px-1 rounded-xl flex flex-col items-center justify-center gap-0.5 whitespace-nowrap ${
                           active ? 'bg-[#00D4AA] text-[#17171C]' : 'bg-[#FBF9F4] text-[#17171C]'
                         }`}
                       >
                         {item.icon}
-                        <span className="text-[10px] font-black tracking-wider">{item.label}</span>
+                        <span className="text-[10.5px] font-black">{item.label}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* BIND CARD Stack */}
+              {/* 绑定声卡 Stack */}
               <div className="flex-1 flex flex-col min-h-0">
                 <div className="flex items-center justify-between mb-1 shrink-0">
-                  <h2 className="text-[12.5px] font-black tracking-wide uppercase text-[#17171C]">
-                    BIND CARD
+                  <h2 className="text-[13px] zh-display text-[#17171C]">
+                    绑定声卡
                   </h2>
-                  <span className="hw-silkscreen !text-[8px]">绑定碰撞音色</span>
+                  <span className="text-[9.5px] font-bold text-[#626272]">点选切换机关音色</span>
                 </div>
                 <div className="flex-1 overflow-y-auto holo-scroll pr-0.5 flex flex-col gap-1.5">
                   {unlockedCards.map((c) => {
@@ -1897,17 +1904,8 @@ export const PinballPage: React.FC = () => {
                               {c.code}
                             </span>
                           </div>
-                          <div className="flex items-baseline justify-between gap-1 min-w-0">
-                            <span className="text-[11.5px] font-black italic tracking-tight shrink-0 leading-none">
-                              {c.shortTitle}
-                            </span>
-                            <span
-                              className={`text-[9px] font-bold truncate hidden xl:inline ${
-                                isBound ? 'text-white/60' : 'text-[#626272]'
-                              }`}
-                            >
-                              {c.zhTitle}
-                            </span>
+                          <div className="text-[11.5px] font-black truncate leading-tight">
+                            {c.zhTitle}
                           </div>
                         </div>
                       </button>
@@ -1916,27 +1914,33 @@ export const PinballPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* PRESETS Row */}
+              {/* 预设布局 Row */}
               <div className="shrink-0 pt-0.5">
-                <h2 className="text-[12px] font-black tracking-wide uppercase text-[#17171C] mb-1">
-                  PRESETS
+                <h2 className="text-[12.5px] zh-display text-[#17171C] mb-1">
+                  预设布局
                 </h2>
                 <div className="grid grid-cols-3 gap-1.5">
-                  {(['LOOP', 'CASCADE', 'CLEAR'] as const).map((preset) => (
+                  {(
+                    [
+                      { id: 'LOOP' as const, label: '循环' },
+                      { id: 'CASCADE' as const, label: '瀑布' },
+                      { id: 'CLEAR' as const, label: '清空' },
+                    ] as const
+                  ).map((preset) => (
                     <button
-                      key={preset}
+                      key={preset.id}
                       onClick={() => {
-                        playSfx(preset === 'CLEAR' ? 'click' : 'cartridgeLock');
-                        applyPinballPreset(preset);
+                        playSfx(preset.id === 'CLEAR' ? 'click' : 'cartridgeLock');
+                        applyPinballPreset(preset.id);
                         setSelectedToyId(null);
                       }}
-                      className={`brutal-pad py-1.5 rounded-lg text-[10px] font-black tracking-wide ${
-                        preset === 'CLEAR'
+                      className={`brutal-pad py-1.5 rounded-lg text-[11px] font-black whitespace-nowrap ${
+                        preset.id === 'CLEAR'
                           ? 'bg-[#FBF9F4] hover:bg-[#FF5526] hover:text-white'
                           : 'bg-[#FBF9F4] hover:bg-[#FFD426]'
                       }`}
                     >
-                      {preset}
+                      {preset.label}
                     </button>
                   ))}
                 </div>
@@ -1946,35 +1950,36 @@ export const PinballPage: React.FC = () => {
             /* CHOREOGRAPHED SHOW INFO PANEL */
             <div className="flex flex-col justify-between h-full gap-2.5">
               <div>
-                <span className="hw-silkscreen !text-[8.5px]">HOLO MOTION THEATRE</span>
-                <h2 className="text-base font-black uppercase text-[#17171C] mt-0.5">
+                <h2 className="text-base zh-display text-[#17171C]">
                   编曲剧场演出
                 </h2>
                 <p className="text-[11px] font-bold text-[#626272] mt-1 leading-relaxed">
-                  由 02 BEAT 冻结的真实音符时间轴驱动，4 轨光球按真实音乐时钟沿抛物线精准落点，零物理杂音。
+                  由 02 插卡编曲冻结的真实音符时间轴驱动，四轨光球按音乐时钟沿抛物线精准落点，零物理杂音。
                 </p>
               </div>
 
               {pinballShowSnapshot && (
-                <div className="rounded-xl bg-[#14151B] text-[#FBF9F4] border-[2px] border-[#17171C] p-2.5 flex flex-col gap-1.5 font-mono-hw text-[10.5px]">
+                <div className="rounded-xl bg-[#14151B] text-[#FBF9F4] border-[2px] border-[#17171C] p-2.5 flex flex-col gap-1.5 text-[11px]">
                   <div className="flex justify-between">
-                    <span className="text-white/55">EVENTS</span>
-                    <span className="text-[#00D4AA] font-bold">
-                      {pinballShowSnapshot.events.length} NOTES
+                    <span className="text-white/55 font-bold">音符数量</span>
+                    <span className="font-mono-hw text-[#00D4AA] font-bold">
+                      {pinballShowSnapshot.events.length} 个
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-white/55">TEMPO</span>
-                    <span className="text-[#FFD426] font-bold">{pinballShowSnapshot.bpm} BPM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/55">DURATION</span>
-                    <span className="font-bold">
-                      {(pinballShowSnapshot.durationMs / 1000).toFixed(1)} s
+                    <span className="text-white/55 font-bold">演奏速度</span>
+                    <span className="font-mono-hw text-[#FFD426] font-bold">
+                      {pinballShowSnapshot.bpm} BPM
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-white/55">SCALE</span>
+                    <span className="text-white/55 font-bold">演出时长</span>
+                    <span className="font-mono-hw font-bold">
+                      {(pinballShowSnapshot.durationMs / 1000).toFixed(1)} 秒
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/55 font-bold">锁定调式</span>
                     <span className="font-bold">{SCALE_META[pinballShowSnapshot.scale].label}</span>
                   </div>
                 </div>
@@ -1984,17 +1989,17 @@ export const PinballPage: React.FC = () => {
                 {TRACK_CATEGORIES.map((cat) => (
                   <div
                     key={cat}
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-[#FBF9F4] border-[2px] border-[#17171C] text-[10.5px] font-black"
+                    className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-[#FBF9F4] border-[2px] border-[#17171C] text-[11px] font-black"
                   >
                     <span className="flex items-center gap-1.5">
                       <span
                         className="w-2.5 h-2.5 rounded-full border border-[#17171C]"
                         style={{ backgroundColor: TRACK_MOTION_PROFILES[cat].color }}
                       />
-                      {cat}
+                      {CATEGORY_META[cat].zhLabel}
                     </span>
                     <span className="font-mono-hw text-[#626272]">
-                      {choreography.laneAnchors[cat].length} hits
+                      {choreography.laneAnchors[cat].length} 次
                     </span>
                   </div>
                 ))}
@@ -2005,10 +2010,10 @@ export const PinballPage: React.FC = () => {
                   playSfx('cartridgeLock');
                   performBeatInPinball();
                 }}
-                className="brutal-btn py-2 px-2.5 rounded-xl bg-[#FBF9F4] hover:bg-[#FFD426] text-[11px] font-black flex items-center justify-center gap-1.5"
+                className="brutal-btn py-2 px-2.5 rounded-xl bg-[#FBF9F4] hover:bg-[#FFD426] text-[11px] font-black flex items-center justify-center gap-1.5 whitespace-nowrap"
               >
-                <Wand2 className="w-3.5 h-3.5" />
-                <span>同步最新节拍台编曲</span>
+                <Wand2 className="w-3.5 h-3.5 shrink-0" />
+                <span>同步最新编曲</span>
               </button>
             </div>
           )}
@@ -2029,34 +2034,34 @@ export const PinballPage: React.FC = () => {
                 playSfx('tab');
                 setPinballMode('free');
               }}
-              className={`px-2.5 py-1 rounded-lg text-[10.5px] font-black tracking-wide transition-colors cursor-pointer ${
+              className={`px-3 py-1 rounded-lg text-[11px] font-black tracking-wide transition-colors cursor-pointer whitespace-nowrap ${
                 pinballMode === 'free'
                   ? 'bg-[#00D4AA] text-[#17171C]'
                   : 'text-white/75 hover:text-white'
               }`}
             >
-              FREE JAM · 自由弹珠
+              自由实验
             </button>
             <button
               onClick={() => {
                 playSfx('tab');
                 setPinballMode('show');
               }}
-              className={`px-2.5 py-1 rounded-lg text-[10.5px] font-black tracking-wide transition-colors cursor-pointer flex items-center gap-1 ${
+              className={`px-3 py-1 rounded-lg text-[11px] font-black tracking-wide transition-colors cursor-pointer flex items-center gap-1 whitespace-nowrap ${
                 pinballMode === 'show'
                   ? 'bg-[#FFD426] text-[#17171C]'
                   : 'text-white/75 hover:text-white'
               }`}
             >
-              <Sparkles className="w-3 h-3" />
-              <span>SHOW · 编曲演出</span>
+              <Sparkles className="w-3 h-3 shrink-0" />
+              <span>编曲剧场</span>
             </button>
           </div>
 
           <div className="pointer-events-auto flex items-center gap-1.5">
             {pinballRemixOrigin && pinballMode === 'free' && (
-              <span className="px-2 py-1 rounded-lg bg-[#7C3AED] text-white border-[2px] border-[#17171C] font-mono-hw text-[10px] font-black">
-                REMIX OF {pinballRemixOrigin.parentCode} · GEN {pinballRemixOrigin.lineageDepth}
+              <span className="px-2 py-1 rounded-lg bg-[#7C3AED] text-white border-[2px] border-[#17171C] text-[10.5px] font-black whitespace-nowrap">
+                重混 {pinballRemixOrigin.parentCode} · 第{pinballRemixOrigin.lineageDepth}代
               </span>
             )}
             {pinballMode === 'show' && (
@@ -2066,7 +2071,7 @@ export const PinballPage: React.FC = () => {
                   setTheaterMode((v) => !v);
                 }}
                 title={theaterMode ? '退出剧场沉浸视图' : '展开剧场沉浸视图'}
-                className="brutal-pad px-2.5 py-1 rounded-lg bg-[#14151B] text-[#FFD426] border-[#FFD426] text-[10.5px] font-black flex items-center gap-1"
+                className="brutal-pad px-2.5 py-1 rounded-lg bg-[#14151B] text-[#FFD426] border-[#FFD426] text-[10.5px] font-black flex items-center gap-1 whitespace-nowrap"
               >
                 {theaterMode ? (
                   <>
@@ -2097,8 +2102,8 @@ export const PinballPage: React.FC = () => {
         {/* Selected Toy Floating Micro-Toolbar (FREE JAM) */}
         {pinballMode === 'free' && selectedToy && (
           <div className="absolute bottom-[56px] left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-[#14151B] text-[#FBF9F4] border-[2px] border-[#FFD426] rounded-2xl px-3 py-1.5 shadow-[0_8px_20px_rgba(0,0,0,0.4),3px_3px_0px_0px_#17171C]">
-            <span className="font-mono-hw text-[11px] font-black text-[#FFD426] uppercase">
-              {selectedToy.type}
+            <span className="text-[11px] font-black text-[#FFD426] whitespace-nowrap">
+              {TOY_TYPE_ZH[selectedToy.type]}
             </span>
             <span className="text-white/25">|</span>
             {selectedToy.type === 'block' && (
@@ -2168,16 +2173,16 @@ export const PinballPage: React.FC = () => {
                   timelineEvents.length > 0 ? 'bg-[#FF5526] animate-pulse' : 'bg-white/25'
                 }`}
               />
-              <span className="font-mono-hw text-[10px] font-bold text-[#FFD426] whitespace-nowrap">
-                8S REC · {timelineEvents.length} 音符 ({recDurationSec}s)
+              <span className="font-mono-hw text-[10.5px] font-bold text-[#FFD426] whitespace-nowrap">
+                8 秒录音 · {timelineEvents.length} 音符 ({recDurationSec}s)
               </span>
             </div>
 
             {/* Event Tick Track */}
             <div className="flex-1 h-5 rounded-md bg-white/[0.06] border border-white/10 relative overflow-hidden">
               {timelineEvents.length === 0 ? (
-                <span className="absolute inset-0 flex items-center justify-center text-[9.5px] font-bold text-white/40">
-                  投放弹珠撞击音块后，碰撞音符将自动记录到此时间轴
+                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white/45 truncate px-2">
+                  投掷弹珠撞击机关后，碰撞音符将自动记录至此时间轴
                 </span>
               ) : (
                 timelineEvents.map((ev, i) => {
@@ -2199,11 +2204,11 @@ export const PinballPage: React.FC = () => {
                 onClick={() => void handlePlayRecording()}
                 disabled={timelineEvents.length === 0}
                 title="试听当前录制的弹珠片段"
-                className="px-2 py-1 rounded-lg bg-[#00D4AA] text-[#17171C] text-[10px] font-black disabled:opacity-35 cursor-pointer flex items-center gap-1"
+                className="px-2 py-1 rounded-lg bg-[#00D4AA] text-[#17171C] text-[10.5px] font-black disabled:opacity-35 cursor-pointer flex items-center gap-1 whitespace-nowrap"
               >
                 {playingRec ? (
                   <>
-                    <Square className="w-2.5 h-2.5 fill-current" /> 停
+                    <Square className="w-2.5 h-2.5 fill-current" /> 停止
                   </>
                 ) : (
                   <>
@@ -2214,10 +2219,10 @@ export const PinballPage: React.FC = () => {
               <button
                 onClick={handleSendToBeatQuantize}
                 disabled={timelineEvents.length === 0}
-                title="送回 02 节拍台进行幽灵量化预览"
-                className="px-2 py-1 rounded-lg bg-[#7C3AED] text-white text-[10px] font-black disabled:opacity-35 cursor-pointer flex items-center gap-1"
+                title="送回 02 插卡编曲进行量化预览"
+                className="px-2 py-1 rounded-lg bg-[#7C3AED] text-white text-[10.5px] font-black disabled:opacity-35 cursor-pointer flex items-center gap-1 whitespace-nowrap"
               >
-                <Music className="w-2.5 h-2.5" /> 送节拍台
+                <Music className="w-2.5 h-2.5" /> 送回节拍台
               </button>
               <button
                 onClick={handleClearRecording}
@@ -2238,18 +2243,18 @@ export const PinballPage: React.FC = () => {
               onClick={() =>
                 showPlaying ? stopChoreographedShow() : void startChoreographedShow()
               }
-              className={`brutal-btn px-4 py-1.5 rounded-xl text-xs font-black tracking-wide flex items-center gap-1.5 ${
+              className={`brutal-btn px-4 py-1.5 rounded-xl text-xs font-black tracking-wide flex items-center gap-1.5 whitespace-nowrap ${
                 showPlaying ? 'bg-[#FF5526] text-white' : 'bg-[#00D4AA] text-[#17171C]'
               }`}
             >
               {showPlaying ? (
                 <>
-                  <Square className="w-3.5 h-3.5 fill-current" /> STOP SHOW
+                  <Square className="w-3.5 h-3.5 fill-current" /> 停止演出
                 </>
               ) : (
                 <>
                   <Play className="w-3.5 h-3.5 fill-current" />{' '}
-                  {showFinaleBloom > 0 ? 'REPLAY SHOW' : 'PLAY CHOREOGRAPHED SHOW'}
+                  {showFinaleBloom > 0 ? '重播演出' : '播放编曲演出'}
                 </>
               )}
             </button>
@@ -2259,9 +2264,9 @@ export const PinballPage: React.FC = () => {
                 stopChoreographedShow();
                 sendBeatToForge();
               }}
-              className="brutal-btn px-3 py-1.5 rounded-xl bg-[#FFD426] text-[#17171C] text-xs font-black flex items-center gap-1"
+              className="brutal-btn px-3 py-1.5 rounded-xl bg-[#FFD426] text-[#17171C] text-xs font-black flex items-center gap-1 whitespace-nowrap"
             >
-              <span>去铸造屋封存</span>
+              <span>送去闪卡铸造</span>
               <span>→</span>
             </button>
           </div>
@@ -2273,46 +2278,46 @@ export const PinballPage: React.FC = () => {
         <section className="brutal-panel p-3 flex flex-col justify-between gap-2 min-h-0">
           {pinballMode === 'free' ? (
             <>
-              <div className="grid grid-cols-[1.45fr_1fr] gap-2 shrink-0">
+              <div className="grid grid-cols-[1.35fr_1fr] gap-2 shrink-0">
                 <button
                   onClick={() => dropSingleBall(false)}
-                  className="brutal-btn py-2.5 px-2 rounded-xl bg-[#00D4AA] text-[#17171C] text-sm font-black tracking-wide flex items-center justify-center gap-1"
+                  className="brutal-btn py-2.5 px-2 rounded-xl bg-[#00D4AA] text-[#17171C] text-[13.5px] zh-display flex items-center justify-center gap-1 whitespace-nowrap"
                 >
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>DROP BALL</span>
+                  <Play className="w-3.5 h-3.5 fill-current shrink-0" />
+                  <span>投掷弹珠</span>
                 </button>
                 <button
                   onClick={() => {
                     playSfx('click', autoDrop ? 0.35 : 0.85);
                     setPinballAutoDrop(!autoDrop);
                   }}
-                  className={`brutal-btn py-2 px-2 rounded-xl text-xs font-black leading-tight flex items-center justify-center gap-1.5 ${
+                  className={`brutal-btn py-2 px-2 rounded-xl text-[11.5px] font-black leading-tight flex items-center justify-center gap-1.5 whitespace-nowrap ${
                     autoDrop ? 'bg-[#FF5526] text-[#17171C]' : 'bg-[#FBF9F4] text-[#17171C]'
                   }`}
                 >
                   <span
-                    className={`w-3 h-3 rounded-full border-2 border-[#17171C] shrink-0 ${
+                    className={`w-2.5 h-2.5 rounded-full border-2 border-[#17171C] shrink-0 ${
                       autoDrop ? 'bg-[#FBF9F4] animate-pulse' : 'bg-[#E7E1D3]'
                     }`}
                   />
                   <span>
-                    AUTO
+                    自动连发
                     <br />
-                    {autoDrop ? 'ON' : 'OFF'}
+                    {autoDrop ? '开' : '关'}
                   </span>
                 </button>
               </div>
 
               <div className="flex flex-col gap-3 py-0.5">
                 <BrutalSlider
-                  label="GRAVITY"
+                  label="重力"
                   value={(gravity - 0.25) / 1.95}
                   onChange={(v) => setPinballGravity(0.25 + v * 1.95)}
                   color="#7C3AED"
                   height={13}
                 />
                 <BrutalSlider
-                  label="DROP RATE"
+                  label="落球频率"
                   value={(dropRate - 0.1) / 0.9}
                   onChange={(v) => setPinballDropRate(0.1 + v * 0.9)}
                   color="#FF5526"
@@ -2326,7 +2331,7 @@ export const PinballPage: React.FC = () => {
                   onChange={(v) => setPinballBounce(0.5 + v * 0.85)}
                   color="#FFD426"
                   size={40}
-                  label="BOUNCE"
+                  label="弹性"
                   title="上下拖拽或滚轮调节弹珠全局弹性"
                 />
                 <div className="h-10 w-[1.5px] bg-[#17171C]/18" />
@@ -2336,38 +2341,38 @@ export const PinballPage: React.FC = () => {
                     cycleScale();
                   }}
                   title={`调式锁定：${SCALE_META[scale].zhLabel}`}
-                  className="brutal-btn flex-1 py-2 px-2 rounded-xl bg-[#FBF9F4] font-mono-hw text-xs font-black flex items-center justify-center gap-1"
+                  className="brutal-btn flex-1 py-2 px-2 rounded-xl bg-[#FBF9F4] text-xs font-black flex items-center justify-center gap-1 whitespace-nowrap"
                 >
                   <span>{SCALE_META[scale].label}</span>
-                  <ChevronDown className="w-3.5 h-3.5" strokeWidth={3} />
+                  <ChevronDown className="w-3.5 h-3.5 shrink-0" strokeWidth={3} />
                 </button>
               </div>
 
               <div className="relative oled-scanlines rounded-2xl bg-[#14151B] border-[2.5px] border-[#17171C] shadow-[inset_0_3px_10px_rgba(0,0,0,0.65)] p-2.5 flex flex-col justify-between gap-1.5 h-[128px] shrink-0">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono-hw text-[10px] font-bold tracking-[0.14em] text-white/75">
+                  <span className="text-[10.5px] font-bold tracking-wider text-white/80">
                     {comboTitle}
                   </span>
-                  <span className="font-mono-hw text-[10px] font-bold text-[#FFD426]">
-                    {toys.length} TOYS
+                  <span className="font-mono-hw text-[10.5px] font-bold text-[#FFD426]">
+                    {toys.length} 个机关
                   </span>
                 </div>
 
                 <div className="flex items-center justify-center gap-1.5">
                   <span className="text-[#FFD426] font-black text-sm">ミ</span>
                   <span
-                    className={`font-black text-[21px] tracking-tight leading-none ${
+                    className={`font-mono-hw font-black text-[21px] tracking-tight leading-none ${
                       combo >= 15 ? 'text-[#FFD426]' : 'text-[#00D4AA]'
                     }`}
                   >
-                    COMBO x{combo}
+                    连击 x{combo}
                   </span>
                   <span className="text-[#FFD426] font-black text-sm">彡</span>
                 </div>
 
                 <div className="h-6 rounded-full bg-white/[0.07] px-2 flex items-center justify-center gap-1.5 overflow-hidden">
                   {hitDots.length === 0 ? (
-                    <span className="font-mono-hw text-[9px] text-white/40">WAITING HITS...</span>
+                    <span className="text-[10px] font-bold text-white/45">等待弹珠触发...</span>
                   ) : (
                     hitDots.slice(-9).map((dot) => (
                       <span
@@ -2383,7 +2388,7 @@ export const PinballPage: React.FC = () => {
 
               <button
                 onClick={handleRecToForge}
-                className={`brutal-btn-lg w-full py-2.5 rounded-2xl text-[13.5px] font-black tracking-wide uppercase flex items-center justify-center gap-1.5 shrink-0 ${
+                className={`brutal-btn-lg w-full py-2.5 rounded-2xl text-[14px] zh-display flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap ${
                   timelineEvents.length > 0
                     ? 'bg-[#FFD426] text-[#17171C]'
                     : 'bg-[#E7E1D3] text-[#626272]'
@@ -2391,8 +2396,8 @@ export const PinballPage: React.FC = () => {
               >
                 <span>
                   {timelineEvents.length > 0
-                    ? `CAPTURE ${timelineEvents.length} NOTES`
-                    : 'REC TO FORGE'}
+                    ? `录成闪卡 (${timelineEvents.length})`
+                    : '录成闪卡'}
                 </span>
                 <span className="text-base leading-none">→</span>
               </button>
@@ -2402,8 +2407,8 @@ export const PinballPage: React.FC = () => {
             <div className="flex flex-col gap-2.5 h-full">
               <div className="rounded-2xl bg-[#14151B] text-[#FBF9F4] border-[2.5px] border-[#17171C] p-3 flex flex-col gap-2 shrink-0">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono-hw text-[10px] font-bold text-[#00D4AA]">
-                    SHOW DIRECTOR
+                  <span className="text-[11px] font-black text-[#00D4AA]">
+                    剧场导控
                   </span>
                   <span
                     className={`w-2 h-2 rounded-full ${
@@ -2412,14 +2417,14 @@ export const PinballPage: React.FC = () => {
                   />
                 </div>
                 <p className="text-[11px] font-bold text-white/75 leading-relaxed">
-                  观察 4 条声部光球如何在同一音乐时钟下弹跳、触发和弦涟漪，并在终场绽放作品专属「声音纹章」。
+                  观察四条声部光球如何在同一音乐时钟下弹跳、触发和弦涟漪，并在终场绽放作品专属声音纹章。
                 </p>
               </div>
 
               {pinballShowSnapshot && (
                 <div className="flex-1 rounded-2xl bg-[#14151B] text-[#FBF9F4] border-[2.5px] border-[#17171C] p-3 flex flex-col items-center justify-center gap-2 min-h-0">
-                  <span className="font-mono-hw text-[9px] font-bold tracking-[0.16em] text-[#FFD426] uppercase">
-                    FINALE SOUND SIGIL PREVIEW
+                  <span className="text-[10.5px] font-bold tracking-wider text-[#FFD426]">
+                    终场声音纹章预览
                   </span>
                   <SoundSigil snapshot={pinballShowSnapshot} size={116} />
                   <span className="text-[10px] font-bold text-white/60 text-center">
@@ -2433,17 +2438,17 @@ export const PinballPage: React.FC = () => {
                   onClick={() =>
                     showPlaying ? stopChoreographedShow() : void startChoreographedShow()
                   }
-                  className={`brutal-btn-lg py-2.5 rounded-2xl text-sm font-black tracking-wide uppercase flex items-center justify-center gap-1.5 ${
+                  className={`brutal-btn-lg py-2.5 rounded-2xl text-sm zh-display flex items-center justify-center gap-1.5 whitespace-nowrap ${
                     showPlaying ? 'bg-[#FF5526] text-white' : 'bg-[#00D4AA] text-[#17171C]'
                   }`}
                 >
                   {showPlaying ? (
                     <>
-                      <Square className="w-4 h-4 fill-current" /> STOP SHOW
+                      <Square className="w-4 h-4 fill-current" /> 停止演出
                     </>
                   ) : (
                     <>
-                      <Play className="w-4 h-4 fill-current" /> PLAY SHOW
+                      <Play className="w-4 h-4 fill-current" /> 播放演出
                     </>
                   )}
                 </button>
@@ -2453,9 +2458,9 @@ export const PinballPage: React.FC = () => {
                     playSfx('tab');
                     setPinballMode('free');
                   }}
-                  className="brutal-btn py-2 rounded-xl bg-[#FBF9F4] text-[#17171C] text-xs font-black"
+                  className="brutal-btn py-2 rounded-xl bg-[#FBF9F4] text-[#17171C] text-xs font-black whitespace-nowrap"
                 >
-                  切回自由物理弹珠实验
+                  切回自由实验
                 </button>
 
                 <button
@@ -2464,9 +2469,9 @@ export const PinballPage: React.FC = () => {
                     stopChoreographedShow();
                     sendBeatToForge();
                   }}
-                  className="brutal-btn-lg w-full py-2.5 rounded-2xl bg-[#FFD426] text-[#17171C] text-[13px] font-black tracking-wide uppercase flex items-center justify-center gap-1.5"
+                  className="brutal-btn-lg w-full py-2.5 rounded-2xl bg-[#FFD426] text-[#17171C] text-[13.5px] zh-display flex items-center justify-center gap-1.5 whitespace-nowrap"
                 >
-                  <span>送去闪卡铸造屋</span>
+                  <span>送去闪卡铸造</span>
                   <span className="text-base leading-none">→</span>
                 </button>
               </div>

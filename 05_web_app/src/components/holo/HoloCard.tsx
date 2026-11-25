@@ -409,8 +409,8 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                   {badgeLabel}
                 </div>
                 {isDemo && (
-                  <span className="px-1.5 py-0.5 rounded-md bg-[#14151B]/90 border border-[#FFD426] font-mono-hw text-[9px] font-black text-[#FFD426]">
-                    DEMO
+                  <span className="px-1.5 py-0.5 rounded-md bg-[#14151B]/90 border border-[#FFD426] text-[9.5px] font-black text-[#FFD426]">
+                    示例
                   </span>
                 )}
               </div>
@@ -588,33 +588,25 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                   : 'bg-[#FBF9F4] text-[#17171C]'
               }`}
             >
-              <div className="w-full flex items-center justify-between text-[8px] font-mono-hw font-bold tracking-[0.14em] opacity-60 mb-0.5">
-                <span>{specLabel ?? category} · {foilMeta.label}</span>
-                <span>{lineageLabel ? lineageLabel : 'HB-V2'}</span>
+              <div className="w-full flex items-center justify-between text-[9.5px] font-bold tracking-wide opacity-65 mb-0.5">
+                <span className="truncate">
+                  {specLabel ?? catInfo.zhLabel} · {foilMeta.zhLabel}
+                </span>
+                {lineageLabel && <span className="truncate ml-2">{lineageLabel}</span>}
               </div>
 
               <div className="flex items-center gap-1.5 max-w-full">
-                <span className="text-[10px] font-black opacity-80">✦</span>
-                <span className="font-black italic tracking-wide text-[18px] leading-tight truncate uppercase">
-                  {title}
+                <span className="text-[10px] font-black opacity-75">✦</span>
+                <span className="zh-display text-[17.5px] leading-tight truncate">
+                  {zhTitle ?? title}
                 </span>
-                <span className="text-[10px] font-black opacity-80">✦</span>
+                <span className="text-[10px] font-black opacity-75">✦</span>
               </div>
-
-              {zhTitle && (
-                <span
-                  className={`text-[10px] font-bold tracking-wider leading-tight ${
-                    rarity === 'LTD' ? 'text-[#FFD426]/80' : 'text-[#626272]'
-                  }`}
-                >
-                  {zhTitle}
-                </span>
-              )}
 
               {rarity !== 'N' && rarity !== 'R' && (
                 <div
                   className="absolute bottom-1.5 left-2 w-4 h-4 rounded-full border border-[#17171C]/60 holo-shine-border flex items-center justify-center shadow-xs pointer-events-none"
-                  title="HoloBeat Authenticated Foil"
+                  title="全息防伪认证印记"
                 >
                   <span className="text-[6px] font-mono-hw font-black text-[#17171C]">✦</span>
                 </div>
@@ -671,23 +663,20 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                 className="px-2 py-0.5 rounded-full text-[10.5px] font-black border-[1.5px] border-[#17171C]"
                 style={{ backgroundColor: catInfo.color, color: catInfo.textColor }}
               >
-                {rarityInfo.label} · {specLabel ?? catInfo.label}
+                {rarityInfo.label} · {specLabel ?? catInfo.zhLabel}
               </span>
-              <span className="font-mono-hw text-[11px] font-bold text-[#FFD426] tracking-wider">
-                {code} // {foilMeta.label}
+              <span className="font-mono-hw text-[10.5px] font-bold text-[#FFD426] tracking-wide">
+                {code} · {foilMeta.zhLabel}
               </span>
             </div>
 
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="text-[16px] font-black italic tracking-wide uppercase text-[#FBF9F4] truncate leading-tight">
-                  {title}
+                <h3 className="text-[16px] zh-display text-[#FBF9F4] truncate leading-tight">
+                  {zhTitle ?? title}
                 </h3>
-                {zhTitle && (
-                  <p className="text-[11px] font-bold text-[#00D4AA] mt-0.5 truncate">{zhTitle}</p>
-                )}
                 {lineageLabel && (
-                  <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-[#7C3AED]/30 border border-[#A855F7]/60 font-mono-hw text-[9px] font-bold text-[#E9D5FF]">
+                  <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-[#7C3AED]/30 border border-[#A855F7]/60 text-[9.5px] font-bold text-[#E9D5FF]">
                     {lineageLabel}
                   </span>
                 )}
@@ -696,11 +685,11 @@ export const HoloCard: React.FC<HoloCardProps> = ({
             </div>
 
             <div className="p-2 rounded-xl bg-white/[0.06] border border-white/12">
-              <div className="text-[8.5px] font-mono-hw font-bold uppercase tracking-[0.14em] text-[#FFD426] mb-0.5">
-                ARCHIVE // 市井声景档案
+              <div className="text-[9.5px] font-bold tracking-wider text-[#FFD426] mb-0.5">
+                市井声景档案
               </div>
               <p className="text-[11px] leading-relaxed text-white/85">
-                {storyZh ?? '由 HoloBeat 声卡造物局封存的数字声音藏品，支持随时拆封重混与离线无损导出。'}
+                {storyZh ?? '由声卡造物局封存的数字声音藏品，支持随时拆封重混与离线无损导出。'}
               </p>
               {pairingHintZh && (
                 <p className="text-[10px] leading-snug text-[#00D4AA]/90 mt-1 pt-1 border-t border-white/10">
@@ -710,32 +699,32 @@ export const HoloCard: React.FC<HoloCardProps> = ({
             </div>
 
             <div className="p-2 rounded-xl bg-black/55 border border-[#7C3AED]/55">
-              <div className="text-[8.5px] font-mono-hw font-bold uppercase tracking-[0.14em] text-[#C084FC] mb-0.5">
-                DSP ENGINE // SYNTH FORMULA
+              <div className="text-[9.5px] font-bold tracking-wider text-[#C084FC] mb-0.5">
+                合成声学配方
               </div>
-              <code className="font-mono-hw text-[10px] text-[#00D4AA] leading-snug block">
-                {synthFormula ?? 'Tone.js Procedural Multi-Voice Mix'}
+              <code className="text-[10.5px] text-[#00D4AA] leading-snug block">
+                {synthFormula ?? '离线程序化多声部合成引擎'}
               </code>
             </div>
 
             {stats && (
               <div>
-                <div className="text-[8px] font-mono-hw tracking-[0.14em] text-white/45 uppercase mb-1">
-                  STYLE PROFILE · 音色风格标签
+                <div className="text-[9.5px] font-bold tracking-wider text-white/55 mb-1">
+                  音色特征
                 </div>
                 <div className="grid grid-cols-3 gap-1.5">
                   {[
-                    { k: 'PUNCH', v: stats.punch, c: '#FF5526' },
-                    { k: 'SHINE', v: stats.shine, c: '#FFD426' },
-                    { k: 'VIBE', v: stats.vibe, c: '#A855F7' },
+                    { k: '冲击', v: stats.punch, c: '#FF5526' },
+                    { k: '光泽', v: stats.shine, c: '#FFD426' },
+                    { k: '氛围', v: stats.vibe, c: '#A855F7' },
                   ].map((item) => (
                     <div
                       key={item.k}
                       className="rounded-lg bg-white/[0.05] border border-white/10 px-2 py-1 flex flex-col gap-0.5"
                     >
-                      <div className="flex items-center justify-between font-mono-hw text-[9px]">
-                        <span className="text-white/60">{item.k}</span>
-                        <span className="font-bold text-white">{item.v}</span>
+                      <div className="flex items-center justify-between text-[9.5px]">
+                        <span className="text-white/70 font-bold">{item.k}</span>
+                        <span className="font-mono-hw font-bold text-white">{item.v}</span>
                       </div>
                       <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
                         <div
@@ -750,12 +739,12 @@ export const HoloCard: React.FC<HoloCardProps> = ({
             )}
           </div>
 
-          <div className="pt-2 border-t border-white/15 flex items-center justify-between text-[9.5px] font-mono-hw">
+          <div className="pt-2 border-t border-white/15 flex items-center justify-between text-[10px] font-mono-hw">
             <span className="text-white/65">
-              BPM {recommendedBpm}
-              {ownedCount !== undefined ? ` · 已抽 ×${ownedCount}` : ''}
+              推荐 {recommendedBpm} BPM
+              {ownedCount !== undefined ? ` · 已收录 ×${ownedCount}` : ''}
             </span>
-            <span className="text-[#FFD426] font-bold tracking-wider">HOLOBEAT V2</span>
+            <span className="text-[#FFD426] font-bold tracking-wider">HOLOBEAT</span>
           </div>
         </div>
       </div>
