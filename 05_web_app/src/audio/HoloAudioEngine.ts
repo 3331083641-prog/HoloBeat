@@ -1,7 +1,14 @@
 import * as Tone from 'tone';
-import { SCALE_META, getCardById } from '../data/soundCards';
+import { getCardById } from '../data/soundCards';
 import { useHoloStore } from '../store/useHoloStore';
-import type { PinballRecordedEvent, ScaleId, TrackState } from '../types/holo';
+import type {
+  CompositionSnapshot,
+  PerformanceEvent,
+  PinballRecordedEvent,
+  ScaleId,
+  TrackState,
+} from '../types/holo';
+import { CHORD_PROGRESSIONS, resolveNoteForStep } from './compositionEngine';
 
 type StepListener = (step: number) => void;
 
@@ -16,41 +23,7 @@ export interface TriggerOptions {
 }
 
 /**
- * Curated 16-step musical hook contours (indices into scaleNotes 0..9)
- * Makes every step painted in the Beat Deck lock into a catchy, musical motif!
- */
-const MELODY_CONTOUR: Record<ScaleId, number[]> = {
-  PENTA_C: [5, 7, 8, 7, 5, 4, 5, 7, 8, 9, 8, 7, 5, 4, 3, 5],
-  MINOR_C: [5, 6, 7, 8, 7, 6, 5, 4, 5, 7, 9, 8, 7, 6, 4, 5],
-  DORIAN_C: [5, 6, 8, 7, 5, 3, 4, 6, 8, 9, 7, 6, 5, 4, 3, 5],
-};
-
-/**
- * 4-beat lush chord progressions per scale for VIBE tracks (beats 0..3 -> steps 0..15)
- */
-const CHORD_PROGRESSIONS: Record<ScaleId, [string, string, string][]> = {
-  PENTA_C: [
-    ['C4', 'G4', 'D5'], // Csus2
-    ['A3', 'E4', 'C5'], // Am7 flavor
-    ['F3', 'C4', 'A4'], // Fmaj7 flavor
-    ['G3', 'D4', 'A4'], // G9sus4
-  ],
-  MINOR_C: [
-    ['C4', 'Eb4', 'Bb4'], // Cm7
-    ['Ab3', 'Eb4', 'G4'], // AbMaj7
-    ['F3', 'C4', 'Eb4'], // Fm7
-    ['G3', 'D4', 'F4'], // G7sus
-  ],
-  DORIAN_C: [
-    ['C4', 'Eb4', 'G4'], // Cm
-    ['F3', 'A3', 'D4'], // F6 / Dm7
-    ['Bb3', 'D4', 'A4'], // BbMaj7
-    ['G3', 'C4', 'F4'], // G11
-  ],
-};
-
-/**
- * Pure procedural synthesis helper shared by BOTH live engine and Tone.Offline WAV renderer!
+ * Pure procedural synthesis rack shared by BOTH live engine and Tone.Offline WAV renderer!
  */
 export interface SynthVoiceRack {
   kick: Tone.MembraneSynth;
@@ -116,7 +89,6 @@ export function createVoiceRack(destination: Tone.InputNode): SynthVoiceRack {
   bellPoly.maxPolyphony = 10;
   bellPoly.volume.value = -3;
 
-  // Warm-filtered chiptune pulse (softened edges so 8-bit sounds nostalgic, never piercing!)
   const squareFilter = new Tone.Filter(3600, 'lowpass').connect(rackGain);
   squareFilter.Q.value = 1.2;
   const squarePoly = new Tone.PolySynth(Tone.Synth, {
@@ -133,7 +105,6 @@ export function createVoiceRack(destination: Tone.InputNode): SynthVoiceRack {
   pluckPoly.maxPolyphony = 10;
   pluckPoly.volume.value = -4;
 
-  // Lush analog-filtered Juno-style pad synth (no harsh raw buzz!)
   const padFilter = new Tone.Filter(2100, 'lowpass').connect(rackGain);
   padFilter.Q.value = 1.4;
   const padPoly = new Tone.PolySynth(Tone.Synth, {
@@ -185,14 +156,8 @@ export function triggerCardOnRack(
   const vel = Math.min(1, Math.max(0.15, (opts.velocity ?? 0.82) * (opts.gain ?? 1)));
   const tone = opts.tone ?? 0.5;
   const scaleId = opts.scale ?? 'PENTA_C';
-  const scaleNotes = SCALE_META[scaleId].notes;
   const stepIdx = opts.stepIndex ?? 0;
-
-  // Musical contour note selection with gentle tone-based octave/degree lift
-  const contourDeg = MELODY_CONTOUR[scaleId][stepIdx % 16];
-  const toneOffset = Math.round((tone - 0.5) * 4);
-  const noteIdx = Math.min(scaleNotes.length - 1, Math.max(0, contourDeg + toneOffset));
-  const chosenNote = opts.note ?? scaleNotes[noteIdx];
+  const chosenNote = opts.note ?? resolveNoteForStep(scaleId, stepIdx, tone);
 
   const beatQuarter = Math.floor((stepIdx % 16) / 4);
   const chord = CHORD_PROGRESSIONS[scaleId][beatQuarter];
@@ -202,23 +167,19 @@ export function triggerCardOnRack(
 
   try {
     switch (cardId) {
-      // === BEAT ===
       case 'card-01': {
-        // 弄堂竹板梆子: deep punchy 808-style thump + hollow wooden bamboo clack
         rack.kick.triggerAttackRelease(shiftFreq(58), '16n', now, vel * 0.96);
         rack.woodSnap.triggerAttackRelease(shiftFreq(740), '64n', now, vel * 0.42);
         rack.woodSnap.triggerAttackRelease(shiftFreq(520), '64n', now + 0.016, vel * 0.25);
         break;
       }
       case 'card-02': {
-        // 老式街机拍键: snappy arcade punch kick + crisp microswitch click
         rack.kick.triggerAttackRelease(shiftFreq(74), '16n', now, vel * 0.96);
         rack.whiteFilter.frequency.setValueAtTime(3400 + tone * 2800, now);
         rack.whiteNoise.triggerAttackRelease('64n', now, vel * 0.44);
         break;
       }
       case 'card-03': {
-        // 糖炒栗子爆壳: warm sub kick + sizzling roasted shell crackle burst
         rack.kick.triggerAttackRelease(shiftFreq(66), '16n', now, vel * 0.85);
         rack.whiteFilter.frequency.setValueAtTime(4800 + tone * 1400, now);
         rack.whiteNoise.triggerAttackRelease('64n', now + 0.012, vel * 0.55);
@@ -226,15 +187,11 @@ export function triggerCardOnRack(
         break;
       }
       case 'card-04': {
-        // 舞狮咚咚大鼓: resonant festival taiko drum + crisp rim knock
         rack.subKick.triggerAttackRelease(shiftFreq(50), '8n', now, vel * 1.0);
         rack.woodSnap.triggerAttackRelease(shiftFreq(290), '32n', now, vel * 0.42);
         break;
       }
-
-      // === PERC ===
       case 'card-05': {
-        // 二八大杠车铃: iconic sparkling brass double-ring bicycle bell!
         const n1 = opts.note ?? (stepIdx % 4 === 0 ? 'G5' : 'D6');
         const f1 = Tone.Frequency(n1).toFrequency() * (0.94 + tone * 0.14);
         rack.bellPoly.triggerAttackRelease(f1, '16n', now, vel * 0.52);
@@ -242,14 +199,12 @@ export function triggerCardOnRack(
         break;
       }
       case 'card-06': {
-        // 冰镇汽水拉环: metallic pull-tab snap + crisp cold soda fizz hat
         rack.whiteFilter.frequency.setValueAtTime(5600 + tone * 2800, now);
         rack.whiteNoise.triggerAttackRelease('16n', now, vel * 0.56);
         rack.woodSnap.triggerAttackRelease(shiftFreq(1650), '64n', now, vel * 0.32);
         break;
       }
       case 'card-07': {
-        // 麻将碰杠脆碰: unmistakable ivory mahjong tile resonant double-clack
         rack.woodSnap.triggerAttackRelease(shiftFreq(1920), '64n', now, vel * 0.68);
         rack.woodSnap.triggerAttackRelease(shiftFreq(2460), '64n', now + 0.034, vel * 0.56);
         rack.whiteFilter.frequency.setValueAtTime(2900, now);
@@ -257,15 +212,11 @@ export function triggerCardOnRack(
         break;
       }
       case 'card-08': {
-        // 货郎拨浪鼓: playful wooden double-bead snare tap
         rack.woodSnap.triggerAttackRelease(shiftFreq(460), '32n', now, vel * 0.72);
         rack.woodSnap.triggerAttackRelease(shiftFreq(615), '32n', now + 0.052, vel * 0.6);
         break;
       }
-
-      // === MELODY ===
       case 'card-09': {
-        // 8-Bit 街机投币: iconic catchy rising chiptune coin chime (softened analog edge)
         const baseFreq = Tone.Frequency(chosenNote).toFrequency();
         rack.squareFilter.frequency.setValueAtTime(2000 + tone * 3400, now);
         rack.squarePoly.triggerAttackRelease(baseFreq, '16n', now, vel * 0.54);
@@ -273,27 +224,21 @@ export function triggerCardOnRack(
         break;
       }
       case 'card-10': {
-        // 糖画铜勺叮当: crystalline glassy FM chime
         rack.bellPoly.triggerAttackRelease(chosenNote, '8n', now, vel * 0.62);
         break;
       }
       case 'card-11': {
-        // 赛博古筝拨弦: oriental pentatonic plucked string + shimmering octave grace note
         const f = Tone.Frequency(chosenNote).toFrequency();
         rack.pluckPoly.triggerAttackRelease(f, '8n', now, vel * 0.76);
         rack.pluckPoly.triggerAttackRelease(f * 2, '16n', now + 0.022, vel * 0.3);
         break;
       }
       case 'card-12': {
-        // 摩天轮八音盒: dreamy celesta music-box sparkle harmony
         const f = Tone.Frequency(chosenNote).toFrequency();
         rack.bellPoly.triggerAttackRelease([f, f * 1.498], '4n', now, vel * 0.52);
         break;
       }
-
-      // === VIBE ===
       case 'card-13': {
-        // 夜市铁板滋啦: appetizing gentle sizzle + lush neo-soul warm chord progression
         rack.pinkFilter.frequency.setValueAtTime(2200 + tone * 2400, now);
         rack.pinkNoise.triggerAttackRelease('16n', now, vel * 0.34);
         rack.padFilter.frequency.setValueAtTime(1400 + tone * 2400, now);
@@ -301,20 +246,17 @@ export function triggerCardOnRack(
         break;
       }
       case 'card-14': {
-        // 梅雨铁皮雨棚: cozy raindrop patter + warm Rhodes lo-fi voicing
         rack.pinkFilter.frequency.setValueAtTime(2400 + tone * 1600, now);
         rack.pinkNoise.triggerAttackRelease('16n', now, vel * 0.28);
         rack.pluckPoly.triggerAttackRelease(chord, '4n', now, vel * 0.44);
         break;
       }
       case 'card-15': {
-        // 港风霓虹电流: retro 90s vaporwave warm synth swell
         rack.padFilter.frequency.setValueAtTime(1200 + tone * 3000, now);
         rack.padPoly.triggerAttackRelease(chord, '4n', now, vel * 0.62);
         break;
       }
       case 'card-16': {
-        // 晚风胡同蝉鸣: shimmering moonlit harmonics + gentle cicada breeze
         const f = Tone.Frequency(chosenNote).toFrequency();
         rack.bellPoly.triggerAttackRelease([f, f * 1.498], '4n', now, vel * 0.42);
         rack.padPoly.triggerAttackRelease([chord[0], chord[2]], '4n', now, vel * 0.34);
@@ -329,6 +271,13 @@ export function triggerCardOnRack(
   } catch {
     // Prevent Tone scheduling exceptions on extreme rapid triggers
   }
+}
+
+export interface SnapshotPlaybackCallbacks {
+  onEvent?: (ev: PerformanceEvent) => void;
+  onComplete?: () => void;
+  loop?: boolean;
+  leadInMs?: number;
 }
 
 class HoloAudioEngine {
@@ -347,6 +296,10 @@ class HoloAudioEngine {
   private trackChannels: Tone.Channel[] = [];
   private trackRacks: SynthVoiceRack[] = [];
   private previewRack!: SynthVoiceRack;
+  private snapshotRack!: SynthVoiceRack;
+  private snapshotBitCrusher!: Tone.BitCrusher;
+  private snapshotEcho!: Tone.FeedbackDelay;
+
   private sfxSynth!: Tone.Synth;
   private sfxPoly!: Tone.PolySynth<Tone.Synth>;
   private sfxNoise!: Tone.NoiseSynth;
@@ -358,6 +311,15 @@ class HoloAudioEngine {
   private lastScratchTime = 0;
   private lastKnobTickTime = 0;
   private pinballTimers: number[] = [];
+
+  // Isolated Frozen Snapshot Playback State (For Forge Audition & Choreographed Pinball Show!)
+  private snapshotActive = false;
+  private snapshotStartAudioSec = 0;
+  private snapshotLeadInMs = 0;
+  private snapshotDurationMs = 0;
+  private snapshotTimers: number[] = [];
+  private snapshotLoopHandle: number | null = null;
+  private mediaStreamDest: MediaStreamAudioDestinationNode | null = null;
 
   async ensureStarted(): Promise<void> {
     if (Tone.getContext().state !== 'running') {
@@ -408,7 +370,7 @@ class HoloAudioEngine {
 
     this.masterBus = new Tone.Gain(0.96).connect(this.bitCrusher);
 
-    // 4 dedicated track channels for Beat Deck
+    // 4 dedicated track channels for Beat Deck live editor
     for (let i = 0; i < 4; i++) {
       const channel = new Tone.Channel(0, 0).connect(this.masterBus);
       const filter = new Tone.Filter(12000, 'lowpass').connect(channel);
@@ -418,10 +380,20 @@ class HoloAudioEngine {
       this.trackRacks.push(rack);
     }
 
-    // Dedicated preview / pinball / forge voice rack (goes through warm room reverb!)
+    // Dedicated preview / pinball voice rack
     this.previewRack = createVoiceRack(this.roomReverb);
 
-    // Ultra-fast UI tactile SFX nodes
+    // Dedicated isolated rack + FX bus for Frozen Snapshot Audition / Choreographed Show
+    this.snapshotEcho = new Tone.FeedbackDelay({
+      delayTime: '8n.',
+      feedback: 0.42,
+      wet: 0,
+    }).connect(this.roomReverb);
+    this.snapshotBitCrusher = new Tone.BitCrusher(4).connect(this.snapshotEcho);
+    this.snapshotBitCrusher.wet.value = 0;
+    this.snapshotRack = createVoiceRack(this.snapshotBitCrusher);
+
+    // UI tactile SFX nodes
     this.sfxSynth = new Tone.Synth({
       oscillator: { type: 'triangle' },
       envelope: { attack: 0.001, decay: 0.042, sustain: 0, release: 0.028 },
@@ -462,8 +434,9 @@ class HoloAudioEngine {
           const rack = this.trackRacks[idx];
           if (!rack) return;
 
-          // Subtle human velocity accent on strong downbeats (steps 0, 4, 8, 12)
-          const grooveVel = step % 4 === 0 ? 0.92 : step % 2 === 0 ? 0.8 : 0.72;
+          const isAccented = Boolean(track.accents?.[step]);
+          const baseVel = step % 4 === 0 ? 0.92 : step % 2 === 0 ? 0.8 : 0.72;
+          const grooveVel = Math.min(1, isAccented ? Math.max(0.95, baseVel + 0.14) : baseVel);
 
           triggerCardOnRack(rack, track.cardId, {
             time,
@@ -473,12 +446,11 @@ class HoloAudioEngine {
             scale: state.scale,
           });
 
-          // Live STUTTER DJ FX: crisp 32nd-note retrigger!
           if (state.liveFx.stutter) {
             const sub = Tone.Time('32n').toSeconds();
             triggerCardOnRack(rack, track.cardId, {
               time: time + sub,
-              velocity: 0.62,
+              velocity: Math.max(0.35, grooveVel * 0.68),
               tone: Math.min(1, track.tone + 0.14),
               stepIndex: step,
               scale: state.scale,
@@ -521,8 +493,23 @@ class HoloAudioEngine {
     });
   }
 
+  /**
+   * Returns exact continuous 0..16 step position driven by Tone.Transport audio clock
+   * for sub-frame accurate Holo Motion bouncing notes!
+   */
+  getTransportStepFloat(): number {
+    if (!this.initialized) return -1;
+    const transport = Tone.getTransport();
+    if (transport.state !== 'started') return this.currentStep;
+    const bpm = Math.max(40, transport.bpm.value || useHoloStore.getState().bpm);
+    const stepSec = 60 / bpm / 4;
+    const posSec = Math.max(0, transport.seconds);
+    return (posSec / stepSec) % 16;
+  }
+
   async togglePlay(): Promise<boolean> {
     await this.ensureStarted();
+    this.stopSnapshotPlayback();
     this.syncFromStore();
     const transport = Tone.getTransport();
     if (transport.state === 'started') {
@@ -538,6 +525,7 @@ class HoloAudioEngine {
 
   async startTransport(): Promise<void> {
     await this.ensureStarted();
+    this.stopSnapshotPlayback();
     this.syncFromStore();
     if (Tone.getTransport().state !== 'started') {
       Tone.getTransport().start();
@@ -553,6 +541,15 @@ class HoloAudioEngine {
     useHoloStore.getState().setIsPlaying(false);
   }
 
+  /**
+   * Stop ALL active audio streams cleanly (used on workspace switch / page close / unseal)
+   */
+  stopAllPlayback(): void {
+    this.stopTransport();
+    this.stopPinballRecording();
+    this.stopSnapshotPlayback();
+  }
+
   subscribeStep(fn: StepListener): () => void {
     this.stepListeners.add(fn);
     return () => this.stepListeners.delete(fn);
@@ -560,6 +557,137 @@ class HoloAudioEngine {
 
   getCurrentStep(): number {
     return this.currentStep;
+  }
+
+  /**
+   * Play ANY frozen immutable CompositionSnapshot (Beat or Pinball) cleanly on its isolated
+   * audio bus with exact Tone audio-clock scheduling! Never leaks or reads mutable BeatDeck editor state!
+   */
+  async playCompositionSnapshot(
+    snapshot: CompositionSnapshot,
+    cbs: SnapshotPlaybackCallbacks = {}
+  ): Promise<void> {
+    await this.ensureStarted();
+    this.stopTransport();
+    this.stopPinballRecording();
+    this.stopSnapshotPlayback();
+
+    const leadInMs = cbs.leadInMs ?? 60;
+    const events = snapshot.events;
+    if (events.length === 0) {
+      cbs.onComplete?.();
+      return;
+    }
+
+    // Apply frozen FX settings strictly to the isolated snapshot FX bus!
+    const fx = snapshot.beatSnapshot?.liveFx ?? { bitcrush: false, echo: false, stutter: false };
+    const stepSec = 60 / Math.max(40, snapshot.bpm) / 4;
+    this.snapshotBitCrusher.wet.value = fx.bitcrush ? 0.8 : 0;
+    this.snapshotEcho.delayTime.value = stepSec * 3;
+    this.snapshotEcho.wet.value = fx.echo ? 0.48 : 0;
+
+    const schedulePass = () => {
+      this.clearSnapshotTimers();
+      this.snapshotActive = true;
+      this.snapshotLeadInMs = leadInMs;
+      this.snapshotDurationMs = Math.max(800, snapshot.durationMs);
+
+      const baseAudioTime = Tone.now() + 0.04;
+      this.snapshotStartAudioSec = baseAudioTime;
+
+      const tracksByIdx = snapshot.beatSnapshot?.tracks;
+
+      events.forEach((ev) => {
+        const fireTime = baseAudioTime + (leadInMs + ev.timeOffsetMs) / 1000;
+        const trackVol = tracksByIdx?.[ev.trackIndex]?.volume ?? 0.85;
+        const isBeatMelodyOrPinball =
+          snapshot.sourceType === 'pinball' || ev.trackCategory === 'MELODY';
+
+        triggerCardOnRack(this.snapshotRack, ev.cardId, {
+          time: fireTime,
+          note: isBeatMelodyOrPinball ? ev.pitch : undefined,
+          velocity: ev.velocity,
+          gain: trackVol,
+          tone: ev.tone ?? 0.5,
+          stepIndex: ev.stepIndex ?? 0,
+          scale: snapshot.scale,
+        });
+
+        Tone.getDraw().schedule(() => {
+          if (this.snapshotActive) {
+            cbs.onEvent?.(ev);
+          }
+        }, fireTime);
+      });
+
+      const totalMs = leadInMs + this.snapshotDurationMs + 140;
+      const doneTimer = window.setTimeout(() => {
+        if (!this.snapshotActive) return;
+        if (cbs.loop) {
+          schedulePass();
+        } else {
+          this.snapshotActive = false;
+          cbs.onComplete?.();
+        }
+      }, totalMs);
+      this.snapshotTimers.push(doneTimer);
+    };
+
+    schedulePass();
+  }
+
+  /** Exact real-time playback position in ms relative to snapshot t=0 (negative during lead-in) */
+  getSnapshotPlaybackMs(): number {
+    if (!this.initialized || !this.snapshotActive) return -1;
+    const elapsedMs = (Tone.now() - this.snapshotStartAudioSec) * 1000;
+    return elapsedMs - this.snapshotLeadInMs;
+  }
+
+  isSnapshotPlaying(): boolean {
+    return this.snapshotActive;
+  }
+
+  private clearSnapshotTimers() {
+    this.snapshotTimers.forEach((t) => window.clearTimeout(t));
+    this.snapshotTimers = [];
+    if (this.snapshotLoopHandle !== null) {
+      window.clearTimeout(this.snapshotLoopHandle);
+      this.snapshotLoopHandle = null;
+    }
+  }
+
+  stopSnapshotPlayback(): void {
+    this.snapshotActive = false;
+    this.clearSnapshotTimers();
+    if (this.initialized) {
+      try {
+        this.snapshotRack.padPoly.releaseAll();
+        this.snapshotRack.bellPoly.releaseAll();
+        this.snapshotRack.pluckPoly.releaseAll();
+        this.snapshotRack.squarePoly.releaseAll();
+      } catch {
+        // Ignore release errors
+      }
+    }
+  }
+
+  /**
+   * Tap the master limiter output into a Web Audio MediaStream for genuine
+   * synchronized audio+video Motion Card (.webm) export!
+   */
+  async getAudioCaptureStream(): Promise<MediaStream | null> {
+    await this.ensureStarted();
+    try {
+      const rawCtx = Tone.getContext().rawContext as AudioContext;
+      if (typeof rawCtx.createMediaStreamDestination !== 'function') return null;
+      if (!this.mediaStreamDest) {
+        this.mediaStreamDest = rawCtx.createMediaStreamDestination();
+        this.limiter.connect(this.mediaStreamDest);
+      }
+      return this.mediaStreamDest.stream;
+    } catch {
+      return null;
+    }
   }
 
   async previewCard(cardId: string, opts: TriggerOptions = {}): Promise<void> {
@@ -576,17 +704,20 @@ class HoloAudioEngine {
       velocity: opts.velocity ?? 0.88,
     });
 
-    // Joyful 3-note pentatonic phrase preview on Gacha / Drawer showcase!
     if (!opts.note && card.category === 'MELODY' && opts.stepIndex === undefined) {
-      const notes = SCALE_META[scale].shortNotes;
+      const notes = [
+        resolveNoteForStep(scale, 0, 0.5),
+        resolveNoteForStep(scale, 2, 0.5),
+        resolveNoteForStep(scale, 8, 0.5),
+      ];
       triggerCardOnRack(this.previewRack, card.id, {
-        note: notes[2],
+        note: notes[1],
         time: now + 0.14,
         scale,
         velocity: 0.74,
       });
       triggerCardOnRack(this.previewRack, card.id, {
-        note: notes[4],
+        note: notes[2],
         time: now + 0.28,
         scale,
         velocity: 0.86,
@@ -607,10 +738,11 @@ class HoloAudioEngine {
     }
 
     const scale = useHoloStore.getState().scale;
+    const minOffset = events.reduce((m, e) => Math.min(m, e.timeOffsetMs), events[0].timeOffsetMs);
     let maxDelay = 0;
 
     events.forEach((ev) => {
-      const delay = Math.max(0, ev.timeOffsetMs);
+      const delay = Math.max(0, ev.timeOffsetMs - minOffset);
       if (delay > maxDelay) maxDelay = delay;
       const timer = window.setTimeout(() => {
         triggerCardOnRack(this.previewRack, ev.cardId, {
@@ -634,9 +766,6 @@ class HoloAudioEngine {
     this.pinballTimers = [];
   }
 
-  /**
-   * Zero-asset procedural UI tactile micro-SFX (<2ms latency)
-   */
   async playSfx(
     kind:
       | 'tab'
@@ -660,7 +789,6 @@ class HoloAudioEngine {
       const now = Tone.now();
       switch (kind) {
         case 'bootChime': {
-          // Signature Teenage Engineering / Pocket Handheld warm analog startup chord!
           const notes = ['C5', 'G5', 'B5', 'D6'];
           notes.forEach((n, i) => {
             this.sfxPoly.triggerAttackRelease(n, '8n', now + i * 0.055, 0.65);
@@ -717,7 +845,6 @@ class HoloAudioEngine {
           break;
         }
         case 'foilPress': {
-          // Heavy hydraulic stamp impact + rising crystalline holo seal shimmer!
           this.previewRack.kick.triggerAttackRelease(54, '16n', now, 0.95);
           this.sfxNoiseFilter.frequency.setValueAtTime(1800, now);
           this.sfxNoise.triggerAttackRelease('16n', now, 0.55);

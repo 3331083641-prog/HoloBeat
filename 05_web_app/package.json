@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --port 5173 --strictPort",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --port 4173"
+    "preview": "vite preview --port 4173",
+    "test": "node --experimental-strip-types --test tests/core.test.ts"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.2.5",

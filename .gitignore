@@ -13,12 +13,17 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Environment & Secrets
+# Environment & Secrets & Local Databases
 .env
 .env.local
 .env.*.local
 *.pem
 *.key
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+06_backend/data/
 
 # OS & Editor Artifacts
 .DS_Store
