@@ -132,8 +132,8 @@ function drawSoundSigilOnCanvas(
  * - Deterministic Generative Sound Sigil + Remix Lineage + PCM Audio Spec Plate
  * - Strictly 100% anonymous competition-safe metadata
  */
-const ZH_SANS = '"HarmonyOS Sans SC", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif';
-const HW_MONO = '"JetBrains Mono", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", monospace';
+const ZH_SANS = '"Noto Sans SC", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
+const HW_MONO = '"JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace';
 
 export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promise<Blob> {
   if (typeof document !== 'undefined' && document.fonts?.ready) {
@@ -422,10 +422,13 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.textBaseline = 'middle';
   ctx.fillText(`✦ ${opts.title} ✦`, W / 2, pad + artH + ribbonH / 2 + 16, innerW - 72);
 
-  // Black-Valley Holographic Diffraction Pass
+  // Black-Valley Holographic Diffraction Pass — clipped STRICTLY to artwork area (protects badges, text & waveform!)
   ctx.save();
+  ctx.beginPath();
+  ctx.rect(pad, pad, innerW, artH);
+  ctx.clip();
   ctx.globalCompositeOperation = 'color-dodge';
-  ctx.globalAlpha = opts.rarity === 'UR' ? 0.52 : 0.42;
+  ctx.globalAlpha = opts.rarity === 'UR' ? 0.34 : 0.28;
 
   if (opts.foil === 'prism') {
     const g = ctx.createLinearGradient(0, 0, W, H);
