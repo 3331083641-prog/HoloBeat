@@ -1,23 +1,41 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Lock, RotateCw, Send, Volume2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Disc3,
+  FolderHeart,
+  Lock,
+  RotateCw,
+  Send,
+  Volume2,
+  X,
+} from 'lucide-react';
 import { holoAudio } from '../audio/HoloAudioEngine';
 import { useHoloSfx } from '../audio/useHoloSfx';
 import { CardArtwork } from '../components/artwork/CardArtwork';
 import { HoloCard } from '../components/holo/HoloCard';
 import { CATEGORY_META, HOLO_FOIL_LIST, RARITY_META, getCardById } from '../data/soundCards';
 import { useHoloStore } from '../store/useHoloStore';
+import type { TrackCategory } from '../types/holo';
 import { fireHoloConfetti } from '../utils/confetti';
+
+const TRACK_CATEGORIES: TrackCategory[] = ['BEAT', 'PERC', 'MELODY', 'VIBE'];
 
 export const GachaPage: React.FC = () => {
   const selectedId = useHoloStore((s) => s.selectedGachaCardId);
   const needsScratch = useHoloStore((s) => s.needsScratch);
   const pityCount = useHoloStore((s) => s.pityCount);
   const pullHistory = useHoloStore((s) => s.pullHistory);
+  const pullCounts = useHoloStore((s) => s.pullCounts);
   const collection = useHoloStore((s) => s.collection);
+  const tracks = useHoloStore((s) => s.tracks);
+
   const pullGachaCard = useHoloStore((s) => s.pullGachaCard);
   const revealCurrentCard = useHoloStore((s) => s.revealCurrentCard);
   const selectGachaCard = useHoloStore((s) => s.selectGachaCard);
   const sendCardToBeat = useHoloStore((s) => s.sendCardToBeat);
+  const sendCardToPinball = useHoloStore((s) => s.sendCardToPinball);
+  const setActivePage = useHoloStore((s) => s.setActivePage);
   const pushToast = useHoloStore((s) => s.pushToast);
 
   const playSfx = useHoloSfx();
@@ -29,10 +47,26 @@ export const GachaPage: React.FC = () => {
   const [flipped, setFlipped] = useState(false);
   const [shaking, setShaking] = useState(false);
   const [capsuleBounce, setCapsuleBounce] = useState(false);
+  const [chuteCapsuleColor, setChuteCapsuleColor] = useState<string | null>(null);
   const [vaultFlash, setVaultFlash] = useState(false);
   const [cardPopKey, setCardPopKey] = useState(0);
   const [leverAngle, setLeverAngle] = useState(0);
   const [deckPage, setDeckPage] = useState(0);
+  const [slotPickerOpen, setSlotPickerOpen] = useState(false);
+  const [cardDims, setCardDims] = useState({ w: 306, h: 428 });
+
+  useEffect(() => {
+    const updateDims = () => {
+      const vh = window.innerHeight;
+      if (vh < 740) setCardDims({ w: 236, h: 330 });
+      else if (vh < 820) setCardDims({ w: 264, h: 370 });
+      else if (vh < 940) setCardDims({ w: 286, h: 400 });
+      else setCardDims({ w: 306, h: 428 });
+    };
+    updateDims();
+    window.addEventListener('resize', updateDims);
+    return () => window.removeEventListener('resize', updateDims);
+  }, []);
 
   const waveCanvasRef = useRef<HTMLCanvasElement>(null);
   const burstEnergyRef = useRef(0);
@@ -40,9 +74,10 @@ export const GachaPage: React.FC = () => {
 
   useEffect(() => {
     setFlipped(false);
+    setSlotPickerOpen(false);
   }, [selectedId]);
 
-  // Live OLED Waveform Visualizer on top-right panel
+  // Retina OLED Live Waveform Visualizer (responds to real Web Audio output)
   useEffect(() => {
     let raf = 0;
     const draw = (t: number) => {
@@ -66,7 +101,6 @@ export const GachaPage: React.FC = () => {
           ctx.fillStyle = '#14151B';
           ctx.fillRect(0, 0, w, h);
 
-          // Subtle center oscilloscope horizon line
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
           ctx.lineWidth = 1;
           ctx.beginPath();
@@ -88,7 +122,7 @@ export const GachaPage: React.FC = () => {
             const raw = Math.abs(waveData[sampleIdx] ?? 0);
             const centerEnv = Math.sin((i / (barCount - 1)) * Math.PI);
             const harmonic = Math.abs(Math.sin(i * 0.72 + t * 0.0055)) * 0.55 + 0.45;
-            const idleH = (0.12 + centerEnv * harmonic * 0.58) * (0.62 + energy * 0.9);
+            const idleH = (0.1 + centerEnv * harmonic * 0.54) * (0.55 + energy * 0.95);
             const liveH = Math.min(0.95, raw * 3.8 + idleH);
             const bh = Math.max(4, liveH * (h - 14));
             const x = 8 + i * (barW + gap);
@@ -121,21 +155,32 @@ export const GachaPage: React.FC = () => {
     }, 440);
   };
 
+  /**
+   * Physical Causality Sequence:
+   * Lever Crank -> Gear Ratchet & Capsule Agitation -> Capsule Drops Into Bottom Chute ->
+   * Foil Pack Emerges Onto Vault -> Scratch or Quick Unbox Reveal!
+   */
   const handlePull = (skipScratch = false) => {
     if (skipScratch && needsScratch) {
       handleReveal(card.id);
       return;
     }
 
+    setSlotPickerOpen(false);
     playSfx('ratchet');
     triggerShake();
     setFlipped(false);
     setLeverAngle(66);
     window.setTimeout(() => setLeverAngle(0), 360);
 
+    // Stage 1: Capsule drops into visible dispensing chute
     window.setTimeout(() => {
       playSfx('capsuleDrop');
       const { card: pulled, isNew, hitPity } = pullGachaCard(skipScratch);
+      setChuteCapsuleColor(CATEGORY_META[pulled.category].color);
+      window.setTimeout(() => setChuteCapsuleColor(null), 950);
+
+      // Stage 2: Card emerges onto showcase vault
       setCardPopKey((k) => k + 1);
       setDeckPage(0);
       setVaultFlash(true);
@@ -146,12 +191,12 @@ export const GachaPage: React.FC = () => {
       } else {
         pushToast({
           text: hitPity
-            ? `✨ 保底出金触发！按住刮开银色全息膜，揭晓高阶稀有声卡！`
-            : `🎁 新盲盒已落槽！动手刮开全息涂层，或点 QUICK UNBOX 秒拆`,
+            ? `✨ 保底高阶胶囊已落槽！动手刮开银膜揭晓稀有声卡`
+            : `🎁 扭蛋已落入出卡槽！按住刮开全息银膜，或点 QUICK UNBOX 秒拆`,
           accent: '#7C3AED',
         });
       }
-    }, 185);
+    }, 210);
   };
 
   const triggerRevealCelebration = (
@@ -162,10 +207,17 @@ export const GachaPage: React.FC = () => {
   ) => {
     const revealed = getCardById(cardId);
     const isHigh = rarity === 'SSR' || rarity === 'UR';
-    if (isHigh || rarity === 'SR') {
+    // Restrained tiered ceremony: N/R clean crisp pop, SR prism chime, SSR/UR full confetti & fanfare!
+    if (isHigh) {
       playSfx('holoFanfare');
+      fireHoloConfetti('high');
+    } else if (rarity === 'SR') {
+      playSfx('holoFanfare');
+      fireHoloConfetti('normal');
+    } else {
+      playSfx('cartridgeLock');
     }
-    fireHoloConfetti(isHigh ? 'high' : 'normal');
+
     burstEnergyRef.current = 1;
     void holoAudio.previewCard(revealed.id);
     pushToast({
@@ -195,34 +247,33 @@ export const GachaPage: React.FC = () => {
   const deckSlots = Array.from({ length: 6 }, (_, i) => visibleSlice[i] ?? null);
 
   return (
-    <div className="w-full h-full p-3.5 grid grid-cols-[minmax(285px,30%)_1fr_minmax(270px,28%)] gap-4 overflow-hidden">
-      {/* ================= LEFT COLUMN: PHYSICAL HOLO GACHA MACHINE ================= */}
+    <div className="w-full h-full p-3.5 grid grid-cols-[minmax(280px,30%)_1fr_minmax(265px,28%)] gap-4 overflow-hidden">
+      {/* ================= LEFT COLUMN: INDUSTRIAL TOY GACHA MACHINE ================= */}
       <section className="relative flex items-stretch justify-center pr-5 min-h-0">
-        {/* Injection-Molded Playdate-Yellow Machine Chassis */}
         <div
-          className={`relative flex-1 bg-[#FFD426] border-[3px] border-[#17171C] rounded-[24px] shadow-[inset_0_2px_0_rgba(255,255,255,0.65),inset_0_-4px_0_rgba(23,23,28,0.14),5px_5px_0px_0px_#17171C] p-3.5 flex flex-col justify-between gap-2.5 ${
+          className={`relative flex-1 bg-[#FFD426] border-[3px] border-[#17171C] rounded-[24px] shadow-[inset_0_2px_0_rgba(255,255,255,0.65),inset_0_-4px_0_rgba(23,23,28,0.14),5px_5px_0px_0px_#17171C] p-3 flex flex-col justify-between gap-2 ${
             shaking ? 'animate-gacha-shake' : ''
           }`}
         >
-          {/* Machine Rubber Stand Feet */}
+          {/* Machine Rubber Feet */}
           <div className="absolute -bottom-[10px] left-6 w-14 h-2.5 rounded-b-lg bg-[#64748B] border-[2.5px] border-[#17171C]" />
           <div className="absolute -bottom-[10px] right-6 w-14 h-2.5 rounded-b-lg bg-[#64748B] border-[2.5px] border-[#17171C]" />
 
-          {/* Top Riveted Hardware Nameplate */}
-          <div className="relative bg-[#FBF9F4] border-[2.5px] border-[#17171C] rounded-2xl py-2 px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_0_#17171C] flex flex-col items-center justify-center shrink-0">
+          {/* Top Riveted Nameplate */}
+          <div className="relative bg-[#FBF9F4] border-[2.5px] border-[#17171C] rounded-2xl py-1.5 px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_0_#17171C] flex flex-col items-center justify-center shrink-0">
             <span className="absolute left-2.5 top-2 w-1.5 h-1.5 rounded-full bg-[#17171C]" />
             <span className="absolute right-2.5 top-2 w-1.5 h-1.5 rounded-full bg-[#17171C]" />
             <span className="absolute left-2.5 bottom-2 w-1.5 h-1.5 rounded-full bg-[#17171C]" />
             <span className="absolute right-2.5 bottom-2 w-1.5 h-1.5 rounded-full bg-[#17171C]" />
-            <h1 className="text-[20px] font-black tracking-wide text-[#17171C] leading-none">
+            <h1 className="text-[19px] font-black tracking-wide text-[#17171C] leading-none">
               HOLO GACHA
             </h1>
             <span className="hw-silkscreen !text-[8px] mt-0.5 leading-none">
-              UNIT 01 // STREET SOUND DISPENSER
+              UNIT 01 // DISCOVER SOUND
             </span>
           </div>
 
-          {/* Transparent Capsule & Foil Booster Showcase Dome (Gravity-Packed Bottom Pile!) */}
+          {/* Transparent Capsule Showcase Dome */}
           <div
             onClick={() => {
               playSfx('capsuleDrop');
@@ -230,18 +281,16 @@ export const GachaPage: React.FC = () => {
               window.setTimeout(() => setCapsuleBounce(false), 420);
             }}
             title="点击橱窗摇晃扭蛋与全息卡包！"
-            className="relative flex-1 min-h-[180px] rounded-[18px] border-[3px] border-[#17171C] bg-gradient-to-b from-[#252436] via-[#1B1A28] to-[#12121A] overflow-hidden cursor-pointer shadow-[inset_0_8px_20px_rgba(0,0,0,0.72)] group flex flex-col"
+            className="relative flex-1 min-h-[150px] rounded-[18px] border-[3px] border-[#17171C] bg-gradient-to-b from-[#252436] via-[#1B1A28] to-[#12121A] overflow-hidden cursor-pointer shadow-[inset_0_8px_20px_rgba(0,0,0,0.72)] group flex flex-col"
           >
-            {/* Top Showcase Warm Spotlight Cone */}
             <div
               className="absolute inset-x-0 top-0 h-28 pointer-events-none"
               style={{
                 background:
-                  'radial-gradient(ellipse 80% 70% at 50% 0%, rgba(255, 212, 38, 0.22) 0%, rgba(124, 58, 237, 0.1) 52%, transparent 100%)',
+                  'radial-gradient(ellipse 80% 70% at 50% 0%, rgba(255, 212, 38, 0.2) 0%, rgba(124, 58, 237, 0.1) 52%, transparent 100%)',
               }}
             />
 
-            {/* Packed Bottom-Resting Capsules & Foil Packs */}
             <svg
               viewBox="0 0 260 320"
               preserveAspectRatio="xMidYMax slice"
@@ -265,14 +314,6 @@ export const GachaPage: React.FC = () => {
                 </linearGradient>
               </defs>
 
-              {/* Ambient interior stars */}
-              <g fill="#FFD426" opacity="0.55">
-                <circle cx="38" cy="48" r="2.5" />
-                <circle cx="218" cy="56" r="3" />
-                <circle cx="136" cy="34" r="2" />
-              </g>
-
-              {/* Layer 1 (Deep Back Pile) */}
               <g opacity="0.88">
                 <circle cx="52" cy="148" r="34" fill="#FF3D9A" stroke="#17171C" strokeWidth="3.5" />
                 <path d="M18 148 A34 34 0 0 1 86 148 Z" fill="#FFFDF8" opacity="0.55" />
@@ -282,7 +323,6 @@ export const GachaPage: React.FC = () => {
                 <path d="M169 154 A35 35 0 0 1 239 154 Z" fill="#E9D5FF" opacity="0.5" />
               </g>
 
-              {/* Peeking Foil Booster Pack #1 (Top Center-Right) */}
               <g transform="translate(152, 68) rotate(13)">
                 <rect x="0" y="0" width="60" height="88" rx="6" fill="url(#gacha-pack-holo)" stroke="#17171C" strokeWidth="3.5" />
                 <line x1="0" y1="11" x2="60" y2="11" stroke="#17171C" strokeWidth="2.5" />
@@ -290,7 +330,6 @@ export const GachaPage: React.FC = () => {
                 <path d="M30 26 L35 39 L48 44 L35 49 L30 62 L25 49 L12 44 L25 39 Z" fill="#FFFDF8" stroke="#17171C" strokeWidth="2.5" />
               </g>
 
-              {/* Peeking Gold Foil Booster Pack #2 (Mid-Left) */}
               <g transform="translate(24, 152) rotate(-14)">
                 <rect x="0" y="0" width="60" height="88" rx="6" fill="url(#gacha-pack-gold)" stroke="#17171C" strokeWidth="3.5" />
                 <line x1="0" y1="11" x2="60" y2="11" stroke="#17171C" strokeWidth="2.5" />
@@ -298,7 +337,6 @@ export const GachaPage: React.FC = () => {
                 <path d="M30 26 L35 39 L48 44 L35 49 L30 62 L25 49 L12 44 L25 39 Z" fill="#17171C" />
               </g>
 
-              {/* Layer 2 (Mid-Row Capsules) */}
               <g>
                 <circle cx="96" cy="196" r="39" fill="#7C3AED" stroke="#17171C" strokeWidth="4" />
                 <path d="M57 196 A39 39 0 0 1 135 196 Z" fill="#EDE9FE" opacity="0.58" />
@@ -315,13 +353,11 @@ export const GachaPage: React.FC = () => {
                 <line x1="187" y1="222" x2="257" y2="222" stroke="#17171C" strokeWidth="3" />
               </g>
 
-              {/* Peeking Holo Booster Pack #3 (Lower Right) */}
               <g transform="translate(172, 206) rotate(11)">
                 <rect x="0" y="0" width="60" height="88" rx="6" fill="url(#gacha-pack-holo)" stroke="#17171C" strokeWidth="3.5" />
                 <path d="M30 26 L35 39 L48 44 L35 49 L30 62 L25 49 L12 44 L25 39 Z" fill="#FFFDF8" stroke="#17171C" strokeWidth="2.5" />
               </g>
 
-              {/* Layer 3 (Front Floor Capsules Resting Solidly on Tray!) */}
               <g>
                 <circle cx="48" cy="272" r="40" fill="#FFD426" stroke="#17171C" strokeWidth="4" />
                 <path d="M8 272 A40 40 0 0 1 88 272 Z" fill="#FFFBEB" opacity="0.58" />
@@ -337,36 +373,50 @@ export const GachaPage: React.FC = () => {
                 <line x1="159" y1="284" x2="237" y2="284" stroke="#17171C" strokeWidth="3" />
               </g>
 
-              {/* Recessed Bottom Metallic Chamber Floor */}
               <rect x="0" y="308" width="260" height="14" fill="#0F1016" />
               <line x1="0" y1="308" x2="260" y2="308" stroke="#17171C" strokeWidth="3" />
             </svg>
 
-            {/* Glossy Diagonal Acrylic Glass Reflections */}
             <div className="absolute -top-6 -left-10 w-20 h-[140%] bg-white/14 rotate-[22deg] pointer-events-none" />
             <div className="absolute -top-6 left-11 w-5 h-[140%] bg-white/10 rotate-[22deg] pointer-events-none" />
 
-            {/* Subtle Glass Corner Tag */}
-            <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/55 border border-white/15 font-mono-hw text-[9px] font-bold text-white/75 tracking-wider pointer-events-none">
+            <div className="absolute top-2 left-2.5 px-2 py-0.5 rounded-md bg-black/55 border border-white/15 font-mono-hw text-[9px] font-bold text-white/75 tracking-wider pointer-events-none">
               TAP TO SHAKE
             </div>
           </div>
 
-          {/* Bottom Tactile Control Cluster */}
-          <div className="flex flex-col gap-2 shrink-0">
-            {/* Primary Oversized Persimmon Orange PULL CARD CTA */}
+          {/* Physical Capsule Dispensing Chute (Shows Real Dropped Capsule on Pull!) */}
+          <div className="relative h-9 rounded-xl bg-[#14151B] border-[2.5px] border-[#17171C] shadow-[inset_0_4px_10px_rgba(0,0,0,0.85)] px-3 flex items-center justify-between overflow-hidden shrink-0">
+            <span className="font-mono-hw text-[9px] font-bold tracking-[0.14em] text-white/45">
+              DISPENSE CHUTE
+            </span>
+            {chuteCapsuleColor ? (
+              <div
+                className="w-6 h-6 rounded-full border-[2px] border-[#17171C] animate-capsule-chute relative overflow-hidden shadow-[0_0_12px_rgba(255,212,38,0.7)]"
+                style={{ backgroundColor: chuteCapsuleColor }}
+              >
+                <div className="absolute inset-x-0 top-0 h-1/2 bg-white/50 border-b border-[#17171C]" />
+              </div>
+            ) : (
+              <span className="font-mono-hw text-[9px] font-bold text-[#00D4AA]/70">
+                READY ●
+              </span>
+            )}
+          </div>
+
+          {/* Bottom Control Cluster */}
+          <div className="flex flex-col gap-1.5 shrink-0">
             <div className="relative px-1">
               <span className="absolute left-0 top-1.5 w-1.5 h-1.5 rounded-full bg-[#17171C]/50" />
               <span className="absolute right-0 top-1.5 w-1.5 h-1.5 rounded-full bg-[#17171C]/50" />
               <button
                 onClick={() => handlePull(false)}
-                className="brutal-btn-lg w-full py-2.5 rounded-[16px] bg-[#FF5526] text-[#17171C] text-[20px] font-black tracking-wide uppercase flex items-center justify-center gap-2"
+                className="brutal-btn-lg w-full py-2.5 rounded-[15px] bg-[#FF5526] text-[#17171C] text-[19px] font-black tracking-wide uppercase flex items-center justify-center gap-2"
               >
                 <span>PULL CARD</span>
               </button>
             </div>
 
-            {/* Secondary Mint Cyan QUICK UNBOX Button */}
             <div className="px-4">
               <button
                 onClick={() => handlePull(true)}
@@ -376,8 +426,7 @@ export const GachaPage: React.FC = () => {
               </button>
             </div>
 
-            {/* SSR PITY 4/5 Hardware Progress Meter */}
-            <div className="bg-[#FBF9F4] border-[2.5px] border-[#17171C] rounded-2xl px-3 py-2 flex items-center justify-between gap-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+            <div className="bg-[#FBF9F4] border-[2.5px] border-[#17171C] rounded-2xl px-3 py-1.5 flex items-center justify-between gap-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
               <div className="flex items-center gap-1.5 shrink-0">
                 <span
                   className={`w-2 h-2 rounded-full ${
@@ -388,15 +437,15 @@ export const GachaPage: React.FC = () => {
                   SSR PITY {pityCount}/5
                 </span>
               </div>
-              <div className="flex-1 h-4 rounded-full bg-[#E7E1D3] border-[2px] border-[#17171C] p-[2px] grid grid-cols-5 gap-[2px] shadow-[inset_0_1px_2px_rgba(0,0,0,0.16)]">
+              <div className="flex-1 h-3.5 rounded-full bg-[#E7E1D3] border-[2px] border-[#17171C] p-[2px] grid grid-cols-5 gap-[2px] shadow-[inset_0_1px_2px_rgba(0,0,0,0.16)]">
                 {[0, 1, 2, 3, 4].map((seg) => (
                   <div
                     key={seg}
                     className={`h-full rounded-sm transition-all duration-200 ${
                       seg < pityCount
                         ? pityCount >= 4
-                          ? 'bg-gradient-to-r from-[#7C3AED] to-[#FF3D9A] border border-[#17171C]/30'
-                          : 'bg-[#7C3AED] border border-[#17171C]/30'
+                          ? 'bg-gradient-to-r from-[#7C3AED] to-[#FF3D9A]'
+                          : 'bg-[#7C3AED]'
                         : 'bg-transparent'
                     }`}
                   />
@@ -406,7 +455,7 @@ export const GachaPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Physical Mechanical Pull Lever Mounted on Right Edge of Machine */}
+        {/* Mechanical Pull Lever */}
         <div
           title="向下拖拽或点击拉杆抽卡！"
           onPointerDown={(e) => {
@@ -435,14 +484,11 @@ export const GachaPage: React.FC = () => {
             leverDragRef.current = null;
             setLeverAngle(0);
           }}
-          className="absolute right-0 top-[33%] w-9 h-36 flex items-center justify-start cursor-grab active:cursor-grabbing select-none z-20 group"
+          className="absolute right-0 top-[31%] w-9 h-36 flex items-center justify-start cursor-grab active:cursor-grabbing select-none z-20 group"
         >
-          {/* Metallic Wall Bracket */}
           <div className="w-4 h-24 rounded-r-xl bg-gradient-to-b from-[#E2E8F0] via-[#94A3B8] to-[#64748B] border-[2.5px] border-l-0 border-[#17171C] shadow-[3px_3px_0px_0px_#17171C] flex items-center justify-center">
             <div className="w-1.5 h-12 rounded-full bg-[#14151B]" />
           </div>
-
-          {/* Pivoting Chrome Arm + Persimmon Orange Ball Knob */}
           <div
             style={{
               transformOrigin: '4px 90%',
@@ -458,7 +504,7 @@ export const GachaPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ================= CENTER STAGE: MUSEUM 3D HOLOGRAPHIC CARD VAULT ================= */}
+      {/* ================= CENTER STAGE: 3D HOLOGRAPHIC CARD VAULT ================= */}
       <section
         className={`brutal-oled relative flex flex-col items-center justify-between p-4 overflow-hidden min-h-0 transition-shadow duration-300 ${
           vaultFlash ? 'ring-4 ring-[#FFD426]' : ''
@@ -469,7 +515,6 @@ export const GachaPage: React.FC = () => {
           backgroundSize: '100% 100%, 28px 28px, 28px 28px',
         }}
       >
-        {/* Top Vault Header Silkscreen Bar */}
         <div className="w-full flex items-center justify-between gap-2 text-white/55 font-mono-hw text-[10px] tracking-[0.14em] shrink-0 z-10">
           <span className="flex items-center gap-1.5 whitespace-nowrap truncate">
             <span className="text-white/75 text-sm leading-none">+</span>
@@ -483,31 +528,8 @@ export const GachaPage: React.FC = () => {
           </span>
         </div>
 
-        {/* Subtle Floating Street Vector Accents Behind Card */}
-        <svg
-          viewBox="0 0 460 440"
-          className="absolute inset-0 w-full h-full pointer-events-none opacity-65"
-        >
-          <path d="M40 102 L45 112 L55 115 L45 118 L40 128 L35 118 L25 115 L35 112 Z" fill="#FFD426" />
-          <g transform="translate(22, 175) rotate(-14)">
-            <path d="M12 24 V4 L26 2 V18" fill="none" stroke="#FF3D9A" strokeWidth="3.5" strokeLinecap="round" />
-            <circle cx="8" cy="24" r="4.5" fill="#FF3D9A" />
-            <circle cx="22" cy="18" r="4.5" fill="#FF3D9A" />
-          </g>
-          <path d="M26 270 L46 266 M28 282 L44 282 M32 294 L46 298" stroke="#FFD426" strokeWidth="3" strokeLinecap="round" />
-
-          <path d="M420 96 L424 103 L431 105 L424 107 L420 114 L416 107 L409 105 L416 103 Z" fill="#FFD426" />
-          <g transform="translate(405, 160) rotate(10)">
-            <path d="M8 22 V4 L24 2 V17" fill="none" stroke="#00D4AA" strokeWidth="3.5" strokeLinecap="round" />
-            <circle cx="4" cy="22" r="4.5" fill="#00D4AA" />
-            <circle cx="20" cy="17" r="4.5" fill="#00D4AA" />
-          </g>
-          <path d="M412 252 L430 242 M416 264 L434 264 M414 276 L430 286" stroke="#FF5526" strokeWidth="3" strokeLinecap="round" />
-          <path d="M424 318 L428 328 L438 331 L428 334 L424 344 L420 334 L410 331 L420 328 Z" fill="#FFD426" />
-        </svg>
-
         {/* Center 3D Holographic Showcase Card */}
-        <div className="flex-1 flex items-center justify-center w-full min-h-0 relative z-10 py-2">
+        <div className="flex-1 flex items-center justify-center w-full min-h-0 relative z-10 py-1">
           <div key={cardPopKey} className="animate-card-pop">
             <HoloCard
               title={card.title}
@@ -518,59 +540,163 @@ export const GachaPage: React.FC = () => {
               foil={card.foil}
               artId={card.artId}
               storyZh={card.storyZh}
+              pairingHintZh={card.pairingHintZh}
               synthFormula={card.synthFormula}
               recommendedBpm={card.recommendedBpm}
               stats={card.stats}
+              ownedCount={pullCounts[card.id] ?? 1}
               flipped={flipped}
               needsScratch={needsScratch}
               onScratchReveal={() => handleReveal(card.id)}
               showAura
               idleShimmer
-              width={312}
-              height={438}
+              width={cardDims.w}
+              height={cardDims.h}
             />
           </div>
+
+          {/* A/B Preview & Target Track Slot Selector Popover */}
+          {slotPickerOpen && (
+            <div className="absolute bottom-2 inset-x-2 z-30 rounded-2xl bg-[#14151B]/96 border-[2px] border-[#FFD426] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.75)] animate-card-pop">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <span className="font-mono-hw text-[10px] font-bold tracking-widest text-[#FFD426] uppercase">
+                    A/B PREVIEW & SLOT ROUTING · 选择装入轨道
+                  </span>
+                  <p className="text-[11px] font-bold text-white/80">
+                    对比旧卡与新卡「{card.zhTitle}」，点击装入即飞入节拍台
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSlotPickerOpen(false)}
+                  className="p-1 text-white/60 hover:text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {TRACK_CATEGORIES.map((cat, idx) => {
+                  const currTrackCard = getCardById(tracks[idx].cardId);
+                  const cm = CATEGORY_META[cat];
+                  const isRecommended = cat === card.category;
+                  return (
+                    <div
+                      key={cat}
+                      className={`rounded-xl border p-2 flex items-center justify-between gap-2 ${
+                        isRecommended
+                          ? 'bg-white/10 border-[#FFD426]'
+                          : 'bg-white/5 border-white/15'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span
+                            className="px-1.5 py-[1px] rounded text-[9px] font-black"
+                            style={{ backgroundColor: cm.color, color: cm.textColor }}
+                          >
+                            {cat}
+                          </span>
+                          {isRecommended && (
+                            <span className="font-mono-hw text-[8.5px] font-bold text-[#FFD426]">
+                              推荐
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10.5px] font-bold text-white/80 truncate mt-0.5">
+                          当前: {currTrackCard.zhTitle}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => void holoAudio.previewCard(currTrackCard.id)}
+                          title="试听轨道当前旧音色 (A)"
+                          className="px-1.5 py-1 rounded-md bg-white/10 hover:bg-white/20 font-mono-hw text-[9.5px] font-bold text-white cursor-pointer"
+                        >
+                          听旧A
+                        </button>
+                        <button
+                          onClick={() => {
+                            playSfx('cartridgeLock');
+                            setSlotPickerOpen(false);
+                            sendCardToBeat(card.id, idx, true);
+                          }}
+                          className="px-2 py-1 rounded-md bg-[#00D4AA] hover:brightness-110 text-[#17171C] text-[10px] font-black cursor-pointer"
+                        >
+                          装入→
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Bottom 3 Tactile Action Buttons Row */}
-        <div className="w-full grid grid-cols-3 gap-2.5 pt-2 relative z-10 shrink-0">
-          <button
-            onClick={handlePreviewSound}
-            className="brutal-btn py-2.5 px-2 rounded-xl bg-[#00D4AA] text-[#17171C] text-[12.5px] font-black tracking-wide uppercase flex items-center justify-center gap-1.5"
-          >
-            <Volume2 className="w-4 h-4" strokeWidth={2.8} />
-            <span>PLAY SOUND</span>
-          </button>
-          <button
-            onClick={() => {
-              playSfx('cartridgeLock');
-              sendCardToBeat(card.id);
-            }}
-            className="brutal-btn py-2.5 px-2 rounded-xl bg-[#7C3AED] text-white text-[12.5px] font-black tracking-wide uppercase flex items-center justify-center gap-1.5"
-          >
-            <Send className="w-3.5 h-3.5" strokeWidth={2.8} />
-            <span>SEND TO BEAT</span>
-          </button>
-          <button
-            onClick={() => {
-              playSfx('cardFlip');
-              setFlipped((f) => !f);
-            }}
-            className="brutal-btn py-2.5 px-2 rounded-xl bg-[#FBF9F4] text-[#17171C] text-[12.5px] font-black tracking-wide uppercase flex items-center justify-center gap-1.5"
-          >
-            <RotateCw className="w-3.5 h-3.5" strokeWidth={2.8} />
-            <span>{flipped ? 'SHOW FRONT' : 'FLIP INFO'}</span>
-          </button>
+        {/* Bottom Tactile Action Bar (Clear Primary vs Secondary Hierarchy) */}
+        <div className="w-full flex flex-col gap-2 pt-1.5 relative z-10 shrink-0">
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={handlePreviewSound}
+              className="brutal-btn py-2 px-2 rounded-xl bg-[#00D4AA] text-[#17171C] text-[12px] font-black tracking-wide uppercase flex items-center justify-center gap-1.5"
+            >
+              <Volume2 className="w-3.5 h-3.5" strokeWidth={2.8} />
+              <span>PLAY SOUND</span>
+            </button>
+            <button
+              onClick={() => {
+                playSfx('click', 0.8);
+                setSlotPickerOpen((v) => !v);
+              }}
+              className="brutal-btn py-2 px-2 rounded-xl bg-[#7C3AED] text-white text-[12px] font-black tracking-wide uppercase flex items-center justify-center gap-1.5"
+            >
+              <Send className="w-3.5 h-3.5" strokeWidth={2.8} />
+              <span>SEND TO BEAT</span>
+            </button>
+            <button
+              onClick={() => {
+                playSfx('cardFlip');
+                setFlipped((f) => !f);
+              }}
+              className="brutal-btn py-2 px-2 rounded-xl bg-[#FBF9F4] text-[#17171C] text-[12px] font-black tracking-wide uppercase flex items-center justify-center gap-1.5"
+            >
+              <RotateCw className="w-3.5 h-3.5" strokeWidth={2.8} />
+              <span>{flipped ? 'SHOW FRONT' : 'FLIP INFO'}</span>
+            </button>
+          </div>
+
+          {/* Subtle Secondary Creative Routing Strip */}
+          <div className="flex items-center justify-between gap-2 px-1">
+            <button
+              onClick={() => {
+                playSfx('cartridgeLock');
+                sendCardToPinball(card.id, true);
+              }}
+              className="flex-1 py-1 px-2.5 rounded-lg bg-white/8 hover:bg-white/15 border border-white/15 text-[10.5px] font-bold text-[#00D4AA] flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+            >
+              <Disc3 className="w-3 h-3" />
+              <span>SEND TO PINBALL · 绑定弹珠机关</span>
+            </button>
+            <button
+              onClick={() => {
+                playSfx('tab');
+                setActivePage('forge');
+              }}
+              className="py-1 px-2.5 rounded-lg bg-white/8 hover:bg-white/15 border border-white/15 text-[10.5px] font-bold text-white/80 flex items-center justify-center gap-1 cursor-pointer transition-colors"
+            >
+              <FolderHeart className="w-3 h-3 text-[#FFD426]" />
+              <span>VIEW BINDER</span>
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* ================= RIGHT COLUMN: SPECS & RECENT DECK ================= */}
-      <section className="flex flex-col gap-3.5 min-h-0">
-        {/* Top Panel: Rarity Badge, Live OLED Waveform & PUNCH/SHINE/VIBE Bars */}
-        <div className="brutal-panel p-3.5 flex flex-col gap-2.5 shrink-0">
+      {/* ================= RIGHT COLUMN: SOUND ARCHIVE & RECENT DECK ================= */}
+      <section className="flex flex-col gap-3 min-h-0">
+        <div className="brutal-panel p-3.5 flex flex-col gap-2 shrink-0">
           <div className="flex items-center justify-between gap-2">
             <span
-              className="px-2.5 py-1 rounded-full border-[2px] border-[#17171C] font-mono-hw text-[11px] font-black tracking-wider shadow-[2px_2px_0px_0px_#17171C]"
+              className="px-2.5 py-0.5 rounded-full border-[2px] border-[#17171C] font-mono-hw text-[11px] font-black tracking-wider shadow-[2px_2px_0px_0px_#17171C]"
               style={{ backgroundColor: rarInfo.bg, color: rarInfo.text }}
             >
               {rarInfo.label} · {catInfo.label}
@@ -580,30 +706,33 @@ export const GachaPage: React.FC = () => {
             </span>
           </div>
 
-          {/* Recessed OLED Waveform Window */}
           <div
             onClick={handlePreviewSound}
             title="点击波形试听声卡音色"
-            className="relative oled-scanlines w-full h-[76px] rounded-xl bg-[#14151B] border-[2.5px] border-[#17171C] shadow-[inset_0_3px_10px_rgba(0,0,0,0.65)] overflow-hidden cursor-pointer group"
+            className="relative oled-scanlines w-full h-[70px] rounded-xl bg-[#14151B] border-[2.5px] border-[#17171C] shadow-[inset_0_3px_10px_rgba(0,0,0,0.65)] overflow-hidden cursor-pointer group"
           >
-            <canvas ref={waveCanvasRef} width={280} height={76} className="w-full h-full block" />
+            <canvas ref={waveCanvasRef} width={280} height={70} className="w-full h-full block" />
             <span className="absolute top-1.5 right-2 font-mono-hw text-[8.5px] font-bold tracking-widest text-white/45 group-hover:text-[#00D4AA] transition-colors">
               AUDITION ♪
             </span>
           </div>
 
-          {/* 3 Calibrated Stat Spec Bars: PUNCH / SHINE / VIBE */}
-          <div className="flex flex-col gap-2 pt-0.5">
+          {/* Explicitly labeled artistic style profile tags */}
+          <div className="flex items-center justify-between">
+            <span className="hw-silkscreen !text-[8px]">STYLE PROFILE · 音色风格特征</span>
+            <span className="hw-silkscreen !text-[8px]">REC {card.recommendedBpm} BPM</span>
+          </div>
+          <div className="flex flex-col gap-1.5">
             {[
               { label: 'PUNCH', val: card.stats.punch, color: '#FF5526' },
               { label: 'SHINE', val: card.stats.shine, color: '#FFD426' },
               { label: 'VIBE', val: card.stats.vibe, color: '#7C3AED' },
             ].map((stat) => (
               <div key={stat.label} className="flex items-center gap-2">
-                <span className="w-[58px] py-0.5 text-center rounded-full bg-[#FBF9F4] border-[2px] border-[#17171C] font-mono-hw text-[10px] font-black text-[#17171C] shrink-0">
+                <span className="w-[56px] py-0.5 text-center rounded-full bg-[#FBF9F4] border-[2px] border-[#17171C] font-mono-hw text-[9.5px] font-black text-[#17171C] shrink-0">
                   {stat.label}
                 </span>
-                <div className="flex-1 h-4 rounded-full bg-[#E7E1D3] border-[2px] border-[#17171C] shadow-[inset_0_1px_2px_rgba(0,0,0,0.12)] overflow-hidden">
+                <div className="flex-1 h-3.5 rounded-full bg-[#E7E1D3] border-[2px] border-[#17171C] shadow-[inset_0_1px_2px_rgba(0,0,0,0.12)] overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-350 ease-out border-r-[2px] border-[#17171C]"
                     style={{
@@ -612,7 +741,7 @@ export const GachaPage: React.FC = () => {
                     }}
                   />
                 </div>
-                <span className="font-mono-hw text-[10.5px] font-black text-[#626272] w-6 text-right shrink-0">
+                <span className="font-mono-hw text-[10px] font-black text-[#626272] w-6 text-right shrink-0">
                   {stat.val}
                 </span>
               </div>
@@ -620,11 +749,11 @@ export const GachaPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Bottom Panel: RECENT DECK 2x3 Miniature Holo Cards */}
+        {/* RECENT DECK 2x3 */}
         <div className="brutal-panel p-3.5 flex-1 flex flex-col min-h-0">
           <div className="flex items-center justify-between mb-2 shrink-0">
             <div>
-              <h2 className="text-[15px] font-black tracking-wide uppercase text-[#17171C] leading-none">
+              <h2 className="text-[14.5px] font-black tracking-wide uppercase text-[#17171C] leading-none">
                 RECENT DECK
               </h2>
               <span className="hw-silkscreen !text-[8.5px]">点击卡面切卡试听</span>
@@ -656,7 +785,7 @@ export const GachaPage: React.FC = () => {
             )}
           </div>
 
-          <div className="flex-1 grid grid-cols-2 grid-rows-3 gap-2.5 min-h-0">
+          <div className="flex-1 grid grid-cols-2 grid-rows-3 gap-2 min-h-0">
             {deckSlots.map((slotCardId, idx) => {
               if (!slotCardId) {
                 return (
@@ -691,7 +820,7 @@ export const GachaPage: React.FC = () => {
                     burstEnergyRef.current = 0.95;
                     void holoAudio.previewCard(slotCard.id);
                   }}
-                  className={`relative rounded-xl p-[3px] border-[2.5px] border-[#17171C] overflow-hidden holo-thumb-sheen transition-all duration-150 cursor-pointer ${frameBg} ${
+                  className={`relative rounded-xl p-[3px] border-[2px] border-[#17171C] overflow-hidden holo-thumb-sheen transition-all duration-150 cursor-pointer ${frameBg} ${
                     isCurrent
                       ? 'ring-2 ring-[#FF5526] shadow-[3px_3px_0px_0px_#17171C] -translate-y-0.5'
                       : 'shadow-[2px_2px_0px_0px_#17171C] hover:-translate-y-0.5'

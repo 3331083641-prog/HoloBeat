@@ -1,7 +1,13 @@
+import { buildSoundSigilData } from '../audio/compositionEngine';
 import { getStandaloneArtworkSvg } from '../components/artwork/CardArtwork';
 import { HOLO_FOIL_LIST, RARITY_META } from '../data/soundCards';
 import { getStickerById } from '../data/stickers';
-import type { ForgeRarity, HoloFoilType, PlacedSticker } from '../types/holo';
+import type {
+  CompositionSnapshot,
+  ForgeRarity,
+  HoloFoilType,
+  PlacedSticker,
+} from '../types/holo';
 
 export interface ExportHoloPngOptions {
   title: string;
@@ -11,9 +17,13 @@ export interface ExportHoloPngOptions {
   artId: string;
   stickers: PlacedSticker[];
   waveformBars: number[];
+  waveformIsRealPcm?: boolean;
   sourceType?: 'beat' | 'pinball';
   bpm?: number;
   scaleLabel?: string;
+  isDemo?: boolean;
+  lineageLabel?: string;
+  sigilSnapshot?: CompositionSnapshot | null;
 }
 
 function loadSvgImage(svgMarkup: string): Promise<HTMLImageElement> {
@@ -33,12 +43,94 @@ function loadSvgImage(svgMarkup: string): Promise<HTMLImageElement> {
   });
 }
 
+function drawSoundSigilOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  snapshot: CompositionSnapshot,
+  cx: number,
+  cy: number,
+  radius: number
+) {
+  const sigil = buildSoundSigilData(snapshot);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#14151B';
+  ctx.strokeStyle = 'rgba(255, 214, 10, 0.45)';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  const maxR = radius * 0.84;
+  sigil.rings.forEach((ratio, idx) => {
+    ctx.strokeStyle = idx === 2 ? 'rgba(255, 214, 10, 0.34)' : 'rgba(255, 255, 255, 0.16)';
+    ctx.lineWidth = idx === 2 ? 1.5 : 1.1;
+    ctx.setLineDash(idx === 1 ? [4, 4] : []);
+    ctx.beginPath();
+    ctx.arc(0, 0, maxR * ratio, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  const innerR = radius * 0.24;
+  sigil.spokes.forEach((sp) => {
+    const outerR = innerR + sp.length * (maxR - innerR);
+    const x1 = Math.cos(sp.angle) * innerR;
+    const y1 = Math.sin(sp.angle) * innerR;
+    const x2 = Math.cos(sp.angle) * outerR;
+    const y2 = Math.sin(sp.angle) * outerR;
+    ctx.strokeStyle = sp.color;
+    ctx.lineWidth = sp.dot ? 2.8 : 1.4;
+    ctx.globalAlpha = sp.dot ? 0.96 : 0.35;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    if (sp.dot) {
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#FFFDF8';
+      ctx.beginPath();
+      ctx.arc(x2, y2, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#181820';
+  ctx.strokeStyle = '#FFD60A';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FFD60A';
+  const s = radius * 0.12;
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.lineTo(s * 0.32, -s * 0.32);
+  ctx.lineTo(s, 0);
+  ctx.lineTo(s * 0.32, s * 0.32);
+  ctx.lineTo(0, s);
+  ctx.lineTo(-s * 0.32, s * 0.32);
+  ctx.lineTo(-s, 0);
+  ctx.lineTo(-s * 0.32, -s * 0.32);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
 /**
  * 100% Offline Native Canvas 2D Gallery-Grade Art Collector Poster Renderer (1200x1600 3:4 HD)
- * Features:
- * - Obsidian exhibition drafting mat + corner crosshairs + ambient foil spotlight aura
- * - Centered 3x HD holographic card with black-valley diffraction foil & crushed-diamond stars
- * - Bottom collector archive nameplate (100% anonymous competition-safe)
+ * Includes:
+ * - Obsidian exhibition drafting mat + corner registration crosshairs + ambient foil spotlight
+ * - Centered 3x HD holographic card with black-valley diffraction foil, stickers & waveform strip
+ * - Deterministic Generative Sound Sigil + Remix Lineage + PCM Audio Spec Plate
+ * - Strictly 100% anonymous competition-safe metadata
  */
 export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promise<Blob> {
   const PW = 1200;
@@ -52,13 +144,10 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   const foilMeta = HOLO_FOIL_LIST.find((f) => f.id === opts.foil) ?? HOLO_FOIL_LIST[0];
   const rar = RARITY_META[opts.rarity];
 
-  // ============================================================================
-  // 1. EXHIBITION GALLERY MAT BACKDROP (Obsidian + Blueprint Micro-Grid)
-  // ============================================================================
+  // 1. Exhibition Gallery Mat Backdrop
   ctx.fillStyle = '#121319';
   ctx.fillRect(0, 0, PW, PH);
 
-  // Subtle architectural drafting grid
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
   ctx.lineWidth = 1.5;
   for (let gx = 40; gx < PW; gx += 40) {
@@ -74,7 +163,6 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
     ctx.stroke();
   }
 
-  // Outer gallery hairline frame & registration crosshairs
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
   ctx.lineWidth = 2;
   ctx.strokeRect(36, 36, PW - 72, PH - 72);
@@ -94,20 +182,21 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   drawCrosshair(64, PH - 64);
   drawCrosshair(PW - 64, PH - 64);
 
-  // Top Exhibition Silkscreen Header
   ctx.fillStyle = 'rgba(251, 249, 244, 0.78)';
   ctx.font = '700 20px "JetBrains Mono", monospace';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText('HOLOBEAT STUDIO // ARCHIVE COLLECTIBLE', 92, 72);
+  ctx.fillText('HOLOBEAT STUDIO // COLLECT SOUND · FORGE MEMORIES', 92, 72);
 
   ctx.fillStyle = '#FFD426';
   ctx.textAlign = 'right';
-  ctx.fillText(`SERIES 01 · ${opts.code}`, PW - 92, 72);
+  ctx.fillText(
+    `${opts.isDemo ? 'DEMO EDITION' : 'ARCHIVE EDITION'} · ${opts.code}`,
+    PW - 92,
+    72
+  );
 
-  // ============================================================================
-  // 2. AMBIENT HOLOGRAPHIC SPOTLIGHT AURA BEHIND CARD
-  // ============================================================================
+  // 2. Ambient Holographic Spotlight Aura
   const auraColorA =
     opts.rarity === 'LTD' || opts.foil === 'gold'
       ? 'rgba(255, 212, 38, 0.34)'
@@ -128,15 +217,12 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.fillStyle = spotlight;
   ctx.fillRect(0, 120, PW, 1180);
 
-  // ============================================================================
-  // 3. CENTERED 3X HD HOLOGRAPHIC CARD (800 x 1120)
-  // ============================================================================
+  // 3. Centered 3x HD Holographic Card (800 x 1120)
   const W = 800;
   const H = 1120;
   const cardX = (PW - W) / 2;
-  const cardY = 148;
+  const cardY = 144;
 
-  // Deep Elevated Drop Shadow beneath physical card slab
   ctx.save();
   ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
   ctx.shadowBlur = 64;
@@ -151,7 +237,6 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.save();
   ctx.translate(cardX, cardY);
 
-  // Outer Rounded Card Clip & Rarity/Foil Metallic Frame
   ctx.save();
   ctx.beginPath();
   ctx.roundRect(0, 0, W, H, 46);
@@ -194,7 +279,6 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.fillStyle = frameGrad;
   ctx.fillRect(0, 0, W, H);
 
-  // Inner Card Panel Clip
   const pad = 26;
   const innerW = W - pad * 2;
   const innerH = H - pad * 2;
@@ -206,12 +290,12 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.roundRect(pad, pad, innerW, innerH, 32);
   ctx.clip();
 
-  // Draw 3x Vector Street-Toy Mascot Artwork
   const artImg = await loadSvgImage(getStandaloneArtworkSvg(opts.artId));
   ctx.drawImage(artImg, pad, pad, innerW, artH);
 
-  // Draw Placed Interactive Stickers
-  for (const stk of opts.stickers) {
+  // Stickers sorted by zIndex
+  const sortedStickers = [...opts.stickers].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+  for (const stk of sortedStickers) {
     const def = getStickerById(stk.stickerId);
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="240" height="240">${def.svgInner}</svg>`;
     const sImg = await loadSvgImage(svg);
@@ -225,7 +309,7 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
     ctx.restore();
   }
 
-  // Embedded Audio Fingerprint Pill Strip
+  // Embedded Audio Fingerprint Strip
   const fpX = pad + 34;
   const fpY = pad + artH - 96;
   const fpW = innerW - 68;
@@ -251,7 +335,7 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
     ctx.fill();
   }
 
-  // Top-Left Tiered Rarity Badge
+  // Top-Left Rarity Badge
   ctx.save();
   ctx.translate(pad + 86, pad + 64);
   ctx.rotate(-0.1);
@@ -276,22 +360,23 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.restore();
 
   // Top-Right Serial ID Pill
+  const codePillW = Math.max(164, opts.code.length * 18 + 38);
   ctx.fillStyle = '#17171C';
   ctx.beginPath();
-  ctx.roundRect(pad + innerW - 186, pad + 34, 156, 54, 27);
+  ctx.roundRect(pad + innerW - codePillW - 30, pad + 34, codePillW, 54, 27);
   ctx.fill();
   ctx.fillStyle = '#FBF9F4';
   ctx.strokeStyle = '#17171C';
   ctx.lineWidth = 6;
   ctx.beginPath();
-  ctx.roundRect(pad + innerW - 192, pad + 28, 156, 54, 27);
+  ctx.roundRect(pad + innerW - codePillW - 36, pad + 28, codePillW, 54, 27);
   ctx.fill();
   ctx.stroke();
   ctx.fillStyle = '#17171C';
-  ctx.font = '900 26px "JetBrains Mono", monospace';
+  ctx.font = '900 24px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(opts.code, pad + innerW - 114, pad + 56);
+  ctx.fillText(opts.code, pad + innerW - codePillW / 2 - 36, pad + 56);
 
   // Bottom Precision Collector Nameplate
   const isLtd = opts.rarity === 'LTD';
@@ -307,9 +392,17 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.fillStyle = isLtd ? 'rgba(254, 240, 138, 0.58)' : 'rgba(98, 98, 114, 0.78)';
   ctx.font = '700 18px "JetBrains Mono", monospace';
   ctx.textAlign = 'left';
-  ctx.fillText(`${(opts.sourceType ?? 'beat').toUpperCase()} · ${foilMeta.label} FOIL`, pad + 34, pad + artH + 34);
+  ctx.fillText(
+    `${(opts.sourceType ?? 'beat').toUpperCase()} · ${foilMeta.label} FOIL`,
+    pad + 34,
+    pad + artH + 34
+  );
   ctx.textAlign = 'right';
-  ctx.fillText('HB-S01 // ARCHIVE', pad + innerW - 34, pad + artH + 34);
+  ctx.fillText(
+    opts.lineageLabel ? opts.lineageLabel.toUpperCase() : 'HB-V2 // SOUND ARCHIVE',
+    pad + innerW - 34,
+    pad + artH + 34
+  );
 
   ctx.fillStyle = isLtd ? '#FEF08A' : '#17171C';
   ctx.font = 'italic 900 54px "Space Grotesk", sans-serif';
@@ -317,7 +410,7 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.textBaseline = 'middle';
   ctx.fillText(`✦ ${opts.title.toUpperCase()} ✦`, W / 2, pad + artH + ribbonH / 2 + 16);
 
-  // Zero-Washout Black-Valley Holographic Diffraction Pass ('color-dodge' + 'screen')
+  // Black-Valley Holographic Diffraction Pass
   ctx.save();
   ctx.globalCompositeOperation = 'color-dodge';
   ctx.globalAlpha = opts.rarity === 'UR' ? 0.52 : 0.42;
@@ -376,7 +469,6 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   }
   ctx.restore();
 
-  // Crushed-Diamond 4-Point Sparkle Stars for UR / SSR / Spark Foil
   if (opts.rarity === 'UR' || opts.foil === 'spark' || opts.rarity === 'SSR') {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
@@ -402,7 +494,7 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
     ctx.restore();
   }
 
-  // Crisp Diagonal Specular Light Shaft
+  // Diagonal Specular Light Shaft
   ctx.save();
   ctx.globalCompositeOperation = 'screen';
   const glare = ctx.createLinearGradient(W * 0.08, 0, W * 0.92, H);
@@ -415,7 +507,7 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.fillRect(0, 0, W, H);
   ctx.restore();
 
-  // Signature Peeled Foil Corner (Bottom-Right)
+  // Peeled Foil Corner
   ctx.save();
   const px = pad + innerW;
   const py = pad + innerH;
@@ -459,13 +551,11 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
 
   ctx.restore(); // card translate
 
-  // ============================================================================
-  // 4. BOTTOM GALLERY COLLECTOR SPEC PLATE (Exhibition Board Ready!)
-  // ============================================================================
+  // 4. Bottom Exhibition Collector Spec Plate with Deterministic Sound Sigil!
   const plateX = 96;
-  const plateY = 1324;
+  const plateY = 1316;
   const plateW = PW - 192;
-  const plateH = 192;
+  const plateH = 200;
 
   ctx.fillStyle = 'rgba(255, 255, 255, 0.045)';
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
@@ -475,12 +565,18 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.fill();
   ctx.stroke();
 
-  // Left: Card Title & Rarity Edition Stamp
+  // Left: Deterministic Sound Sigil Emblem (if snapshot available)
+  let textStartX = plateX + 34;
+  if (opts.sigilSnapshot) {
+    drawSoundSigilOnCanvas(ctx, opts.sigilSnapshot, plateX + 98, plateY + plateH / 2, 66);
+    textStartX = plateX + 188;
+  }
+
   ctx.fillStyle = '#FBF9F4';
-  ctx.font = 'italic 900 44px "Space Grotesk", sans-serif';
+  ctx.font = 'italic 900 42px "Space Grotesk", sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillText(opts.title.toUpperCase(), plateX + 34, plateY + 28);
+  ctx.fillText(opts.title.toUpperCase(), textStartX, plateY + 26);
 
   const sourceDesc =
     opts.sourceType === 'pinball'
@@ -488,36 +584,44 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
       : `BEAT MIX · ${opts.bpm ?? 116} BPM · ${opts.scaleLabel ?? 'PENTA C'}`;
 
   ctx.fillStyle = '#00D4AA';
-  ctx.font = '700 22px "JetBrains Mono", monospace';
-  ctx.fillText(sourceDesc, plateX + 34, plateY + 86);
+  ctx.font = '700 21px "JetBrains Mono", monospace';
+  ctx.fillText(sourceDesc, textStartX, plateY + 84, plateW - 420);
 
-  ctx.fillStyle = 'rgba(251, 249, 244, 0.52)';
-  ctx.font = '700 18px "JetBrains Mono", monospace';
+  const shortLineage = opts.isDemo
+    ? 'DEMO EDITION'
+    : opts.lineageLabel
+      ? opts.lineageLabel.split('·')[0].trim()
+      : 'ORIGINAL';
+
+  ctx.fillStyle = 'rgba(251, 249, 244, 0.56)';
+  ctx.font = '700 16.5px "JetBrains Mono", monospace';
   ctx.fillText(
-    `FINISH: ${foilMeta.label} (${foilMeta.zhLabel})  ·  RARITY: ${opts.rarity}  ·  100% OFFLINE WEB AUDIO`,
-    plateX + 34,
-    plateY + 134
+    `FOIL: ${foilMeta.label} (${foilMeta.zhLabel}) · ${shortLineage} · ${
+      opts.waveformIsRealPcm ? 'REAL PCM' : 'SPECTRUM'
+    }`,
+    textStartX,
+    plateY + 136,
+    plateW - 410
   );
 
-  // Right: Collector Serial Stamp + Decorative Micro-Waveform
+  // Right: Collector Serial Stamp + Micro-Waveform
   ctx.fillStyle = '#FFD426';
-  ctx.font = '900 32px "JetBrains Mono", monospace';
+  ctx.font = '900 30px "JetBrains Mono", monospace';
   ctx.textAlign = 'right';
-  ctx.fillText(opts.code, plateX + plateW - 34, plateY + 32);
+  ctx.fillText(opts.code, plateX + plateW - 34, plateY + 30);
 
-  // Mini spectrum bars on bottom-right of spec plate
-  const mwW = 190;
+  const mwW = 180;
   const mwX = plateX + plateW - 34 - mwW;
-  const mwY = plateY + 88;
+  const mwY = plateY + 86;
   const mwCount = 16;
   const mwGap = 5;
   const mwBw = (mwW - mwGap * (mwCount - 1)) / mwCount;
   for (let i = 0; i < mwCount; i++) {
     const v = opts.waveformBars[i] ?? 0.45;
-    const bh = Math.max(8, v * 40);
+    const bh = Math.max(8, v * 44);
     ctx.fillStyle = barColors[i % barColors.length];
     ctx.beginPath();
-    ctx.roundRect(mwX + i * (mwBw + mwGap), mwY + (40 - bh) / 2, mwBw, bh, 3);
+    ctx.roundRect(mwX + i * (mwBw + mwGap), mwY + (44 - bh) / 2, mwBw, bh, 3);
     ctx.fill();
   }
 

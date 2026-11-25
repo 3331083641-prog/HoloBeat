@@ -1,10 +1,17 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { RotateCw, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
+import { Layers, RotateCw, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
 import { CATEGORY_META, HOLO_FOIL_LIST, RARITY_META } from '../../data/soundCards';
 import { getStickerById } from '../../data/stickers';
-import type { HoloFoilType, PlacedSticker, Rarity, TrackCategory } from '../../types/holo';
+import type {
+  CompositionSnapshot,
+  HoloFoilType,
+  PlacedSticker,
+  Rarity,
+  TrackCategory,
+} from '../../types/holo';
 import { CardArtwork } from '../artwork/CardArtwork';
 import { ScratchOverlay } from './ScratchOverlay';
+import { SoundSigil } from './SoundSigil';
 
 export interface HoloCardProps {
   title: string;
@@ -16,17 +23,25 @@ export interface HoloCardProps {
   foil: HoloFoilType;
   artId: string;
   storyZh?: string;
+  pairingHintZh?: string;
   synthFormula?: string;
   recommendedBpm?: number;
   stats?: { punch: number; shine: number; vibe: number };
+  ownedCount?: number;
+  isDemo?: boolean;
+  lineageLabel?: string;
+  sigilSnapshot?: CompositionSnapshot | null;
   flipped?: boolean;
   needsScratch?: boolean;
   onScratchReveal?: () => void;
   waveformBars?: number[];
   waveformActive?: boolean;
+  /** 0..1 playback progress sweep across the embedded waveform strip */
+  waveformProgress?: number;
   stickers?: PlacedSticker[];
   editableStickers?: boolean;
   onUpdateSticker?: (uid: string, patch: Partial<PlacedSticker>) => void;
+  onBringStickerFront?: (uid: string) => void;
   onRemoveSticker?: (uid: string) => void;
   showAura?: boolean;
   idleShimmer?: boolean;
@@ -36,8 +51,8 @@ export interface HoloCardProps {
 }
 
 const RARITY_FOIL_INTENSITY: Record<Rarity, number> = {
-  N: 0.14,
-  R: 0.3,
+  N: 0.12,
+  R: 0.28,
   SR: 0.56,
   SSR: 0.78,
   UR: 0.96,
@@ -63,17 +78,24 @@ export const HoloCard: React.FC<HoloCardProps> = ({
   foil,
   artId,
   storyZh,
+  pairingHintZh,
   synthFormula,
   recommendedBpm = 120,
   stats,
+  ownedCount,
+  isDemo = false,
+  lineageLabel,
+  sigilSnapshot,
   flipped = false,
   needsScratch = false,
   onScratchReveal,
   waveformBars,
   waveformActive = false,
+  waveformProgress = -1,
   stickers = [],
   editableStickers = false,
   onUpdateSticker,
+  onBringStickerFront,
   onRemoveSticker,
   showAura = true,
   idleShimmer = true,
@@ -86,7 +108,7 @@ export const HoloCard: React.FC<HoloCardProps> = ({
   const rafRef = useRef<number | null>(null);
   const hoveringRef = useRef(false);
 
-  // Hooke's Law Damped Spring State (position + velocity)
+  // Hooke's Law Damped Spring State
   const springRef = useRef({
     rx: 0, vrx: 0,
     ry: 0, vry: 0,
@@ -99,6 +121,7 @@ export const HoloCard: React.FC<HoloCardProps> = ({
   const targetRef = useRef({ rx: 0, ry: 0, px: 0, py: 0, gx: 50, gy: 50, sc: 1 });
 
   const [selectedStickerUid, setSelectedStickerUid] = useState<string | null>(null);
+  const [snapGuide, setSnapGuide] = useState<{ x: boolean; y: boolean }>({ x: false, y: false });
   const dragStickerRef = useRef<{
     uid: string;
     startX: number;
@@ -118,7 +141,6 @@ export const HoloCard: React.FC<HoloCardProps> = ({
         ? 'soft'
         : 'none';
 
-  // Apply spring values straight to CSS variables (zero React re-renders!)
   const applyCssVars = (el: HTMLDivElement, s: typeof springRef.current) => {
     const hyp = Math.min(1, Math.hypot(s.px, s.py));
     const shadowX = (-s.ry * 1.15).toFixed(1);
@@ -141,7 +163,6 @@ export const HoloCard: React.FC<HoloCardProps> = ({
     el.style.setProperty('--foil-intensity', String(foilIntensity));
   };
 
-  // Spring-Physics + Ambient Museum-Spotlight Idle Loop
   useEffect(() => {
     const prefersReduced =
       typeof window !== 'undefined' &&
@@ -167,22 +188,20 @@ export const HoloCard: React.FC<HoloCardProps> = ({
           rafRef.current = null;
           return;
         }
-
         const s = springRef.current;
         const t = targetRef.current;
 
-        // Subtle museum spotlight ambient figure-8 shimmer when idle on SR+ cards
-        if (!hoveringRef.current && idleShimmer && !prefersReduced && !needsScratch && rarity !== 'N') {
-          const amp = rarity === 'UR' ? 1 : rarity === 'SSR' || rarity === 'LTD' ? 0.85 : 0.45;
-          const phase = now * 0.00095;
-          const ix = Math.sin(phase) * 0.34 * amp;
-          const iy = Math.sin(phase * 1.65) * 0.24 * amp;
-          t.rx = -iy * 6.5;
-          t.ry = ix * 7.5;
+        // Calm museum breathing when idle so artwork stays sharp & still, subtly catching light
+        if (!hoveringRef.current && idleShimmer && !prefersReduced && !needsScratch && isHighTier) {
+          const phase = now * 0.00075;
+          const ix = Math.sin(phase) * 0.14;
+          const iy = Math.sin(phase * 1.5) * 0.1;
+          t.rx = -iy * 3.5;
+          t.ry = ix * 4.0;
           t.px = ix;
           t.py = iy;
-          t.gx = 50 + ix * 55;
-          t.gy = 50 + iy * 55;
+          t.gx = 50 + ix * 36;
+          t.gy = 50 + iy * 36;
           t.sc = 1;
         }
 
@@ -199,7 +218,7 @@ export const HoloCard: React.FC<HoloCardProps> = ({
 
         applyCssVars(el, s);
 
-        const keepAmbient = idleShimmer && !prefersReduced && !needsScratch && rarity !== 'N';
+        const keepAmbient = idleShimmer && !prefersReduced && !needsScratch && isHighTier;
         const settled =
           !hoveringRef.current &&
           !keepAmbient &&
@@ -223,7 +242,7 @@ export const HoloCard: React.FC<HoloCardProps> = ({
       shellRef.current.style.setProperty('--foil-intensity', String(foilIntensity));
     }
 
-    if (idleShimmer && !prefersReduced && !needsScratch && rarity !== 'N') {
+    if (idleShimmer && !prefersReduced && !needsScratch && isHighTier) {
       startLoop();
     }
 
@@ -234,7 +253,7 @@ export const HoloCard: React.FC<HoloCardProps> = ({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rarity, foilIntensity, idleShimmer, needsScratch]);
+  }, [rarity, foilIntensity, idleShimmer, needsScratch, isHighTier]);
 
   const ensureSpringRunning = () => {
     if (rafRef.current !== null) return;
@@ -341,7 +360,6 @@ export const HoloCard: React.FC<HoloCardProps> = ({
         if (selectedStickerUid) setSelectedStickerUid(null);
       }}
     >
-      {/* Ambient Stage Spotlight Halo for SR / SSR / UR / LTD */}
       {showAura && <div className="holo-stage-aura" data-rarity={rarity} />}
 
       <div
@@ -355,20 +373,24 @@ export const HoloCard: React.FC<HoloCardProps> = ({
           data-foil={foil}
         >
           <div className="relative w-full h-full rounded-[11px] overflow-hidden border-[2px] border-[#17171C] bg-[#14151B] flex flex-col">
-            {/* Layer 1: 3-Layer Parallax Vector Street-Toy Mascot */}
             <div className="relative flex-1 overflow-hidden">
               <CardArtwork artId={artId} parallax />
 
-              {/* Subtle Vignette Depth Frame inside Art Box */}
               <div
                 className="absolute inset-0 pointer-events-none z-10"
-                style={{
-                  boxShadow: 'inset 0 0 22px rgba(20, 21, 27, 0.28)',
-                }}
+                style={{ boxShadow: 'inset 0 0 22px rgba(20, 21, 27, 0.24)' }}
               />
 
+              {/* Sticker Center Snap Reference Guides (Only when dragging near center!) */}
+              {snapGuide.x && (
+                <div className="absolute inset-y-0 left-1/2 w-[1.5px] bg-[#FFD426]/85 z-25 pointer-events-none" />
+              )}
+              {snapGuide.y && (
+                <div className="absolute inset-x-0 top-1/2 h-[1.5px] bg-[#FFD426]/85 z-25 pointer-events-none" />
+              )}
+
               {/* Top-Left Tiered Collector Rarity Badge */}
-              <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none">
+              <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none flex items-center gap-1.5">
                 <div
                   className={`relative px-2.5 py-0.5 font-black tracking-tight border-[2px] border-[#17171C] shadow-[2.5px_2.5px_0px_0px_#17171C] rounded-[7px] ${
                     rarity === 'UR' || rarity === 'SSR'
@@ -386,6 +408,11 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                 >
                   {badgeLabel}
                 </div>
+                {isDemo && (
+                  <span className="px-1.5 py-0.5 rounded-md bg-[#14151B]/90 border border-[#FFD426] font-mono-hw text-[9px] font-black text-[#FFD426]">
+                    DEMO
+                  </span>
+                )}
               </div>
 
               {/* Top-Right Precision Serial Number Pill */}
@@ -395,7 +422,7 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                 </div>
               </div>
 
-              {/* Interactive Draggable Sticker Layer (Forge Page) */}
+              {/* Interactive Draggable / Snappable Sticker Layer (Forge Page) */}
               {stickers.length > 0 && (
                 <div className="absolute inset-0 z-20 pointer-events-none">
                   {stickers.map((stk) => {
@@ -408,6 +435,7 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                           if (!editableStickers) return;
                           e.stopPropagation();
                           setSelectedStickerUid(stk.uid);
+                          onBringStickerFront?.(stk.uid);
                           e.currentTarget.setPointerCapture(e.pointerId);
                           dragStickerRef.current = {
                             uid: stk.uid,
@@ -422,15 +450,20 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                           e.stopPropagation();
                           const dxPct = ((e.clientX - dragStickerRef.current.startX) / width) * 100;
                           const dyPct = ((e.clientY - dragStickerRef.current.startY) / height) * 100;
-                          onUpdateSticker?.(stk.uid, {
-                            x: Math.min(92, Math.max(8, dragStickerRef.current.origX + dxPct)),
-                            y: Math.min(88, Math.max(12, dragStickerRef.current.origY + dyPct)),
-                          });
+                          let nx = Math.min(92, Math.max(8, dragStickerRef.current.origX + dxPct));
+                          let ny = Math.min(86, Math.max(12, dragStickerRef.current.origY + dyPct));
+                          const snapX = Math.abs(nx - 50) < 2.6;
+                          const snapY = Math.abs(ny - 50) < 2.6;
+                          if (snapX) nx = 50;
+                          if (snapY) ny = 50;
+                          setSnapGuide({ x: snapX, y: snapY });
+                          onUpdateSticker?.(stk.uid, { x: nx, y: ny });
                         }}
                         onPointerUp={(e) => {
                           if (dragStickerRef.current?.uid === stk.uid) {
                             e.stopPropagation();
                             dragStickerRef.current = null;
+                            setSnapGuide({ x: false, y: false });
                           }
                         }}
                         onDoubleClick={(e) => {
@@ -441,6 +474,7 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                         style={{
                           left: `${stk.x}%`,
                           top: `${stk.y}%`,
+                          zIndex: stk.zIndex ?? 1,
                           transform: `translate(-50%, -50%) scale(${stk.scale}) rotate(${stk.rotation}deg)`,
                         }}
                         className={`absolute w-12 h-12 ${
@@ -496,6 +530,14 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                             </button>
                             <button
                               type="button"
+                              onClick={() => onBringStickerFront?.(stk.uid)}
+                              className="p-0.5 text-white hover:text-[#38BDF8] cursor-pointer"
+                              title="置于顶层"
+                            >
+                              <Layers className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => onRemoveSticker?.(stk.uid)}
                               className="p-0.5 text-[#FF5526] hover:text-white cursor-pointer"
                               title="删除贴纸"
@@ -510,22 +552,25 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                 </div>
               )}
 
-              {/* Embedded Audio Fingerprint Strip (for Forge Card) */}
+              {/* Embedded Real Audio Fingerprint Strip with Live Playback Sweep! */}
               {waveformBars && waveformBars.length > 0 && (
                 <div className="absolute bottom-2 left-2.5 right-2.5 z-20 pointer-events-none">
                   <div className="bg-[#14151B]/95 border-[2px] border-[#17171C] shadow-[0_2px_8px_rgba(0,0,0,0.4)] rounded-full px-2.5 py-1.5 flex items-center justify-between gap-[2px] h-7">
                     {waveformBars.map((val, i) => {
                       const colors = ['#7C3AED', '#FF3D9A', '#FF5526', '#FFD426', '#00D4AA', '#38BDF8'];
                       const barColor = colors[Math.floor((i / waveformBars.length) * colors.length)];
+                      const frac = i / Math.max(1, waveformBars.length - 1);
+                      const isLit = waveformProgress >= 0 ? frac <= waveformProgress : true;
                       return (
                         <span
                           key={i}
-                          className={`flex-1 rounded-full transition-all duration-150 ${
-                            waveformActive ? 'animate-pulse' : ''
+                          className={`flex-1 rounded-full transition-all duration-100 ${
+                            waveformActive && waveformProgress < 0 ? 'animate-pulse' : ''
                           }`}
                           style={{
                             height: `${Math.round(val * 100)}%`,
                             backgroundColor: barColor,
+                            opacity: isLit ? 1 : 0.34,
                           }}
                         />
                       );
@@ -543,10 +588,9 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                   : 'bg-[#FBF9F4] text-[#17171C]'
               }`}
             >
-              {/* Micro Spec Top Hairline */}
               <div className="w-full flex items-center justify-between text-[8px] font-mono-hw font-bold tracking-[0.14em] opacity-60 mb-0.5">
                 <span>{specLabel ?? category} · {foilMeta.label}</span>
-                <span>HB-S01</span>
+                <span>{lineageLabel ? lineageLabel : 'HB-V2'}</span>
               </div>
 
               <div className="flex items-center gap-1.5 max-w-full">
@@ -567,7 +611,6 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                 </span>
               )}
 
-              {/* Miniature Holographic Authenticity Micro-Seal on SR+ cards */}
               {rarity !== 'N' && rarity !== 'R' && (
                 <div
                   className="absolute bottom-1.5 left-2 w-4 h-4 rounded-full border border-[#17171C]/60 holo-shine-border flex items-center justify-center shadow-xs pointer-events-none"
@@ -578,22 +621,13 @@ export const HoloCard: React.FC<HoloCardProps> = ({
               )}
             </div>
 
-            {/* Optical Layer 1: Zero-Washout Black-Valley Foil Diffraction */}
+            {/* Optical Layers */}
             <div className={`holo-foil-layer holo-foil-${foil}`} />
-
-            {/* Optical Layer 2: Counter-Scrolling Crushed-Diamond Sparkle Facets */}
             <div className="holo-sparkle-layer" data-active={sparkleMode} />
-
-            {/* Optical Layer 3: Subtle Micro-Paper / Foil Grain */}
             <div className="holo-noise-layer" />
-
-            {/* Optical Layer 4: Directional Specular Glare */}
             <div className="holo-glare-layer" />
-
-            {/* Optical Layer 5: 3D Edge Rim Glint */}
             <div className="holo-rim-glint" />
 
-            {/* Refined Peeled Foil Corner Detail (SSR / UR / LTD Signature Touch) */}
             {isHighTier && (
               <svg
                 viewBox="0 0 38 38"
@@ -616,96 +650,112 @@ export const HoloCard: React.FC<HoloCardProps> = ({
               </svg>
             )}
 
-            {/* Interactive Scratch-to-Reveal Foil Layer for Newly Pulled Gacha Cards */}
             {needsScratch && onScratchReveal && (
               <ScratchOverlay width={width} height={height} onReveal={onScratchReveal} />
             )}
           </div>
         </div>
 
-        {/* ================= BACK FACE (COLLECTOR SPEC SHEET) ================= */}
+        {/* ================= BACK FACE (COLLECTOR ARCHIVE & LINEAGE SHEET) ================= */}
         <div
-          className="holo-face holo-face-back bg-[#14151B] text-[#FBF9F4] p-4 flex flex-col justify-between"
+          className="holo-face holo-face-back bg-[#14151B] text-[#FBF9F4] p-3.5 flex flex-col justify-between overflow-hidden"
           style={{
             backgroundImage:
-              'linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
+              'linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px)',
+            backgroundSize: '18px 18px',
           }}
         >
-          <div>
-            {/* Top Spec Bar */}
-            <div className="flex items-center justify-between pb-2.5 border-b border-white/15">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between pb-2 border-b border-white/15">
               <span
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-black border-[1.5px] border-[#17171C]"
+                className="px-2 py-0.5 rounded-full text-[10.5px] font-black border-[1.5px] border-[#17171C]"
                 style={{ backgroundColor: catInfo.color, color: catInfo.textColor }}
               >
-                {rarityInfo.label} · {catInfo.label}
+                {rarityInfo.label} · {specLabel ?? catInfo.label}
               </span>
-              <span className="font-mono-hw text-xs font-bold text-[#FFD426] tracking-wider">
+              <span className="font-mono-hw text-[11px] font-bold text-[#FFD426] tracking-wider">
                 {code} // {foilMeta.label}
               </span>
             </div>
 
-            <div className="mt-3 flex items-baseline justify-between gap-2">
-              <h3 className="text-lg font-black italic tracking-wide uppercase text-[#FBF9F4] truncate">
-                {title}
-              </h3>
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="text-[16px] font-black italic tracking-wide uppercase text-[#FBF9F4] truncate leading-tight">
+                  {title}
+                </h3>
+                {zhTitle && (
+                  <p className="text-[11px] font-bold text-[#00D4AA] mt-0.5 truncate">{zhTitle}</p>
+                )}
+                {lineageLabel && (
+                  <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-[#7C3AED]/30 border border-[#A855F7]/60 font-mono-hw text-[9px] font-bold text-[#E9D5FF]">
+                    {lineageLabel}
+                  </span>
+                )}
+              </div>
+              {sigilSnapshot && <SoundSigil snapshot={sigilSnapshot} size={58} />}
             </div>
-            {zhTitle && (
-              <p className="text-xs font-bold text-[#00D4AA] mt-0.5">{zhTitle}</p>
-            )}
 
-            {/* Collector Lore Box */}
-            <div className="mt-3 p-2.5 rounded-xl bg-white/[0.06] border border-white/12">
-              <div className="text-[9px] font-mono-hw font-bold uppercase tracking-[0.14em] text-[#FFD426] mb-1">
+            <div className="p-2 rounded-xl bg-white/[0.06] border border-white/12">
+              <div className="text-[8.5px] font-mono-hw font-bold uppercase tracking-[0.14em] text-[#FFD426] mb-0.5">
                 ARCHIVE // 市井声景档案
               </div>
-              <p className="text-xs leading-relaxed text-white/85">
-                {storyZh ?? '纯前端离线程序化合成的专属全息声卡，封印你的高光街头节拍与物理旋律。'}
+              <p className="text-[11px] leading-relaxed text-white/85">
+                {storyZh ?? '由 HoloBeat 声卡造物局封存的数字声音藏品，支持随时拆封重混与离线无损导出。'}
               </p>
+              {pairingHintZh && (
+                <p className="text-[10px] leading-snug text-[#00D4AA]/90 mt-1 pt-1 border-t border-white/10">
+                  搭配建议：{pairingHintZh}
+                </p>
+              )}
             </div>
 
-            {/* Synth Schematic Box */}
-            <div className="mt-2.5 p-2.5 rounded-xl bg-black/55 border border-[#7C3AED]/55">
-              <div className="text-[9px] font-mono-hw font-bold uppercase tracking-[0.14em] text-[#C084FC] mb-1">
+            <div className="p-2 rounded-xl bg-black/55 border border-[#7C3AED]/55">
+              <div className="text-[8.5px] font-mono-hw font-bold uppercase tracking-[0.14em] text-[#C084FC] mb-0.5">
                 DSP ENGINE // SYNTH FORMULA
               </div>
-              <code className="font-mono-hw text-[10.5px] text-[#00D4AA] leading-snug block">
+              <code className="font-mono-hw text-[10px] text-[#00D4AA] leading-snug block">
                 {synthFormula ?? 'Tone.js Procedural Multi-Voice Mix'}
               </code>
             </div>
 
-            {/* Compact Spec Bars on Back */}
             {stats && (
-              <div className="mt-2.5 grid grid-cols-3 gap-1.5">
-                {[
-                  { k: 'PUNCH', v: stats.punch, c: '#FF5526' },
-                  { k: 'SHINE', v: stats.shine, c: '#FFD426' },
-                  { k: 'VIBE', v: stats.vibe, c: '#A855F7' },
-                ].map((item) => (
-                  <div
-                    key={item.k}
-                    className="rounded-lg bg-white/[0.05] border border-white/10 px-2 py-1.5 flex flex-col gap-1"
-                  >
-                    <div className="flex items-center justify-between font-mono-hw text-[9px]">
-                      <span className="text-white/60">{item.k}</span>
-                      <span className="font-bold text-white">{item.v}</span>
+              <div>
+                <div className="text-[8px] font-mono-hw tracking-[0.14em] text-white/45 uppercase mb-1">
+                  STYLE PROFILE · 音色风格标签
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { k: 'PUNCH', v: stats.punch, c: '#FF5526' },
+                    { k: 'SHINE', v: stats.shine, c: '#FFD426' },
+                    { k: 'VIBE', v: stats.vibe, c: '#A855F7' },
+                  ].map((item) => (
+                    <div
+                      key={item.k}
+                      className="rounded-lg bg-white/[0.05] border border-white/10 px-2 py-1 flex flex-col gap-0.5"
+                    >
+                      <div className="flex items-center justify-between font-mono-hw text-[9px]">
+                        <span className="text-white/60">{item.k}</span>
+                        <span className="font-bold text-white">{item.v}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${item.v}%`, backgroundColor: item.c }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${item.v}%`, backgroundColor: item.c }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
-          <div className="pt-2.5 border-t border-white/15 flex items-center justify-between text-[10px] font-mono-hw">
-            <span className="text-white/65">REC BPM: {recommendedBpm}</span>
-            <span className="text-[#FFD426] font-bold tracking-wider">HOLOBEAT · OFFLINE</span>
+          <div className="pt-2 border-t border-white/15 flex items-center justify-between text-[9.5px] font-mono-hw">
+            <span className="text-white/65">
+              BPM {recommendedBpm}
+              {ownedCount !== undefined ? ` · 已抽 ×${ownedCount}` : ''}
+            </span>
+            <span className="text-[#FFD426] font-bold tracking-wider">HOLOBEAT V2</span>
           </div>
         </div>
       </div>

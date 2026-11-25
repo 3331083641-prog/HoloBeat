@@ -316,3 +316,65 @@ body,
 .holo-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(23, 23, 28, 0.42);
 }
+
+/* Shared Element Card Flight Transition (Gacha -> Beat / Pinball) */
+@keyframes card-fly-across {
+  0% {
+    transform: translate(-50%, -50%) scale(0.95) rotate(-6deg);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  60% {
+    transform: translate(-18%, -62%) scale(0.68) rotate(8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-110%, -26%) scale(0.32) rotate(-4deg);
+    opacity: 0;
+  }
+}
+
+.animate-card-fly {
+  animation: card-fly-across 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Capsule Drop Into Gacha Chute */
+@keyframes capsule-chute-drop {
+  0% { transform: translateY(-44px) scale(0.85) rotate(-18deg); opacity: 0; }
+  45% { transform: translateY(4px) scale(1.06) rotate(8deg); opacity: 1; }
+  72% { transform: translateY(-3px) scale(0.96) rotate(-3deg); opacity: 1; }
+  100% { transform: translateY(0px) scale(1) rotate(0deg); opacity: 1; }
+}
+
+.animate-capsule-chute {
+  animation: capsule-chute-drop 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Keyboard Focus Accessibility Ring */
+button:focus-visible,
+[role="slider"]:focus-visible,
+input:focus-visible {
+  outline: 2.5px solid #7C3AED;
+  outline-offset: 2px;
+}
+
+/* Respect System Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-enter,
+  .animate-gacha-shake,
+  .animate-card-pop,
+  .animate-pad-hit,
+  .animate-forge-laser,
+  .animate-forge-stamp,
+  .animate-led-soft,
+  .animate-float-slow,
+  .animate-card-fly,
+  .animate-capsule-chute,
+  .holo-stage-aura,
+  .holo-shine-border {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

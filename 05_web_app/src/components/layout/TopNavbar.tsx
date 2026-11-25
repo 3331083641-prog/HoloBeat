@@ -5,6 +5,7 @@ import { useHoloSfx } from '../../audio/useHoloSfx';
 import { SOUND_CARDS } from '../../data/soundCards';
 import { useHoloStore } from '../../store/useHoloStore';
 import type { PageId } from '../../types/holo';
+import { OnboardingRibbon } from '../ui/OnboardingRibbon';
 
 const NAV_TABS: {
   id: PageId;
@@ -109,6 +110,7 @@ export const TopNavbar: React.FC = () => {
         </button>
 
         <div className="h-6 w-[1.5px] bg-[#17171C]/18 hidden lg:block" />
+        <OnboardingRibbon />
       </div>
 
       {/* Center: Recessed Hardware 4-Module Segmented Rail */}

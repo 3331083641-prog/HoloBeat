@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { holoAudio } from './audio/HoloAudioEngine';
 import { TopNavbar } from './components/layout/TopNavbar';
 import { AudioBootBanner } from './components/ui/AudioBootBanner';
 import { QuickDeckDrawer } from './components/ui/QuickDeckDrawer';
+import { SharedCardFlightOverlay } from './components/ui/SharedCardFlightOverlay';
 import { ToastStack } from './components/ui/ToastStack';
 import { BeatDeckPage } from './pages/BeatDeckPage';
 import { ForgePage } from './pages/ForgePage';
@@ -11,6 +13,26 @@ import { useHoloStore } from './store/useHoloStore';
 
 export const App: React.FC = () => {
   const activePage = useHoloStore((s) => s.activePage);
+  const hydrateFromIndexedDb = useHoloStore((s) => s.hydrateFromIndexedDb);
+
+  // Hydrate persistent IndexedDB minted archive & forge draft safely on boot
+  useEffect(() => {
+    void hydrateFromIndexedDb();
+  }, [hydrateFromIndexedDb]);
+
+  // Cleanly halt isolated snapshot audio when switching pages or leaving the tab
+  useEffect(() => {
+    holoAudio.stopSnapshotPlayback();
+    holoAudio.stopPinballRecording();
+  }, [activePage]);
+
+  useEffect(() => {
+    const onUnload = () => {
+      holoAudio.stopAllPlayback();
+    };
+    window.addEventListener('pagehide', onUnload);
+    return () => window.removeEventListener('pagehide', onUnload);
+  }, []);
 
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden canvas-dot-grid">
@@ -26,6 +48,7 @@ export const App: React.FC = () => {
       </main>
 
       <AudioBootBanner />
+      <SharedCardFlightOverlay />
       <QuickDeckDrawer />
       <ToastStack />
     </div>
