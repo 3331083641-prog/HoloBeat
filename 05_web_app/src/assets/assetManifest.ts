@@ -1,7 +1,9 @@
 import { ASSET_VERSION } from '../audio/compositionEngine';
+import { SOUND_CARD_ART_BRIEFS } from '../data/artBriefs';
 
 export interface AssetManifestEntry {
   id: string;
+  cardId?: string;
   usage: 'card-character' | 'sticker' | 'stage-backdrop' | 'sound-icon';
   sourceFile: string | null;
   runtimeFile: string;
@@ -10,93 +12,37 @@ export interface AssetManifestEntry {
   safeAreaPct: number;
   version: string;
   promptRef?: string;
-  origin: 'original-vector-svg' | 'external-raster-pending';
+  origin: 'gpt-image-2-raster' | 'original-vector-svg';
   manualEdits: string;
   license: string;
 }
 
 /**
- * Shared runtime asset registry used consistently by Web UI, PNG Poster Export,
- * and Motion Card WebM Export. Currently powered by high-craft original vector SVGs
- * with clean drop-in slots prepared under D:\HoloBeat\08_assets\ for future PNG renders.
+ * Shared runtime asset registry used consistently by Web UI (CardArtwork),
+ * 1200x1600 HD PNG Gallery Poster (exportHoloPng), and Motion Card WebM (exportMotionCard).
+ * All 16 street sound-card heroes now run on archived & optically framed GPT Image 2 RGBA WebP assets
+ * with SVG studio backdrops and instant vector fallback.
  */
 export const RUNTIME_ASSET_MANIFEST: {
   manifestVersion: string;
   entries: AssetManifestEntry[];
 } = {
   manifestVersion: ASSET_VERSION,
-  entries: [
-    {
-      id: 'bamboo-cat',
-      usage: 'card-character',
-      sourceFile: '08_assets/source/cards/01_bamboo_clapper.png',
-      runtimeFile: 'svg:CardArtwork#bamboo-cat',
-      fallbackMode: 'svg-inline',
-      dimensions: { width: 260, height: 320 },
-      safeAreaPct: 12,
-      version: ASSET_VERSION,
-      promptRef: '08_assets/prompts/character_prompts.md#1-竹板梆子',
-      origin: 'original-vector-svg',
-      manualEdits: '重构为双片竹节+红绳结核心轮廓，移除旧版 DJ 猫与黑胶唱盘',
-      license: 'Project Original (MIT)',
-    },
-    {
-      id: 'street-bell',
-      usage: 'card-character',
-      sourceFile: '08_assets/source/cards/05_street_bell.png',
-      runtimeFile: 'svg:CardArtwork#street-bell',
-      fallbackMode: 'svg-inline',
-      dimensions: { width: 260, height: 320 },
-      safeAreaPct: 12,
-      version: ASSET_VERSION,
-      promptRef: '08_assets/prompts/character_prompts.md#2-二八车铃',
-      origin: 'original-vector-svg',
-      manualEdits: '重构为半球铜铃罩+拇指拨杆+车把夹具核心轮廓，移除旧版硬币脸人物',
-      license: 'Project Original (MIT)',
-    },
-    {
-      id: 'lucky-coin',
-      usage: 'card-character',
-      sourceFile: '08_assets/source/cards/09_arcade_coin.png',
-      runtimeFile: 'svg:CardArtwork#lucky-coin',
-      fallbackMode: 'svg-inline',
-      dimensions: { width: 260, height: 320 },
-      safeAreaPct: 12,
-      version: ASSET_VERSION,
-      promptRef: '08_assets/prompts/character_prompts.md#3-街机投币',
-      origin: 'original-vector-svg',
-      manualEdits: '重构为圆币+薄荷投币槽+像素落槽瞬间，移除旧版招财猫造型',
-      license: 'Project Original (MIT)',
-    },
-    {
-      id: 'night-sizzle',
-      usage: 'card-character',
-      sourceFile: '08_assets/source/cards/13_night_sizzle.png',
-      runtimeFile: 'svg:CardArtwork#night-sizzle',
-      fallbackMode: 'svg-inline',
-      dimensions: { width: 260, height: 320 },
-      safeAreaPct: 12,
-      version: ASSET_VERSION,
-      promptRef: '08_assets/prompts/character_prompts.md#4-夜市铁板',
-      origin: 'original-vector-svg',
-      manualEdits: '重构为深色铁板+橙色炉体+双铲子臂+三条蒸汽曲线，移除旧版龙首面具',
-      license: 'Project Original (MIT)',
-    },
-    {
-      id: 'sugar-spoon',
-      usage: 'card-character',
-      sourceFile: '08_assets/source/cards/10_sugar_spoon.png',
-      runtimeFile: 'svg:CardArtwork#sugar-spoon',
-      fallbackMode: 'svg-inline',
-      dimensions: { width: 260, height: 320 },
-      safeAreaPct: 12,
-      version: ASSET_VERSION,
-      promptRef: '08_assets/prompts/character_prompts.md#糖画铜勺',
-      origin: 'original-vector-svg',
-      manualEdits: '强化倾斜黄铜浇勺与石板拉丝琥珀糖龙的动态关系',
-      license: 'Project Original (MIT)',
-    },
-  ],
+  entries: SOUND_CARD_ART_BRIEFS.map((brief) => ({
+    id: brief.artId,
+    cardId: brief.cardId,
+    usage: 'card-character' as const,
+    sourceFile: `08_assets/source/cards/${brief.artId}.png`,
+    runtimeFile: `/assets/cards/${brief.artId}.webp`,
+    fallbackMode: 'svg-inline' as const,
+    dimensions: { width: 780, height: 960 },
+    safeAreaPct: 14,
+    version: ASSET_VERSION,
+    promptRef: `08_assets/prompts/gpt_image_2_pack.md#${brief.artId}`,
+    origin: 'gpt-image-2-raster' as const,
+    manualEdits: 'Alpha 透明边缘紧致裁切 + 780x960 光学居中对齐 + 留足顶部角标/底部声纹安全区 + WebP 压缩优化',
+    license: 'Project Original Asset',
+  })),
 };
 
 export function getAssetManifestEntry(id: string): AssetManifestEntry | undefined {

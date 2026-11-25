@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-11-25 23:45:00",
-  "sourceCommit": "ab5a0e5",
+  "timestamp": "2026-11-26 00:31:54",
+  "sourceCommit": "ef9019d",
   "environment": {
     "os": "Windows 11",
     "machine": "AMD64",
@@ -21,7 +21,7 @@
       "beatToPinballChoreographedShow": true,
       "pinballShowSnapshotPreserved": true,
       "pinballRealRecording": true,
-      "pinballRealRecordingText": "8 秒录音 · 42 音符 (4.4s)",
+      "pinballRealRecordingText": "8 秒录音 · 46 音符 (4.4s)",
       "pinballQuantizePreviewWithLossStats": true,
       "emptyPinballGuardRejected": true,
       "realPcmUiBadgeVisible": true,
@@ -188,7 +188,7 @@
             "x": 26.0,
             "y": 90.5,
             "width": 86.7,
-            "height": 44.0
+            "height": 44
           }
         }
       },
@@ -281,27 +281,27 @@
     }
   },
   "performance": {
-    "initialLoadMs": 1835.3,
+    "initialLoadMs": 1079.5,
     "gachaHeroHeightRatio1080p": 0.663,
     "beatHoloMotionFps": {
-      "fps": 148.8,
-      "avgFrameMs": 6.72,
-      "maxFrameMs": 18.2,
-      "frames": 298,
-      "durationMs": 2002,
+      "fps": 148,
+      "avgFrameMs": 6.76,
+      "maxFrameMs": 24.3,
+      "frames": 296,
+      "durationMs": 2000,
       "telemetry": null
     },
     "pinballFreeJamFps": {
-      "fps": 158,
-      "avgFrameMs": 6.33,
-      "maxFrameMs": 18.2,
-      "frames": 317,
-      "durationMs": 2006,
+      "fps": 159.4,
+      "avgFrameMs": 6.27,
+      "maxFrameMs": 14.7,
+      "frames": 319,
+      "durationMs": 2001,
       "telemetry": {
-        "activeBalls": 5,
-        "peakBalls": 8,
-        "activeParticles": 1,
-        "peakParticles": 7,
+        "activeBalls": 7,
+        "peakBalls": 9,
+        "activeParticles": 2,
+        "peakParticles": 8,
         "mode": "free",
         "maxBallsCap": 20
       }
@@ -310,7 +310,7 @@
   },
   "exports": {
     "png": {
-      "bytes": 876922,
+      "bytes": 1052729,
       "width": 1200,
       "height": 1600
     },
@@ -320,18 +320,18 @@
       "sampleRate": 48000,
       "bitsPerSample": 16,
       "durationSec": 5.018,
-      "peakAmplitude": 21571,
+      "peakAmplitude": 21540,
       "nonSilent": true
     },
     "json": {
-      "bytes": 40227,
+      "bytes": 40229,
       "schema": "holobeat.project.v3",
       "kind": "minted-card",
       "code": "#MY-01",
       "title": "清晨弄堂"
     },
     "webm": {
-      "bytes": 1210611,
+      "bytes": 1192854,
       "validWebmMagic": true
     }
   },

@@ -1,6 +1,6 @@
 import { holoAudio } from '../audio/HoloAudioEngine';
 import { renderCompositionSnapshotCached } from '../audio/wavExporter';
-import { getStandaloneArtworkSvg } from '../components/artwork/CardArtwork';
+import { loadCompositeCardArtworkCanvas } from '../components/artwork/CardArtwork';
 import { HOLO_FOIL_LIST, RARITY_META } from '../data/soundCards';
 import { getStickerById } from '../data/stickers';
 import { TRACK_MOTION_PROFILES, drawTrackMotifShape } from '../motion/holoMotion';
@@ -96,7 +96,7 @@ export async function recordMotionCardWebm(
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas 2D 上下文不可用');
 
-  const artImg = await loadSvgImg(getStandaloneArtworkSvg(opts.artId));
+  const artImg = await loadCompositeCardArtworkCanvas(opts.artId);
   const sortedStickers = [...opts.stickers].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
   const stickerImgs = await Promise.all(
     sortedStickers.map(async (stk) => {

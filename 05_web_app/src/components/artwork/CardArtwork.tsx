@@ -868,13 +868,108 @@ export const ARTWORK_LAYERS: Record<string, ArtLayers> = {
   },
 };
 
+export const RASTER_CARD_ART_IDS = new Set<string>([
+  'bamboo-cat',
+  'arcade-bot',
+  'chestnut-pop',
+  'lion-drum',
+  'street-bell',
+  'soda-frog',
+  'mahjong-fox',
+  'street-rattle',
+  'lucky-coin',
+  'sugar-spoon',
+  'cyber-zither',
+  'ferris-box',
+  'night-sizzle',
+  'rain-cloud',
+  'neon-tape',
+  'cicada-moon',
+]);
+
+export function getRasterCardArtUrl(artId: string): string | null {
+  return RASTER_CARD_ART_IDS.has(artId) ? `/assets/cards/${artId}.webp` : null;
+}
+
 export function getArtworkLayers(artId: string): ArtLayers {
   return ARTWORK_LAYERS[artId] ?? ARTWORK_LAYERS['street-bell'];
 }
 
 export function getStandaloneArtworkSvg(artId: string): string {
   const layers = getArtworkLayers(artId);
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 320" width="520" height="640">${layers.bg}${layers.mid}${layers.hero}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 320" width="780" height="960">${layers.bg}${layers.mid}${layers.hero}</svg>`;
+}
+
+export function getStandaloneBackdropSvg(artId: string): string {
+  const layers = getArtworkLayers(artId);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 320" width="780" height="960">${layers.bg}</svg>`;
+}
+
+function loadImgFromSrc(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = (err) => reject(err);
+    img.src = src;
+  });
+}
+
+function loadImgFromSvgMarkup(svgMarkup: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = (err) => {
+      URL.revokeObjectURL(url);
+      reject(err);
+    };
+    img.src = url;
+  });
+}
+
+/**
+ * Shared high-res artwork compositor for BOTH PNG Gallery Poster (1200x1600) and Motion Card WebM.
+ * Composites the tailored studio backdrop SVG with the real transparent GPT Image 2 designer-toy WebP,
+ * falling back cleanly to the original SVG hero if unavailable.
+ */
+export async function loadCompositeCardArtworkCanvas(artId: string): Promise<HTMLCanvasElement> {
+  const W = 780;
+  const H = 960;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+
+  const rasterUrl = getRasterCardArtUrl(artId);
+  if (rasterUrl) {
+    try {
+      const [bgImg, heroImg] = await Promise.all([
+        loadImgFromSvgMarkup(getStandaloneBackdropSvg(artId)),
+        loadImgFromSrc(rasterUrl),
+      ]);
+      ctx.drawImage(bgImg, 0, 0, W, H);
+      ctx.save();
+      ctx.shadowColor = 'rgba(20, 21, 27, 0.24)';
+      ctx.shadowBlur = 22;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 12;
+      ctx.drawImage(heroImg, 0, 0, W, H);
+      ctx.restore();
+      return canvas;
+    } catch {
+      // Fall through cleanly to vector SVG fallback
+    }
+  }
+
+  const svgImg = await loadImgFromSvgMarkup(getStandaloneArtworkSvg(artId));
+  ctx.drawImage(svgImg, 0, 0, W, H);
+  return canvas;
 }
 
 interface CardArtworkProps {
@@ -886,6 +981,41 @@ interface CardArtworkProps {
 export const CardArtwork: React.FC<CardArtworkProps> = React.memo(
   ({ artId, parallax = false, className = '' }) => {
     const layers = getArtworkLayers(artId);
+    const rasterUrl = getRasterCardArtUrl(artId);
+    const [rasterFailed, setRasterFailed] = React.useState(false);
+
+    React.useEffect(() => {
+      setRasterFailed(false);
+    }, [artId]);
+
+    const useRaster = Boolean(rasterUrl && !rasterFailed);
+
+    if (useRaster && rasterUrl) {
+      return (
+        <div
+          className={`relative w-full h-full overflow-hidden select-none pointer-events-none ${className}`}
+        >
+          {/* Layer 0: Tailored Studio Gradient & Architectural Frame Backdrop */}
+          <svg
+            viewBox="0 0 260 320"
+            preserveAspectRatio="xMidYMid slice"
+            className={`absolute inset-0 w-full h-full ${parallax ? 'holo-layer-bg' : ''}`}
+            dangerouslySetInnerHTML={{ __html: layers.bg }}
+          />
+          {/* Layer 2: High-Craft Transparent Designer-Toy Hero Raster */}
+          <img
+            src={rasterUrl}
+            alt=""
+            draggable={false}
+            decoding="async"
+            onError={() => setRasterFailed(true)}
+            className={`absolute inset-0 w-full h-full object-contain drop-shadow-[0_6px_10px_rgba(20,21,27,0.22)] ${
+              parallax ? 'holo-layer-hero' : ''
+            }`}
+          />
+        </div>
+      );
+    }
 
     if (!parallax) {
       return (
@@ -899,7 +1029,9 @@ export const CardArtwork: React.FC<CardArtworkProps> = React.memo(
     }
 
     return (
-      <div className={`relative w-full h-full overflow-hidden select-none pointer-events-none ${className}`}>
+      <div
+        className={`relative w-full h-full overflow-hidden select-none pointer-events-none ${className}`}
+      >
         {/* Layer 0: Background */}
         <svg
           viewBox="0 0 260 320"

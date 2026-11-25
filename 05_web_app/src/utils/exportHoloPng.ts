@@ -1,5 +1,5 @@
 import { buildSoundSigilData } from '../audio/compositionEngine';
-import { getStandaloneArtworkSvg } from '../components/artwork/CardArtwork';
+import { loadCompositeCardArtworkCanvas } from '../components/artwork/CardArtwork';
 import { HOLO_FOIL_LIST, RARITY_META } from '../data/soundCards';
 import { getStickerById } from '../data/stickers';
 import type {
@@ -302,7 +302,7 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   ctx.roundRect(pad, pad, innerW, innerH, 32);
   ctx.clip();
 
-  const artImg = await loadSvgImage(getStandaloneArtworkSvg(opts.artId));
+  const artImg = await loadCompositeCardArtworkCanvas(opts.artId);
   ctx.drawImage(artImg, pad, pad, innerW, artH);
 
   // Stickers sorted by zIndex
