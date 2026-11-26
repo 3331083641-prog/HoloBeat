@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-11-26 11:17:07",
-  "sourceCommit": "cb97527",
+  "timestamp": "2026-11-26 14:44:52",
+  "sourceCommit": "8c7f29b",
   "environment": {
     "os": "Windows 11",
     "machine": "AMD64",
@@ -13,6 +13,7 @@
     "pageErrors": [],
     "checks": {
       "audioUnlock": true,
+      "pulledCardInstalled": true,
       "gachaPullAndReveal": true,
       "cardBackLocalized": true,
       "gachaSoundscapeLoaded": true,
@@ -21,10 +22,11 @@
       "beatToPinballChoreographedShow": true,
       "pinballShowSnapshotPreserved": true,
       "pinballRealRecording": true,
-      "pinballRealRecordingText": "8 秒录音 · 46 音符 (4.2s)",
+      "pinballRealRecordingText": "8 秒录音 · 52 音符 (5.0s)",
       "pinballQuantizePreviewWithLossStats": true,
       "emptyPinballGuardRejected": true,
       "realPcmUiBadgeVisible": true,
+      "realPcmWaveformRendered": true,
       "snapshotImmutabilityVerified": true,
       "mintedCardMY01": true,
       "wavPcmNonSilent": true,
@@ -35,7 +37,10 @@
       "unsealAndRemixLineage": true,
       "stickerChangeCreatesNewVersionMY02": true,
       "allFourViewportsNoOverflowAndClickable": true,
-      "backendShareHtmlShowcaseVerified": true
+      "partialArchiveReported": true,
+      "backendShareHtmlShowcaseVerified": true,
+      "revoke": true,
+      "validProjectImport": true
     }
   },
   "edge": {
@@ -43,7 +48,8 @@
     "consoleErrors": [],
     "pageErrors": [],
     "checks": {
-      "allFourWorkbenchesLoaded": true
+      "allFourWorkbenchesLoaded": true,
+      "longRecordingAfterCancel": true
     }
   },
   "responsive": {
@@ -69,10 +75,10 @@
           "visible": true,
           "inViewport": true,
           "rect": {
-            "x": 26.0,
+            "x": 26,
             "y": 90.5,
             "width": 86.7,
-            "height": 44.0
+            "height": 44
           }
         }
       },
@@ -127,10 +133,10 @@
           "visible": true,
           "inViewport": true,
           "rect": {
-            "x": 26.0,
+            "x": 26,
             "y": 90.5,
             "width": 86.7,
-            "height": 44.0
+            "height": 44
           }
         }
       },
@@ -171,7 +177,7 @@
           "visible": true,
           "inViewport": true,
           "rect": {
-            "x": 28.0,
+            "x": 28,
             "y": 610.5,
             "width": 340.0,
             "height": 48
@@ -188,7 +194,7 @@
             "x": 26.0,
             "y": 90.5,
             "width": 86.7,
-            "height": 44.0
+            "height": 44
           }
         }
       },
@@ -243,10 +249,10 @@
           "visible": true,
           "inViewport": true,
           "rect": {
-            "x": 26.0,
-            "y": 90.5,
-            "width": 86.7,
-            "height": 44.0
+            "x": 29.3,
+            "y": 98.4,
+            "width": 86.3,
+            "height": 43.8
           }
         }
       },
@@ -281,58 +287,98 @@
     }
   },
   "performance": {
-    "initialLoadMs": 1010.2,
+    "initialLoadMs": 365.4,
     "gachaHeroHeightRatio1080p": 0.663,
     "beatHoloMotionFps": {
-      "fps": 148.3,
-      "avgFrameMs": 6.74,
-      "maxFrameMs": 27.5,
-      "frames": 297,
-      "durationMs": 2003,
+      "fps": 87.5,
+      "avgFrameMs": 11.43,
+      "maxFrameMs": 73.6,
+      "frames": 175,
+      "durationMs": 2001,
       "telemetry": null
     },
+    "liveAudioToCanvas": [
+      {
+        "bpm": 92,
+        "swing": 0.4,
+        "count": 10,
+        "minMs": 22.66666666666788,
+        "maxMs": 68.40579710145539
+      },
+      {
+        "bpm": 160,
+        "swing": 0.55,
+        "count": 10,
+        "minMs": 2.3333333333321207,
+        "maxMs": 54.33333333333576
+      }
+    ],
     "pinballFreeJamFps": {
-      "fps": 154.8,
-      "avgFrameMs": 6.46,
-      "maxFrameMs": 19.6,
-      "frames": 310,
+      "fps": 12,
+      "avgFrameMs": 83.48,
+      "maxFrameMs": 152.3,
+      "frames": 24,
       "durationMs": 2003,
       "telemetry": {
-        "activeBalls": 7,
-        "peakBalls": 8,
-        "activeParticles": 0,
-        "peakParticles": 5,
+        "activeBalls": 10,
+        "peakBalls": 10,
+        "activeParticles": 34,
+        "peakParticles": 34,
         "mode": "free",
         "maxBallsCap": 20
       }
     },
-    "forgeHeroHeightRatio1080p": 0.605
+    "forgeHeroHeightRatio1080p": 0.605,
+    "actualPcm": {
+      "bars": 28,
+      "error": 0,
+      "domMatches": true,
+      "seconds": 5.694,
+      "events": 61
+    }
   },
   "exports": {
     "png": {
-      "bytes": 1124026,
+      "bytes": 1125005,
       "width": 1200,
       "height": 1600
     },
     "wav": {
-      "bytes": 963500,
+      "bytes": 1093292,
       "channels": 2,
       "sampleRate": 48000,
       "bitsPerSample": 16,
-      "durationSec": 5.018,
-      "peakAmplitude": 21522,
-      "nonSilent": true
+      "durationSec": 5.694,
+      "peakAmplitude": 30195,
+      "nonSilent": true,
+      "bitDepth": 16,
+      "dataSize": 1093248,
+      "duration": 5.694,
+      "peak": 32768,
+      "final10msPeak": 0
     },
     "json": {
-      "bytes": 40232,
+      "bytes": 51235,
       "schema": "holobeat.project.v3",
       "kind": "minted-card",
       "code": "#MY-01",
       "title": "清晨弄堂"
     },
     "webm": {
-      "bytes": 1209712,
-      "validWebmMagic": true
+      "bytes": 1010299,
+      "validWebmMagic": true,
+      "videoFrames": 99,
+      "videoEndSec": 5.579,
+      "audioDuration": 5.64,
+      "decodedAudioPeak": 32768,
+      "expectedSec": 5.694
+    },
+    "edgeWebm": {
+      "videoFrames": 184,
+      "videoEndSec": 9.405,
+      "audioDuration": 9.48,
+      "decodedAudioPeak": 32768,
+      "expectedSec": 9.483
     }
   },
   "screenshots": [
@@ -346,5 +392,137 @@
     "08_forge_minted_card.png",
     "09_binder_remix.png",
     "10_compact_viewport.png"
-  ]
+  ],
+  "injectedFaults": {
+    "offlineAssetRequests": [],
+    "share503Responses": 2
+  },
+  "storageLifecycle": {
+    "blockedUpgradePreservesCollection": true,
+    "upgradeRetry": true,
+    "realTransactionAbortFallback": true,
+    "disabledIndexedDBFallback": true,
+    "dualStorageFailurePreservesDraft": true,
+    "idbOnlyRetryAndDoubleClick": true,
+    "reopenAfterDegradedAndPrimaryCommits": true
+  },
+  "audioLifecycle": {
+    "cold": true,
+    "hit": true,
+    "contentChanged": true,
+    "rendererVersion": true,
+    "audioAssetVersion": true,
+    "fxVersion": true,
+    "damagedPcm": true,
+    "forceRender": true,
+    "cacheWriteFailure": true,
+    "pendingSessionCancelled": true,
+    "retryPlayback": true,
+    "pageHideStopsPlayback": true,
+    "pauseFreezesTransport": true,
+    "resumeContinues": true,
+    "repeatStop": true,
+    "phraseWavMatrix": true,
+    "stopTail": true,
+    "zeroVolume": true,
+    "stopOverlappingPreview": true,
+    "cancelDuringPreparation": true,
+    "unsupportedMime": true,
+    "captureFailure": true,
+    "noAudioTrack": true,
+    "encoderFailure": true,
+    "drawFailure": true,
+    "pageHideDuringCapture": true,
+    "completeRetry": true
+  },
+  "phraseAudio": [
+    {
+      "phrase": "A",
+      "bars": 1,
+      "bpm": 120,
+      "swing": 0,
+      "fx": false,
+      "steps": [
+        3,
+        15
+      ],
+      "durationSec": 3.544,
+      "dataSize": 680448,
+      "peak": 3030,
+      "final10msPeak": 0,
+      "sampleRate": 48000,
+      "channelCount": 2,
+      "bitDepth": 16
+    },
+    {
+      "phrase": "B",
+      "bars": 2,
+      "bpm": 90,
+      "swing": 0.4,
+      "fx": false,
+      "steps": [
+        16,
+        29,
+        31
+      ],
+      "durationSec": 4.258,
+      "dataSize": 817536,
+      "peak": 2960,
+      "final10msPeak": 0,
+      "sampleRate": 48000,
+      "channelCount": 2,
+      "bitDepth": 16
+    },
+    {
+      "phrase": "AB",
+      "bars": 2,
+      "bpm": 60,
+      "swing": 0.6,
+      "fx": true,
+      "steps": [
+        3,
+        3,
+        15,
+        15,
+        16,
+        16,
+        29,
+        29,
+        31,
+        31
+      ],
+      "durationSec": 17.163,
+      "dataSize": 3295296,
+      "peak": 4511,
+      "final10msPeak": 0,
+      "sampleRate": 48000,
+      "channelCount": 2,
+      "bitDepth": 16
+    },
+    {
+      "phrase": "A",
+      "bars": 2,
+      "bpm": 180,
+      "swing": 0.1,
+      "fx": false,
+      "steps": [
+        3,
+        15
+      ],
+      "durationSec": 2.867,
+      "dataSize": 550464,
+      "peak": 3098,
+      "final10msPeak": 0,
+      "sampleRate": 48000,
+      "channelCount": 2,
+      "bitDepth": 16
+    }
+  ],
+  "routes": {
+    "/health": 200,
+    "/api/health": 200,
+    "/generate": 404
+  },
+  "restartVerified": true,
+  "passed": true
 }

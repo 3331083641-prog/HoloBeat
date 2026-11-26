@@ -4,7 +4,7 @@
 - **基线提交**：`cb97527`（`feat/huacan-deep-redesign` 接入全部 **29/29** GPT Image 2 实绘视觉资产后最终实测）
 - **测试环境**：Windows 11 (`AMD64`) · Python `3.12.4` · Node.js `v24.15.0`
 - **验证浏览器**：Google Chrome `158.0.8127.89` · Microsoft Edge `158.0.4370.33`
-- **原始机器指标文件**：[`e2e_metrics.json`](./e2e_metrics.json)（本文所有数据 100% 与该文件严格一致）
+- 本文记录 11:17 的历史测试。对应数据见 [Antigravity 基准提交中的机器指标](https://github.com/3331083641-prog/HoloBeat/blob/09c622618d833fda11e1aee54b149a8401b4ecbe/07_showcase/reports/e2e_metrics.json)。后续可靠性修复的结果见 [V2.1 专项实测](./v21_test_results.md)。
 
 ---
 
