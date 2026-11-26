@@ -7,16 +7,18 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from urllib.parse import urlsplit
 from playwright.sync_api import sync_playwright
+from reliability_e2e import wav_stats, webm_stats, get
 
 BASE_URL = os.environ.get("HOLOBEAT_URL", "http://127.0.0.1:5173")
 BACKEND_URL = os.environ.get("HOLOBEAT_BACKEND_URL", "http://127.0.0.1:3789")
 CHROME_PATH = "C:/Program Files/Google/Chrome/Application/chrome.exe"
 EDGE_PATH = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 
-ROOT_DIR = Path("D:/HoloBeat")
-SHOTS_DIR = ROOT_DIR / "07_showcase" / "screenshots"
-EXPORTS_DIR = ROOT_DIR / "07_showcase" / "exports"
+ROOT_DIR = Path(__file__).resolve().parents[2]
+SHOTS_DIR = ROOT_DIR / "07_showcase" / "screenshots" / "v21"
+EXPORTS_DIR = ROOT_DIR / "07_showcase" / "exports" / "v21"
 REPORTS_DIR = ROOT_DIR / "07_showcase" / "reports"
 
 SHOTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -143,11 +145,64 @@ def check_control_in_viewport(page, testid: str, vw: int, vh: int):
     }
 
 
-def run_suite():
-    # Clean legacy screenshot filenames to guarantee only current verified 10-shot showcase exists
-    for old_png in SHOTS_DIR.glob("*.png"):
-        old_png.unlink()
+def attach_store(page):
+    page.get_by_test_id("nav-gacha").wait_for(timeout=60000)
+    page.evaluate("""async () => {
+        const path = performance.getEntriesByType('resource').find(r=>r.name.includes('/src/store/useHoloStore.ts'));
+        window.state = (await import(path.name)).useHoloStore.getState;
+    }""")
+    page.wait_for_function("state().dbHydrated")
 
+
+def measure_impacts(page):
+    # Observe the existing Antigravity ripple's first Canvas arc. The instrument schedules
+    # notes on the AudioContext clock. Both clocks are sampled inside the same browser.
+    page.evaluate("""async () => {
+        const {holoAudio} = await import('/src/audio/HoloAudioEngine.ts');
+        document.documentElement.dataset.measureMotion='true';
+        window.observedImpacts=[];
+        const proto=CanvasRenderingContext2D.prototype;
+        const arc=proto.arc;
+        window.restoreArc=()=>{proto.arc=arc;delete document.documentElement.dataset.measureMotion};
+        proto.arc=function(x,y,r,...args){
+          const out=arc.call(this,x,y,r,...args);
+          if(state().isPlaying && (Math.abs(r-(10+30/18))<0.0001 || Math.abs(r-11)<0.0001)){
+            const w=this.canvas.clientWidth, h=this.canvas.clientHeight;
+            const left=state().beatStageMode?16:382;
+            const step=Math.round((x-left)/((w-14-left)/16)-.5);
+            const track=Math.round(y/(h/4)-.55);
+            if(track>=0 && track<4 && step>=0 && step<16) window.observedImpacts.push({
+              step:step+(state().activePhrase==='B'?16:0),track,clockMs:holoAudio.getAudioClockMs()});
+          }
+          return out;
+        };
+    }""")
+    evidence=[]
+    settings=page.evaluate("({bpm:state().bpm,swing:state().swing})")
+    try:
+        for bpm,swing in [(92,.4),(160,.55)]:
+            page.get_by_test_id("beat-stop-btn").click()
+            page.evaluate("""([b,s])=>{state().setBpm(b);state().setSwing(s);
+                window.observedImpacts=[];performance.clearMarks('holobeat-live-note')}""",[bpm,swing])
+            page.get_by_test_id("beat-play-btn").click()
+            page.wait_for_function("observedImpacts.length>=8",timeout=20000)
+            pairs=page.evaluate("""() => {
+                const notes=performance.getEntriesByName('holobeat-live-note').map(x=>x.detail);
+                return observedImpacts.map(f=>{
+                    const matches=notes.filter(n=>n.trackIndex===f.track && n.stepIndex===f.step);
+                    const n=matches.sort((a,b)=>Math.abs(a.clockMs-f.clockMs)-Math.abs(b.clockMs-f.clockMs))[0];
+                    return n ? f.clockMs-n.clockMs : null;
+                });
+            }""")
+            assert None not in pairs and min(pairs)>-20 and max(pairs)<100,(bpm,pairs)
+            evidence.append({"bpm":bpm,"swing":swing,"count":len(pairs),"minMs":min(pairs),"maxMs":max(pairs)})
+    finally:
+        page.get_by_test_id("beat-stop-btn").click()
+        page.evaluate("v=>{restoreArc();state().setBpm(v.bpm);state().setSwing(v.swing)}",settings)
+    return evidence
+
+
+def run_suite(start_archive=None):
     metrics = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "sourceCommit": get_git_commit(),
@@ -179,46 +234,54 @@ def run_suite():
         )
         page = context.new_page()
 
-        page.on(
-            "console",
-            lambda msg: metrics["chrome"]["consoleErrors"].append(msg.text)
-            if msg.type == "error"
-            else None,
-        )
+        injected_share_error=False
+        offline_mint=False
+        metrics["injectedFaults"]={"offlineAssetRequests":[], "share503Responses":0}
+        def log_console(msg):
+            if msg.type != "error":
+                return
+            location = urlsplit(msg.location.get("url",""))
+            if (offline_mint and msg.text.endswith("net::ERR_INTERNET_DISCONNECTED")
+                    and location.netloc == urlsplit(BASE_URL).netloc
+                    and location.path.lower().endswith((".woff2",".woff",".png",".webp",".svg",".jpg"))):
+                metrics["injectedFaults"]["offlineAssetRequests"].append(location.path.split("/")[-1])
+                return
+            if injected_share_error and location.path == "/api/shares" and "503" in msg.text:
+                metrics["injectedFaults"]["share503Responses"]+=1
+                return
+            metrics["chrome"]["consoleErrors"].append(msg.text+" "+location.path.rsplit("/",1)[-1] if offline_mint else msg.text)
+        page.on("console",log_console)
         page.on("pageerror", lambda err: metrics["chrome"]["pageErrors"].append(str(err)))
 
         t0 = time.perf_counter()
-        page.goto(BASE_URL, wait_until="networkidle")
+        page.goto(BASE_URL, wait_until="domcontentloaded", timeout=60000)
         metrics["performance"]["initialLoadMs"] = round((time.perf_counter() - t0) * 1000, 1)
 
-        # Clean storage for deterministic fresh run
-        page.evaluate(
-            """async () => {
-                localStorage.clear();
-                if (indexedDB && indexedDB.deleteDatabase) {
-                    indexedDB.deleteDatabase('HoloBeatStudioDB');
-                }
-            }"""
-        )
-        page.reload(wait_until="networkidle")
-        page.wait_for_selector("[data-testid='nav-gacha']")
-        page.wait_for_timeout(450)
-
+        # Each browser context has a fresh, isolated origin database.
+        attach_store(page)
         # Unlock audio
         power_btn = page.locator("button", has_text="启动声音")
         if power_btn.is_visible():
             power_btn.click()
             page.wait_for_timeout(400)
-        metrics["chrome"]["checks"]["audioUnlock"] = True
+        page.wait_for_function("state().audioUnlocked")
+        metrics["chrome"]["checks"]["audioUnlock"] = page.evaluate("state().audioUnlocked")
 
         # --- 01 声卡盲盒: 抽卡 + 刮开 + 英雄卡截图 + 翻看卡背截图 + 主题声景 ---
         page.locator("[data-testid='gacha-pull-btn']").click()
-        page.wait_for_timeout(950)
-        unbox_btn = page.locator("button", has_text="立即刮开")
+        page.wait_for_function("state().totalPulls>0")
+        unbox_btn = page.get_by_test_id("gacha-quick-btn")
         if unbox_btn.is_visible():
             unbox_btn.click()
             page.wait_for_timeout(420)
 
+        # Keep the pulled card's identity before selecting a different gallery card.
+        pulled_id = page.evaluate("state().selectedGachaCardId")
+        page.get_by_test_id("gacha-slot-btn").click()
+        page.get_by_role("button",name="装入→").first.click()
+        page.get_by_test_id("beat-play-btn").wait_for()
+        metrics["chrome"]["checks"]["pulledCardInstalled"] = page.evaluate("id=>state().tracks.some(t=>t.cardId===id)",pulled_id)
+        page.get_by_test_id("nav-gacha").click()
         # Select flagship benchmark hero (#05 二八车铃) after verifying pull so 01_gacha_hero showcases redesigned benchmark
         bell_slot = page.locator("button", has_text="二八车铃").first
         if bell_slot.is_visible():
@@ -237,7 +300,7 @@ def run_suite():
         shot_01 = SHOTS_DIR / "01_gacha_hero.png"
         page.screenshot(path=str(shot_01))
         metrics["screenshots"].append(shot_01.name)
-        metrics["chrome"]["checks"]["gachaPullAndReveal"] = True
+        metrics["chrome"]["checks"]["gachaPullAndReveal"] = page.evaluate("state().totalPulls>0 && !state().needsScratch")
 
         # Flip card back & capture 02_gacha_card_back.png
         page.locator("[data-testid='gacha-flip-btn']").click()
@@ -254,6 +317,9 @@ def run_suite():
         page.wait_for_timeout(350)
 
         # Load curated soundscape 清晨弄堂 -> goes cleanly to Beat Deck with flagship A/B 2-bar work!
+        power = page.get_by_role("button",name="启动声音")
+        if power.is_visible():
+            power.click()
         page.locator("[data-testid='gacha-soundscapes-btn']").click()
         page.wait_for_selector("[data-testid^='soundscape-load-']")
         page.locator("[data-testid^='soundscape-load-']").first.click()
@@ -270,6 +336,8 @@ def run_suite():
         metrics["screenshots"].append(shot_03.name)
         metrics["performance"]["beatHoloMotionFps"] = measure_fps(page, 2000)
         metrics["chrome"]["checks"]["beatPlaybackAndHoloMotion"] = True
+
+        metrics["performance"]["liveAudioToCanvas"] = measure_impacts(page)
 
         # Open collapsible Fine Variation bar + apply rule-constrained Call & Response variation -> capture 04_beat_variation.png
         page.locator("[data-testid='beat-fine-toggle']").click()
@@ -351,7 +419,8 @@ def run_suite():
         metrics["chrome"]["checks"]["pinballQuantizePreviewWithLossStats"] = (
             "量化预览" in q_text and "偏移" in q_text
         )
-        page.locator("button", has_text="取消").first.click()
+        page.get_by_role("button", name="合并至当前轨").click()
+        page.wait_for_function("!state().pinballQuantizePreview")
         page.wait_for_timeout(200)
 
         # Empty Pinball recording guard verification (clear toys & auto-drop so airborne balls can't re-record)
@@ -400,9 +469,33 @@ def run_suite():
             else 0
         )
 
+        page.get_by_test_id("forge-pcm-badge").filter(has_text="真实 PCM 声纹").wait_for(timeout=60000)
         pcm_badge_text = page.locator("[data-testid='forge-pcm-badge']").inner_text()
         metrics["chrome"]["checks"]["realPcmUiBadgeVisible"] = ("真实 PCM 声纹" in pcm_badge_text)
 
+        metrics["performance"]["actualPcm"] = page.evaluate("""async () => {
+            const snap=state().forgeDraft.snapshot;
+            const {renderCompositionSnapshotCached}=await import('/src/audio/wavExporter.ts');
+            const {holoDb}=await import('/src/storage/holoDb.ts');
+            const {extractRealWaveformBars}=await import('/src/audio/compositionEngine.ts');
+            const artifact=await renderCompositionSnapshotCached(snap);
+            const cached=await holoDb.getAudioCache(artifact.cacheKey,snap.id);
+            if(!cached) throw Error('missing audio cache');
+            const ctx=new OfflineAudioContext(2,1,cached.sampleRate);
+            const buffer=await ctx.decodeAudioData(await cached.wavBlob.arrayBuffer());
+            const bars=extractRealWaveformBars(buffer,cached.waveformBars.length);
+            const error=Math.max(...bars.map((v,i)=>Math.abs(v-cached.waveformBars[i])));
+            if(bars.length!==28 || Math.max(...bars)<=Math.min(...bars) || error>.005) throw Error('PCM discrepancy '+error);
+            const elements=[...document.querySelectorAll('[data-testid="forge-hero-card-wrap"] span')];
+            const shown=elements.filter(e=>e.style.height.endsWith('%') && e.style.backgroundColor);
+            const domMatches=shown.length===bars.length && shown.every((e,i)=>parseInt(e.style.height,10)===Math.round(cached.waveformBars[i]*100));
+            return {bars:bars.length,error,domMatches,seconds:buffer.duration,events:snap.events.length};
+        }""")
+        pcm = metrics["performance"]["actualPcm"]
+        metrics["chrome"]["checks"]["realPcmWaveformRendered"] = (
+            metrics["chrome"]["checks"]["realPcmUiBadgeVisible"] and pcm["domMatches"]
+            and pcm["error"] <= .005 and pcm["bars"] == 28 and pcm["events"] > 0
+        )
         # Snapshot Immutability Check
         spec_before = page.locator("text=/BPM · \\d+ 音符/").first.inner_text()
         page.locator("[data-testid='nav-beat']").click()
@@ -420,9 +513,14 @@ def run_suite():
         page.screenshot(path=str(shot_07))
         metrics["screenshots"].append(shot_07.name)
 
+        offline_mint=True
+        context.set_offline(True)
         # Mint #MY-01
         page.locator("[data-testid='forge-mint-btn']").click()
-        page.wait_for_selector("text=藏品鉴赏 · #MY-01", timeout=10000)
+        page.wait_for_function("state().mintedCards.some(c=>c.code==='#MY-01' && c.id===state().inspectMintedId)", timeout=60000)
+        page.get_by_test_id("forge-unseal-btn").wait_for()
+        context.set_offline(False)
+        offline_mint=False
         page.wait_for_timeout(850)
         metrics["chrome"]["checks"]["mintedCardMY01"] = True
 
@@ -443,6 +541,7 @@ def run_suite():
         wav_path = EXPORTS_DIR / "hutong-groove.wav"
         dl_wav.value.save_as(str(wav_path))
         wav_info = verify_wav_file(wav_path)
+        wav_info.update(wav_stats(wav_path))
         metrics["exports"]["wav"] = wav_info
         metrics["chrome"]["checks"]["wavPcmNonSilent"] = bool(wav_info["nonSilent"])
 
@@ -463,11 +562,16 @@ def run_suite():
         )
 
         # Motion Card WebM Export (Full Duration + Audio Track!)
-        with page.expect_download(timeout=35000) as dl_webm:
-            page.locator("[data-testid='forge-export-motion']").click()
+        page.evaluate("""async()=>{window.exportMessages=[]; const m=performance.getEntriesByType('resource').find(r=>r.name.includes('/src/store/useHoloStore.ts')); const {useHoloStore}=await import(m.name); useHoloStore.subscribe((s,p)=>{if(s.toasts!==p.toasts) window.exportMessages.push(...s.toasts.map(t=>t.text))})}""")
+        try:
+            with page.expect_download(timeout=30000+int(1000*wav_info["duration"])) as dl_webm:
+                page.get_by_test_id("forge-export-motion").click()
+        except Exception as exc:
+            raise AssertionError("Forge WebM download: "+str(page.evaluate("Array.from(new Set(window.exportMessages)).slice(-8)"))) from exc
         webm_path = EXPORTS_DIR / "hutong-groove-motion.webm"
         dl_webm.value.save_as(str(webm_path))
         webm_info = verify_webm_file(webm_path)
+        webm_info.update(webm_stats(webm_path,wav_info["duration"]))
         metrics["exports"]["webm"] = webm_info
         metrics["chrome"]["checks"]["motionCardWebmExported"] = bool(webm_info["validWebmMagic"])
 
@@ -475,17 +579,19 @@ def run_suite():
         bad_json_path = REPORTS_DIR / "_tmp_corrupt.holobeat.json"
         bad_json_path.write_text('{"schema":"broken","card":{"id":123}}', encoding="utf-8")
         page.locator("input[type='file']").set_input_files(str(bad_json_path))
-        page.wait_for_timeout(450)
+        page.wait_for_function("state().toasts.some(t=>/格式|导入失败/.test(t.text))")
+        assert page.evaluate("state().mintedCards.filter(c=>!c.isDemo).length===1")
         bad_json_path.unlink(missing_ok=True)
         metrics["chrome"]["checks"]["corruptJsonImportRejectedSafely"] = page.locator(
             "text=清晨弄堂"
         ).first.is_visible()
 
         # Reload Persistence Verification
-        page.reload(wait_until="networkidle")
+        page.reload(wait_until="domcontentloaded", timeout=60000)
+        attach_store(page)
         page.wait_for_selector("[data-testid='nav-forge']")
         page.locator("[data-testid='nav-forge']").click()
-        page.wait_for_timeout(550)
+        page.wait_for_function("state().dbHydrated && state().mintedCards.filter(c=>!c.isDemo).length===1")
         binder_section = page.locator("section", has_text="我的卡册")
         persisted = binder_section.locator("text=清晨弄堂").first.is_visible()
         metrics["chrome"]["checks"]["indexedDbReloadPersistence"] = bool(persisted)
@@ -510,7 +616,11 @@ def run_suite():
         page.locator("[data-testid='forge-sticker-bell']").click()
         page.wait_for_timeout(250)
         page.locator("[data-testid='forge-mint-btn']").click()
-        page.wait_for_selector("text=藏品鉴赏 · #MY-02", timeout=10000)
+        try:
+            page.wait_for_function("state().mintedCards.some(c=>c.code==='#MY-02' && c.id===state().inspectMintedId)",timeout=60000)
+        except Exception as error:
+            raise AssertionError("Remix mint: "+str(page.evaluate("({cards:state().mintedCards.map(c=>c.code),storage:state().lastStorageError,messages:state().toasts.map(t=>t.text)})"))) from error
+        page.get_by_test_id("forge-unseal-btn").wait_for()
         metrics["chrome"]["checks"]["stickerChangeCreatesNewVersionMY02"] = True
 
         # --- Responsive Layout & Clickability Matrix across 4 Standard Desktop Viewports ---
@@ -554,38 +664,64 @@ def run_suite():
 
         metrics["chrome"]["checks"]["allFourViewportsNoOverflowAndClickable"] = all_responsive_ok
 
-        # Optional Backend Read-Only Share HTML Showcase Check (if backend is running)
-        try:
-            import urllib.request
-            with urllib.request.urlopen(f"{BACKEND_URL}/api/health", timeout=1.5) as r:
-                if r.status == 200:
-                    page.set_viewport_size({"width": 1440, "height": 900})
-                    share_payload = json.dumps(parsed_proj["card"]).encode("utf-8")
-                    req_save = urllib.request.Request(
-                        f"{BACKEND_URL}/api/cards",
-                        data=share_payload,
-                        headers={"Content-Type": "application/json"},
-                        method="POST",
-                    )
-                    urllib.request.urlopen(req_save, timeout=3)
-                    req_share = urllib.request.Request(
-                        f"{BACKEND_URL}/api/shares",
-                        data=json.dumps({"cardId": parsed_proj["card"]["id"]}).encode("utf-8"),
-                        headers={"Content-Type": "application/json"},
-                        method="POST",
-                    )
-                    with urllib.request.urlopen(req_share, timeout=3) as sr:
-                        share_info = json.loads(sr.read().decode("utf-8"))
-                    share_page = context.new_page()
-                    share_page.goto(share_info["shareUrl"], wait_until="networkidle")
-                    html_ok = share_page.locator("text=只读作品展页").is_visible() and share_page.locator(
-                        "text=清晨弄堂"
-                    ).first.is_visible()
-                    metrics["chrome"]["checks"]["backendShareHtmlShowcaseVerified"] = bool(html_ok)
-                    share_page.close()
-        except Exception as exc:
-            metrics["chrome"]["checks"]["backendShareHtmlShowcaseVerified"] = f"error:{exc}"
+        # Use only the isolated archive supplied by the owning runner.
+        if "HOLOBEAT_BACKEND_URL" not in os.environ:
+            raise RuntimeError("Run reliability_e2e.py to provide a disposable archive")
+        if start_archive:
+            start_archive()
+        page.set_viewport_size({"width":1920,"height":1080})
+        page.get_by_test_id("nav-forge").click()
+        page.get_by_test_id("binder-item-minted-"+parsed_proj["card"]["id"]).click()
+        injected_share_error=True
+        page.route(BACKEND_URL+"/api/shares",lambda route: route.fulfill(status=503,
+            headers={"Access-Control-Allow-Origin":BASE_URL},content_type="application/json",body="{}"))
+        share_button=page.get_by_role("button",name="只读分享")
+        share_button.click()
+        page.wait_for_function("state().toasts.some(t=>t.text==='作品已成功归档，但分享链接创建失败。')")
+        metrics["chrome"]["checks"]["partialArchiveReported"]=json.loads(get(BACKEND_URL+"/api/health")[1])["cardsCount"]==1
+        page.unroute(BACKEND_URL+"/api/shares")
+        injected_share_error=False
+        with page.expect_response(lambda res:res.request.method=="POST" and res.url==BACKEND_URL+"/api/shares") as confirmed:
+            share_button.click()
+        assert confirmed.value.status in (200,201)
+        outcome = page.evaluate("""async card => {
+            const client = await import('/src/utils/backendClient.ts');
+            const saved = await client.syncCardToBackend(card);
+            if(saved.status!=='SHARED') throw Error(saved.status+' '+saved.error);
+            const again = await client.syncCardToBackend(card);
+            if(again.share?.token!==saved.share.token) throw Error('unstable share');
+            return saved.share;
+        }""",parsed_proj["card"])
+        share_page = context.new_page()
+        share_page.goto(outcome["shareUrl"])
+        metrics["chrome"]["checks"]["backendShareHtmlShowcaseVerified"] = share_page.get_by_text("清晨弄堂",exact=True).first.is_visible()
+        share_page.close()
+        assert get(outcome["apiUrl"])[0] == 200
+        revoked = page.evaluate("""async token=>(await import('/src/utils/backendClient.ts')).revokeCardShare(token)""",outcome["token"])
+        metrics["chrome"]["checks"]["revoke"] = revoked["status"]=="REVOKED" and get(outcome["apiUrl"])[0]==404 and get(outcome["shareUrl"])[0]==404
+        title = parsed_proj["card"]["title"]
+        page.get_by_test_id("nav-forge").click()
+        page.get_by_test_id("binder-item-minted-"+page.evaluate("state().mintedCards.find(c=>c.code==='#MY-02').id")).click()
+        assert page.evaluate("state().inspectMintedId") != parsed_proj["card"]["id"]
+        page.locator("input[type=file]").set_input_files(str(json_path))
+        page.wait_for_function("title=>state().mintedCards.find(c=>c.id===state().inspectMintedId)?.title===title",arg=title)
+        metrics["chrome"]["checks"]["validProjectImport"] = page.evaluate("id=>!!state().mintedCards.find(c=>c.id===id)",parsed_proj["card"]["id"])
 
+        faults = browser.new_context()
+        testpage=faults.new_page()
+        testpage.goto(BASE_URL,wait_until="domcontentloaded")
+        attach_store(testpage)
+        metrics["storageLifecycle"]=testpage.evaluate("async()=>(await import('/tests/storage-browser.ts')).verifyStorageLifecycle()")
+        faults.close()
+        audioctx=browser.new_context()
+        testpage=audioctx.new_page()
+        testpage.goto(BASE_URL,wait_until="domcontentloaded")
+        attach_store(testpage)
+        testpage.get_by_role("button",name="启动声音").click()
+        metrics["audioLifecycle"]=testpage.evaluate("async()=>(await import('/tests/audio-browser.ts')).verifyAudioLifecycle()")
+        metrics["phraseAudio"]=testpage.evaluate("async()=>(await import('/tests/audio-browser.ts')).verifyPhrases()")
+        audioctx.close()
+        assert all(v is True for v in metrics["storageLifecycle"].values()) and all(v is True for v in metrics["audioLifecycle"].values())
         browser.close()
 
         # ======================== 2. MICROSOFT EDGE COMPATIBILITY CHECK ========================
@@ -604,12 +740,32 @@ def run_suite():
                 else None,
             )
             edge_page.on("pageerror", lambda err: metrics["edge"]["pageErrors"].append(str(err)))
-            edge_page.goto(BASE_URL, wait_until="networkidle")
+            edge_page.goto(BASE_URL, wait_until="domcontentloaded", timeout=60000)
             edge_page.wait_for_selector("[data-testid='nav-gacha']")
             for tab_id in ["gacha", "beat", "pinball", "forge"]:
                 edge_page.locator(f"[data-testid='nav-{tab_id}']").click()
                 edge_page.wait_for_timeout(280)
             metrics["edge"]["checks"]["allFourWorkbenchesLoaded"] = True
+            attach_store(edge_page)
+            # Record a slow, two-bar work so truncating at seven seconds fails the decode check.
+            edge_page.get_by_test_id("nav-beat").click()
+            edge_page.evaluate("state().setBpm(60);state().setBeatBars(2)")
+            edge_page.get_by_test_id("beat-to-forge-btn").click()
+            edge_page.get_by_test_id("forge-pcm-badge").filter(has_text="真实 PCM 声纹").wait_for(timeout=60000)
+            edge_page.get_by_test_id("forge-export-motion").click()
+            edge_page.get_by_test_id("forge-cancel-motion").click()
+            edge_page.get_by_test_id("forge-export-motion").wait_for()
+            with edge_page.expect_download(timeout=90000) as audio_file:
+                edge_page.get_by_test_id("forge-export-wav").click()
+            edge_wav = EXPORTS_DIR / "edge-long.wav"
+            audio_file.value.save_as(edge_wav)
+            with edge_page.expect_download(timeout=90000) as video_file:
+                edge_page.get_by_test_id("forge-export-motion").click()
+            edge_webm = EXPORTS_DIR / "edge-long.webm"
+            video_file.value.save_as(edge_webm)
+            duration = wav_stats(edge_wav)["duration"]
+            metrics["exports"]["edgeWebm"] = webm_stats(edge_webm,duration)
+            metrics["edge"]["checks"]["longRecordingAfterCancel"] = duration>7
             edge_browser.close()
 
     report_json = REPORTS_DIR / "e2e_metrics.json"
@@ -624,6 +780,7 @@ def run_suite():
         failures.append("Edge console/page errors detected")
 
     required_bool_checks = [
+        "partialArchiveReported","pulledCardInstalled","revoke","validProjectImport","backendShareHtmlShowcaseVerified",
         "audioUnlock",
         "gachaPullAndReveal",
         "cardBackLocalized",
@@ -635,7 +792,7 @@ def run_suite():
         "pinballRealRecording",
         "pinballQuantizePreviewWithLossStats",
         "emptyPinballGuardRejected",
-        "realPcmUiBadgeVisible",
+        "realPcmUiBadgeVisible", "realPcmWaveformRendered",
         "snapshotImmutabilityVerified",
         "mintedCardMY01",
         "wavPcmNonSilent",
@@ -652,6 +809,8 @@ def run_suite():
         if val is not True:
             failures.append(f"Required check failed: {key} = {val!r}")
 
+    if not all(metrics["edge"]["checks"].get(k) is True for k in ("allFourWorkbenchesLoaded","longRecordingAfterCancel")):
+        failures.append("Edge full audio/video verification missing")
     if len(metrics["screenshots"]) < 10:
         failures.append(f"Expected 10 showcase screenshots, got {len(metrics['screenshots'])}")
 
@@ -668,4 +827,5 @@ def run_suite():
 
 
 if __name__ == "__main__":
-    run_suite()
+    from reliability_e2e import main
+    main()
