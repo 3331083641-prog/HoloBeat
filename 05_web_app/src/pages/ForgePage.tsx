@@ -220,7 +220,7 @@ export const ForgePage: React.FC = () => {
       document.removeEventListener('visibilitychange', hidden);
       motionAbortRef.current?.abort();
     };
-  }, [inspectMintedId, activeSnapshot]);
+  }, [inspectMintedId, activeSnapshot?.id]);
 
   // Live waveform playhead sweep loop during canonical WAV audition
   useEffect(() => {

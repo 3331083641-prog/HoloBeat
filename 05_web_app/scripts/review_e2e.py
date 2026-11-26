@@ -179,6 +179,18 @@ def run_browser(p,name,base,api,metrics,temp):
       checks['localAncestorThenRemixShare']=True
       page.wait_for_function('S.getState().mintedCards.find(c=>c.id===S.getState().inspectMintedId)?.waveformIsRealPcm===true')
       page.screenshot(path=str(SHOTS/f'{name}-forge.png'))
+      page.get_by_test_id('forge-play-btn').click()
+      page.wait_for_function('E.isSnapshotPlaying()')
+      check(page,'''async()=>{
+        const source=E.activeBufferSource;
+        const c=S.getState().mintedCards.find(c=>c.id===S.getState().inspectMintedId);
+        await S.getState().updateMintedCardWaveform(c.id,[...c.waveformBars],true);
+        await new Promise(ok=>requestAnimationFrame(()=>requestAnimationFrame(ok)));
+        return E.activeBufferSource===source && E.isSnapshotPlaying();
+      }''')
+      page.get_by_test_id('forge-play-btn').click()
+      checks['pcmMetadataSaveKeepsOwnedPlayback']=True
+
       # Second isolated browser album starts its own MY-01, then imports/rearchives existing work.
       other=browser.new_context(viewport={'width':1600,'height':1000})
       q=other.new_page();q.goto(base);attach(q)
