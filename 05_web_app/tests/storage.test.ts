@@ -299,3 +299,34 @@ test('shipped historic V3 showcase migrates without changing archive id, legacy 
   assert.equal(current.code,original.code);
   assert.deepEqual(current.snapshot,original.snapshot);
 });
+
+test('legacy PCM badge expires until a successful current waveform write; original backup and work identity survive', async () => {
+  const old = JSON.parse(readFileSync(new URL('../../07_showcase/exports/hutong-groove.holobeat.json',import.meta.url),'utf8')).card;
+  old.waveformIsRealPcm = true;
+  const raw = JSON.stringify([old]);
+  mirror.set('holobeat-minted-mirror-v3',raw);
+  await initial.hydrateFromIndexedDb();
+  const migrated = useHoloStore.getState().mintedCards[0];
+  assert.equal(migrated.waveformIsRealPcm,false);
+  assert.deepEqual(migrated.waveformBars,old.waveformBars);
+  const bars = Array.from({length:28}, (_,i) => i/27);
+  holoDb.setTestWriteFailureMode('all-fail');
+  try { await initial.updateMintedCardWaveform(old.id,bars,true); }
+  finally { holoDb.setTestWriteFailureMode('none'); }
+  assert.equal(useHoloStore.getState().mintedCards[0].waveformIsRealPcm,false);
+  await initial.updateMintedCardWaveform(old.id,bars,true);
+  const current = (await holoDb.loadLibrary(seed)).cards[0];
+  assert.equal(current.waveformIsRealPcm,true);
+  assert.deepEqual(current.waveformBars,bars);
+  assert.deepEqual(current.snapshot,old.snapshot);
+  assert.equal(current.id,old.id);
+  assert.equal(current.contentHash,await buildMintIdempotencyKey(old));
+  assert.equal(current.idempotencyKey,old.idempotencyKey);
+  assert.equal(mirror.get('migration-backup:holobeat-minted-mirror-v3'),raw);
+  // A later DSP release must also invalidate existing, otherwise valid, saved PCM badges.
+  const previous = JSON.parse(mirror.get('holobeat-library-v4')!);
+  previous.waveformRendererVersion = 'obsolete-dsp';
+  setDb(undefined);
+  mirror.set('holobeat-library-v4',JSON.stringify(previous));
+  assert.equal((await holoDb.loadLibrary(seed)).cards[0].waveformIsRealPcm,false);
+});

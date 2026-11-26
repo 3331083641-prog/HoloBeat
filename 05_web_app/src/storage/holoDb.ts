@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { createSchemas } from '../../../shared/card-schema.mjs';
 import {
-  buildAudioCacheKey, computeSoundSigilSeed, createBeatCompositionSnapshot, normalizePinballEvents,
+  RENDERER_VERSION, buildAudioCacheKey, computeSoundSigilSeed, createBeatCompositionSnapshot, normalizePinballEvents,
 } from '../audio/compositionEngine.ts';
 import { buildMintIdempotencyKey } from "../../../shared/card-content.ts";
 import { migrateMintedCard } from "./schema.ts";
@@ -24,6 +24,7 @@ export interface Library {
   nextMintSerial: number;
 }
 interface StoredLibrary extends Library {
+  waveformRendererVersion?: string;
   version: 2;
   revision: number;
   head?: string;
@@ -149,7 +150,9 @@ async function migrateCard(value: MintedCard & {beatSnapshot?: BeatSnapshot; pin
     card = migrated;
   }
   if (!MintedCardSchema.safeParse(card).success) throw new Error('旧版藏品校验失败，原件已保留');
-  return { ...card, contentHash: await buildMintIdempotencyKey(card) };
+  // The original cache had no validated PCM digest or extractor version. Keep its bars as a
+  // preview until the current renderer has produced the waveform for this exact snapshot.
+  return { ...card, waveformIsRealPcm: false, contentHash: await buildMintIdempotencyKey(card) };
 }
 
 type ReadResult = { state: StoredLibrary; migrate: boolean; primaryHead?: string; mirrorHead?: string };
@@ -176,7 +179,12 @@ async function readLibrary(initial: Library): Promise<ReadResult> {
         throw new Error('两份收藏库分别发生过修改，请保留两份数据并处理冲突');
       }
     }
-    return { state: validateLibrary(newest), migrate: newest === mirror && !!primary && newest.head !== primary.head,
+    const verified = validateLibrary(newest);
+    const state = verified.waveformRendererVersion === RENDERER_VERSION ? verified : {
+      ...verified, cards: verified.cards.map(card => card.waveformIsRealPcm
+        ? { ...card, waveformIsRealPcm: false } : card),
+    };
+    return { state, migrate: newest === mirror && !!primary && newest.head !== primary.head,
       primaryHead: primary?.head ?? mirror?.primaryHead, mirrorHead: mirror?.head };
   }
 
@@ -252,7 +260,7 @@ async function readLibrary(initial: Library): Promise<ReadResult> {
 
 async function commit(next: StoredLibrary, previous: ReadResult): Promise<SaveResult> {
   const head = crypto.randomUUID();
-  const library = { ...next, head, primaryHead: previous.primaryHead, mirrorHead: previous.mirrorHead };
+  const library = { ...next, head, waveformRendererVersion: RENDERER_VERSION, primaryHead: previous.primaryHead, mirrorHead: previous.mirrorHead };
   validateLibrary(library);
   if (testWriteFailureMode === 'all-fail') return { status: 'failed', storageLabel: '设备存储写入失败', error: '模拟存储空间不足' };
   try {

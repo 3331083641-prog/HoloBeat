@@ -1966,7 +1966,8 @@ export const useHoloStore = create<HoloState>()(
       updateMintedCardWaveform: async (cardId, bars, isRealPcm) => {
         const s = get();
         const saved = await holoDb.saveMintedCards({ cards: s.mintedCards, nextMintSerial: s.nextMintSerial }, lib => ({
-          ...lib, cards: lib.cards.map(c => c.id === cardId ? {...c, waveformBars:bars, waveformIsRealPcm:isRealPcm} : c),
+          ...lib, cards: lib.cards.map(c => c.id === cardId ? {...c, waveformBars:bars, waveformIsRealPcm:isRealPcm,
+            audioCacheKey: buildAudioCacheKey(c.snapshot)} : c),
         }));
         if (saved.status !== 'failed') set({ mintedCards: saved.library.cards, nextMintSerial: saved.library.nextMintSerial });
         else get().pushToast({ text: '收藏卡声纹更新未能保存。' });
