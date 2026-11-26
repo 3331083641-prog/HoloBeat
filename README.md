@@ -10,7 +10,7 @@
 
 ## 一、核心创作闭环：四工作台实景展示
 
-> 以下 10 张均为最新版本的**真实浏览器运行截图**（与 [`04_ui_mockups`](./04_ui_mockups) 中的早期视觉概念稿严格区分）。
+> 以下 10 张均为最新 V3.2 版本的**真实浏览器运行截图**（全部 29 项 GPT Image 2 实绘声卡主角、哑光模切贴纸与微缩街巷舞台背景均已接入）。
 
 ### 01 声卡盲盒：街巷声源收集、翻背档案与策展声景
 | 全息声卡赏析（标杆主角：二八大杠车铃） | 翻看卡背（声源小图标、市井档案与合成配方） |
@@ -89,5 +89,4 @@ python 05_web_app/scripts/verify_and_capture.py
 - [`05_web_app`](./05_web_app) — React + TypeScript + Vite + Tone.js + Matter.js 前端主工程与核心测试
 - [`06_backend`](./06_backend) — 可选 Fastify + SQLite 本地归档与 `/share/:token` 只读作品展页服务
 - [`07_showcase`](./07_showcase) — 10 张实景截图、4 格式同源代表作导出物与 [`test_and_perf_report.md`](./07_showcase/reports/test_and_perf_report.md)
-- [`08_assets`](./08_assets) — 素材资产清单 [`manifest.json`](./08_assets/manifest.json)、角色/贴纸/舞台 Prompt 规范与第三方开源许可清单
-- `01_github_research` / `03_architecture` / `04_ui_mockups` — 早期调研、架构草图与视觉概念稿（历史归档，与实景截图区分）
+- [`08_assets`](./08_assets) — 素材资产清单 [`manifest.json`](./08_assets/manifest.json)、29 项实绘源图与 WebP 产物、[`gpt_image_2_pack.md`](./08_assets/prompts/gpt_image_2_pack.md) 提示词规范与第三方开源许可清单
