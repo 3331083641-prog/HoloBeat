@@ -18,6 +18,9 @@ def attach(page):
       window.DB=(await import(resource('/src/storage/holoDb.ts'))).holoDb;
       window.client=await import(resource('/src/utils/backendClient.ts'));
       await E.ensureStarted();
+      const sorted=v=>Array.isArray(v)?v.map(sorted):v&&typeof v==='object'?
+        Object.fromEntries(Object.entries(v).filter(([,v])=>v!==undefined).sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>[k,sorted(v)])):v;
+      window.canonical=v=>JSON.stringify(sorted(v));
     }""")
     page.wait_for_function('S.getState().dbHydrated')
 def check(page,expr,arg=None):
@@ -61,14 +64,14 @@ def run_browser(p,name,base,api,metrics,temp):
           const before=S.getState();
           const ok=await S.getState().importProjectFile({schema:'holobeat.project.v2',kind:'forge-draft',exportedAt:Date.now(),draft:d});
           const after=S.getState();
-          window.retainedDraft=JSON.stringify(original);
-          return !ok && JSON.stringify(after.forgeDraft)===retainedDraft &&
-            JSON.stringify(await DB.loadForgeDraft())===retainedDraft &&
+          window.retainedDraft=canonical(original);
+          return !ok && canonical(after.forgeDraft)===retainedDraft &&
+            canonical(await DB.loadForgeDraft())===retainedDraft &&
             after.nextMintSerial===before.nextMintSerial && after.inspectMintedId===before.inspectMintedId;
         }""",defect)
         original=page.evaluate('retainedDraft')
         page.reload();attach(page)
-        assert page.evaluate('JSON.stringify(S.getState().forgeDraft)')==original
+        assert page.evaluate('canonical(S.getState().forgeDraft)')==original
         checks['rejectV2-'+defect+'-reload']=True
 
       # Gate actual cold cache I/O, retain real renderer and decoder. No fabricated audio success.
@@ -247,6 +250,7 @@ def main():
           values=[stored['id'],stored['serialNumber'],stored['code'],stored['idempotencyKey'],stored['title'],stored['rarity'],stored['foil'],stored['artId'],stored['sourceType'],0,0,json.dumps(stored),stored['createdAt']]
           db.execute('INSERT INTO minted_cards('+','.join(columns)+') VALUES('+','.join('?' for c in columns)+')',values)
           db.execute('INSERT INTO share_links(token,card_id,created_at) VALUES(?,?,?)',('review-history',stored['id'],stored['createdAt']))
+        db.close()
         env={'PORT':str(api_port),'HOST':'127.0.0.1','HOLOBEAT_DB_PATH':str(Path(temp)/'review.sqlite')}
         with service([node,'--experimental-strip-types','src/server.ts'],BACK,env) as backend:
           wait_service(api+'/health',backend)
