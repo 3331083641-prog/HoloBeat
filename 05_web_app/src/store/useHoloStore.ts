@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import {
   ASSET_VERSION,
   RENDERER_VERSION,
@@ -15,7 +15,8 @@ import {
   makeDefaultStepCell,
   normalizeTrackState,
   quantizePinballToBeatPreview,
-} from '../audio/compositionEngine';
+  applyQuantizedTracks, quantizeSummary,
+} from '../audio/compositionEngine.ts';
 import {
   CATEGORY_META,
   RARITY_META,
@@ -23,14 +24,13 @@ import {
   SOUND_CARDS,
   STARTER_CARD_IDS,
   getCardById,
-} from '../data/soundCards';
-import { CURATED_SOUNDSCAPES } from '../data/soundscapes';
-import { holoDb } from '../storage/holoDb';
+} from '../data/soundCards.ts';
+import { CURATED_SOUNDSCAPES } from '../data/soundscapes.ts';
+import { holoDb, ProjectSchema } from '../storage/holoDb.ts';
+import { buildMintIdempotencyKey as mintContentHash, CARD_DESIGN_VERSION, contentDigest } from '../../../shared/card-content.ts';
 import {
-  migrateForgeDraft,
-  migrateMintedCardsCollection,
   validateProjectFile,
-} from '../storage/schema';
+} from '../storage/schema.ts';
 import type {
   BeatPhraseId,
   BeatPhraseLoop,
@@ -769,6 +769,37 @@ interface HoloState {
   dismissToast: (id: string) => void;
 }
 
+// Forge retains a PCM preview by snapshot id for this page's lifetime, including after deletion.
+const previewDigests = new Map<string, Promise<string>>();
+function audibleDigest(s: CompositionSnapshot) {
+  return contentDigest({
+    sourceType: s.sourceType, bpm:s.bpm, scale:s.scale, durationMs:s.durationMs, tailMs:s.tailMs,
+    soundSeed:s.soundSeed, rendererVersion:s.rendererVersion, assetVersion:s.assetVersion,
+    beatSnapshot:s.beatSnapshot, events:s.events.map(({id, color, sourceX, sourceY, ...note}) => note),
+  });
+}
+
+async function snapshotIdMatches(incoming: CompositionSnapshot, known: (CompositionSnapshot | null)[]) {
+  const comparisons = known.filter(s => s?.id === incoming.id).map(s => audibleDigest(s!));
+  const seen = previewDigests.get(incoming.id);
+  if (seen) comparisons.push(seen);
+  if (!comparisons.length) return true;
+  const expected = await audibleDigest(incoming);
+  return (await Promise.all(comparisons)).every(digest => digest === expected);
+}
+
+let retryMint: { contentHash: string; requestId: string } | undefined;
+let warnedPreferences = false;
+let warnedDraft = false;
+function persistDraft(draft: ForgeDraft) {
+  void holoDb.saveForgeDraft(draft).then(saved => {
+    if (saved.status === 'failed' && !warnedDraft) {
+      useHoloStore.getState().pushToast({ text: '草稿目前仅在此标签页，请在关闭前导出工程。' });
+    }
+    warnedDraft = saved.status === 'failed';
+  });
+}
+
 export const useHoloStore = create<HoloState>()(
   persist(
     (set, get) => ({
@@ -846,36 +877,20 @@ export const useHoloStore = create<HoloState>()(
 
       hydrateFromIndexedDb: async () => {
         if (get().dbHydrated) return;
-        const backedUp = holoDb.backupLegacyLocalStorage();
-        const [savedCards, savedDraft] = await Promise.all([
-          holoDb.loadMintedCards(),
+        const initial = get();
+        const [library, draft] = await Promise.allSettled([
+          holoDb.loadLibrary({ cards: initial.mintedCards, nextMintSerial: initial.nextMintSerial }),
           holoDb.loadForgeDraft(),
         ]);
-
-        // Also normalize persisted localStorage tracks from legacy 16-step to 32-step
-        const currentTracks = cloneTracks(get().tracks, get().beatBars);
-        const patch: Partial<HoloState> = {
-          dbHydrated: true,
-          tracks: currentTracks,
-        };
-
-        if (savedCards && savedCards.length > 0) {
-          const { cards, report } = migrateMintedCardsCollection(savedCards, backedUp);
-          if (cards.length > 0) {
-            patch.mintedCards = cards;
-            patch.nextMintSerial = Math.max(get().nextMintSerial, report.maxSerial + 1);
-            patch.migrationReport = report;
-            if (report.migrated) {
-              void holoDb.saveMintedCards(cards);
-            }
-          }
-        }
-        if (savedDraft) {
-          const migratedDraft = migrateForgeDraft(savedDraft);
-          if (migratedDraft) {
-            patch.forgeDraft = migratedDraft;
-          }
-        }
+        if (get().dbHydrated) return;
+        const patch: Partial<HoloState> = { dbHydrated: true, tracks: cloneTracks(get().tracks, get().beatBars) };
+        if (library.status === 'fulfilled') {
+          patch.mintedCards = library.value.cards;
+          patch.migrationReport = library.value.migrationReport ?? null;
+          patch.nextMintSerial = library.value.nextMintSerial;
+        } else get().pushToast({ text: '收藏库读取或迁移失败，原始记录已保留。' });
+        if (draft.status === 'fulfilled' && draft.value && get().forgeDraft === initial.forgeDraft) patch.forgeDraft = draft.value;
+        if (draft.status === 'rejected') get().pushToast({ text: '上次保存的草稿未能读取。' });
         set(patch);
       },
 
@@ -1442,7 +1457,7 @@ export const useHoloStore = create<HoloState>()(
             : s.forgeDraft.title || '胡同放克',
         };
 
-        void holoDb.saveForgeDraft(nextDraft);
+        persistDraft(nextDraft);
 
         set({
           forgeDraft: nextDraft,
@@ -1492,12 +1507,14 @@ export const useHoloStore = create<HoloState>()(
         const s = get();
         const prev = s.pinballQuantizePreview;
         if (!prev) return;
-        const nextPreview = quantizePinballToBeatPreview(prev.sourceEvents, prev.bpm, {
+        const nextPreview = quantizePinballToBeatPreview(prev.sourceEvents, s.bpm, {
+          tracks:s.tracks, scale:s.scale, swing:s.swing,
           startMs: opts.startMs ?? prev.selectedStartMs,
           endMs: opts.endMs ?? prev.selectedEndMs,
           targetBars: opts.targetBars ?? prev.targetBars,
         });
         set({ pinballQuantizePreview: nextPreview });
+        get().pushToast({ text:quantizeSummary(nextPreview), accent:"#00D4AA" });
       },
 
       applyPinballQuantize: (mode) => {
@@ -1513,35 +1530,11 @@ export const useHoloStore = create<HoloState>()(
           beatBars: targetBars,
           activePhrase: 'A',
           beatPhraseLoop: targetBars === 2 ? 'AB' : 'A',
-          tracks: cloneTracks(curr.tracks, targetBars).map((track, tIdx) => {
-            const ghostRow = preview.ghostSteps[tIdx] ?? Array<boolean>(32).fill(false);
-            const steps =
-              mode === 'replace'
-                ? [...ghostRow]
-                : track.steps.map((v, i) => v || ghostRow[i]);
-            const cells = steps.map((on, i) =>
-              track.stepCells?.[i]
-                ? { ...track.stepCells[i], on }
-                : makeDefaultStepCell(on, i)
-            );
-            const suggestedCard = preview.trackCardIds[tIdx];
-            return {
-              ...track,
-              cardId:
-                suggestedCard && curr.collection.includes(suggestedCard)
-                  ? suggestedCard
-                  : track.cardId,
-              steps,
-              stepCells: cells,
-            };
-          }),
+          tracks: applyQuantizedTracks(curr.tracks,curr.collection,preview,mode),
           pinballQuantizePreview: null,
         }));
         get().pushToast({
-          text:
-            mode === 'replace'
-              ? `已替换为 ${targetBars} 小节量化轨（原弹珠录音仍保留在弹珠剧场）`
-              : `已合并 ${preview.mappedCount} 步量化音符至当前节拍轨`,
+          text: (mode === 'replace' ? '已替换。' : '已合并。') + quantizeSummary(preview),
           accent: '#00D4AA',
         });
       },
@@ -1664,7 +1657,7 @@ export const useHoloStore = create<HoloState>()(
           remixOrigin: s.pinballRemixOrigin,
         };
 
-        void holoDb.saveForgeDraft(nextDraft);
+        persistDraft(nextDraft);
 
         set({
           pinballRecordedEvents: validEvents.map((e) => ({ ...e })),
@@ -1715,7 +1708,7 @@ export const useHoloStore = create<HoloState>()(
           remixOrigin: s.beatRemixOrigin,
         };
 
-        void holoDb.saveForgeDraft(nextDraft);
+        persistDraft(nextDraft);
 
         set({
           forgeDraft: nextDraft,
@@ -1742,6 +1735,7 @@ export const useHoloStore = create<HoloState>()(
           return false;
         }
         const preview = quantizePinballToBeatPreview(validEvents, s.bpm, {
+          tracks:s.tracks, scale:s.scale, swing:s.swing,
           targetBars: s.beatBars,
         });
         set({
@@ -1750,7 +1744,7 @@ export const useHoloStore = create<HoloState>()(
           activePage: 'beat',
         });
         get().pushToast({
-          text: `已生成量化预览：${preview.selectedSourceEvents} 个原音符 → ${preview.mappedCount} 步（合并 ${preview.mergedCollisions} 处重叠）`,
+          text: quantizeSummary(preview),
           accent: '#00D4AA',
         });
         return true;
@@ -1784,7 +1778,7 @@ export const useHoloStore = create<HoloState>()(
                 )
               : s.forgeDraft.snapshot;
           const nextDraft: ForgeDraft = { ...s.forgeDraft, sourceType: 'pinball', snapshot: snap };
-          void holoDb.saveForgeDraft(nextDraft);
+          persistDraft(nextDraft);
           set({ forgeDraft: nextDraft, inspectMintedId: null });
           return;
         }
@@ -1799,35 +1793,35 @@ export const useHoloStore = create<HoloState>()(
           tracks: cloneTracks(s.tracks, s.beatBars),
         });
         const nextDraft: ForgeDraft = { ...s.forgeDraft, sourceType: 'beat', snapshot: snap };
-        void holoDb.saveForgeDraft(nextDraft);
+        persistDraft(nextDraft);
         set({ forgeDraft: nextDraft, inspectMintedId: null });
       },
 
       setForgeTitle: (title) =>
         set((s) => {
           const forgeDraft = { ...s.forgeDraft, title: title.slice(0, 18) };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return { forgeDraft, inspectMintedId: null };
         }),
 
       setForgeRarity: (rarity) =>
         set((s) => {
           const forgeDraft = { ...s.forgeDraft, rarity };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return { forgeDraft, inspectMintedId: null };
         }),
 
       setForgeFoil: (foil) =>
         set((s) => {
           const forgeDraft = { ...s.forgeDraft, foil };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return { forgeDraft, inspectMintedId: null };
         }),
 
       setForgeArtId: (artId) =>
         set((s) => {
           const forgeDraft = { ...s.forgeDraft, artId };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return { forgeDraft, inspectMintedId: null };
         }),
 
@@ -1855,7 +1849,7 @@ export const useHoloStore = create<HoloState>()(
             zIndex: maxZ + 1,
           };
           const forgeDraft = { ...s.forgeDraft, stickers: [...prev, nextSticker] };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return {
             forgeDraft,
             inspectMintedId: null,
@@ -1872,7 +1866,7 @@ export const useHoloStore = create<HoloState>()(
               st.uid === uid ? { ...st, ...patch } : st
             ),
           };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return { forgeDraft };
         }),
 
@@ -1885,7 +1879,7 @@ export const useHoloStore = create<HoloState>()(
               st.uid === uid ? { ...st, zIndex: maxZ + 1 } : st
             ),
           };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return { forgeDraft };
         }),
 
@@ -1896,7 +1890,7 @@ export const useHoloStore = create<HoloState>()(
             ...s.forgeDraft,
             stickers: prev.filter((st) => st.uid !== uid),
           };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return {
             forgeDraft,
             stickerUndoStack: [...s.stickerUndoStack.slice(-19), prev.map((x) => ({ ...x }))],
@@ -1909,7 +1903,7 @@ export const useHoloStore = create<HoloState>()(
           if (s.forgeDraft.stickers.length === 0) return s;
           const prev = s.forgeDraft.stickers;
           const forgeDraft = { ...s.forgeDraft, stickers: [] };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return {
             forgeDraft,
             stickerUndoStack: [...s.stickerUndoStack.slice(-19), prev.map((x) => ({ ...x }))],
@@ -1922,7 +1916,7 @@ export const useHoloStore = create<HoloState>()(
           const prev = s.stickerUndoStack[s.stickerUndoStack.length - 1];
           if (!prev) return s;
           const forgeDraft = { ...s.forgeDraft, stickers: prev.map((x) => ({ ...x })) };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return {
             forgeDraft,
             stickerUndoStack: s.stickerUndoStack.slice(0, -1),
@@ -1938,7 +1932,7 @@ export const useHoloStore = create<HoloState>()(
           const next = s.stickerRedoStack[s.stickerRedoStack.length - 1];
           if (!next) return s;
           const forgeDraft = { ...s.forgeDraft, stickers: next.map((x) => ({ ...x })) };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return {
             forgeDraft,
             stickerRedoStack: s.stickerRedoStack.slice(0, -1),
@@ -1963,19 +1957,18 @@ export const useHoloStore = create<HoloState>()(
             foil: card.foil,
             artId: card.artId,
           };
-          void holoDb.saveForgeDraft(forgeDraft);
+          persistDraft(forgeDraft);
           return { forgeDraft, inspectMintedId: null };
         });
       },
 
-      updateMintedCardWaveform: (cardId, bars, isRealPcm) => {
-        set((s) => {
-          const updated = s.mintedCards.map((m) =>
-            m.id === cardId ? { ...m, waveformBars: bars, waveformIsRealPcm: isRealPcm } : m
-          );
-          void holoDb.saveMintedCards(updated);
-          return { mintedCards: updated };
-        });
+      updateMintedCardWaveform: async (cardId, bars, isRealPcm) => {
+        const s = get();
+        const saved = await holoDb.saveMintedCards({ cards: s.mintedCards, nextMintSerial: s.nextMintSerial }, lib => ({
+          ...lib, cards: lib.cards.map(c => c.id === cardId ? {...c, waveformBars:bars, waveformIsRealPcm:isRealPcm} : c),
+        }));
+        if (saved.status !== 'failed') set({ mintedCards: saved.library.cards, nextMintSerial: saved.library.nextMintSerial });
+        else get().pushToast({ text: '收藏卡声纹更新未能保存。' });
       },
 
       /** Freeze an immutable MintRequest the exact instant user initiates Minting */
@@ -2003,9 +1996,9 @@ export const useHoloStore = create<HoloState>()(
 
         const title = s.forgeDraft.title.trim() || '胡同放克';
         const stickers = s.forgeDraft.stickers.map((st) => ({ ...st }));
-        const contentHash = buildMintIdempotencyKey({
-          snapshotId: snapshot.id,
-          contentSignature: snapshot.contentSignature,
+        snapshot = structuredClone(snapshot);
+        const contentHash = mintContentHash({
+          snapshot, parentCardId: s.forgeDraft.remixOrigin?.parentCardId,
           title,
           rarity: s.forgeDraft.rarity,
           foil: s.forgeDraft.foil,
@@ -2044,58 +2037,58 @@ export const useHoloStore = create<HoloState>()(
           };
         }
 
-        const duplicate = s.mintedCards.find((m) => m.idempotencyKey === request.contentHash);
-        if (duplicate) {
-          set({ inspectMintedId: duplicate.id, lastMintedCardId: duplicate.id });
-          get().pushToast({
-            text: `作品 ${duplicate.code}「${duplicate.title}」已在卡册中（移动贴纸、更改箔面/标题或修改编曲即可压印新版本）`,
-            accent: '#FFD60A',
-          });
-          return {
-            card: duplicate,
-            duplicate: true,
-            saveResult: { status: 'primary', storageLabel: '已存在于此设备卡册' },
-          };
-        }
-
         set({ mintInFlight: true, lastStorageError: null });
         try {
-          const serial = get().nextMintSerial;
-          const code = `#MY-${String(serial).padStart(2, '0')}`;
-          const waveformBars =
-            realWaveformBars && realWaveformBars.length > 0
-              ? realWaveformBars
-              : computeEventWaveformBars(request.snapshot.events, request.snapshot.durationMs);
+          await get().hydrateFromIndexedDb();
+          const contentHash = await request.contentHash;
+          if (retryMint?.contentHash !== contentHash) retryMint = {contentHash, requestId:request.requestId};
+          const requestId = retryMint.requestId;
+          let duplicate = false;
+          const current = get();
+          const saveResult = await holoDb.saveMintedCards({ cards: current.mintedCards, nextMintSerial: current.nextMintSerial }, library => {
+            const sameRequest = library.cards.find(c => c.requestId === requestId);
+            if (sameRequest && sameRequest.contentHash !== contentHash) throw new Error('提交编号已用于其他作品');
+            duplicate = library.cards.some(c => !c.isDemo && (c.contentHash === contentHash || c.idempotencyKey === contentHash));
+            if (duplicate) return library;
+            const serial = library.nextMintSerial;
+            const code = '#MY-' + String(serial).padStart(2, '0');
+            const waveformBars =
+              realWaveformBars && realWaveformBars.length > 0
+                ? realWaveformBars
+                : computeEventWaveformBars(request.snapshot.events, request.snapshot.durationMs);
 
-          const minted: MintedCard = {
-            id: createStableId('minted'),
-            schemaVersion: SCHEMA_VERSION,
-            assetVersion: request.assetVersion,
-            rendererVersion: request.snapshot.rendererVersion ?? RENDERER_VERSION,
-            serialNumber: serial,
-            code,
-            idempotencyKey: request.contentHash,
-            title: request.title,
-            rarity: request.rarity,
-            foil: request.foil,
-            artId: request.artId,
-            sourceType: request.snapshot.sourceType,
-            isDemo: false,
-            stickers: request.stickers.map((st) => ({ ...st })),
-            waveformBars,
-            waveformIsRealPcm: Boolean(realWaveformBars && realWaveformBars.length > 0),
-            audioCacheKey: buildAudioCacheKey(request.snapshot),
-            audioFingerprintSeed: computeSoundSigilSeed(request.snapshot),
-            snapshot: request.snapshot,
-            parentCardId: request.remixOrigin?.parentCardId,
-            parentCode: request.remixOrigin?.parentCode,
-            parentTitle: request.remixOrigin?.parentTitle,
-            lineageDepth: request.remixOrigin?.lineageDepth ?? 0,
-            createdAt: Date.now(),
-          };
+            const minted: MintedCard = {
+              id: createStableId('minted'),
+              schemaVersion: SCHEMA_VERSION,
+              assetVersion: request.assetVersion,
+              rendererVersion: request.snapshot.rendererVersion ?? RENDERER_VERSION,
+              serialNumber: serial,
+              code,
+              idempotencyKey: requestId,
+              requestId,
+              contentHash,
+              designVersion: CARD_DESIGN_VERSION,
+              title: request.title,
+              rarity: request.rarity,
+              foil: request.foil,
+              artId: request.artId,
+              sourceType: request.snapshot.sourceType,
+              isDemo: false,
+              stickers: request.stickers.map((st) => ({ ...st })),
+              waveformBars,
+              waveformIsRealPcm: Boolean(realWaveformBars && realWaveformBars.length > 0),
+              audioCacheKey: buildAudioCacheKey(request.snapshot),
+              audioFingerprintSeed: computeSoundSigilSeed(request.snapshot),
+              snapshot: request.snapshot,
+              parentCardId: request.remixOrigin?.parentCardId,
+              parentCode: request.remixOrigin?.parentCode,
+              parentTitle: request.remixOrigin?.parentTitle,
+              lineageDepth: request.remixOrigin?.lineageDepth ?? 0,
+              createdAt: Date.now(),
+            };
 
-          const updatedCards = [minted, ...get().mintedCards];
-          const saveResult = await holoDb.saveMintedCards(updatedCards);
+            return { cards: [minted, ...library.cards], nextMintSerial: serial + 1 };
+          });
 
           // STRICT PERSISTENCE GATE: NEVER fake success or increment serial if storage failed!
           if (saveResult.status === 'failed') {
@@ -2110,15 +2103,11 @@ export const useHoloStore = create<HoloState>()(
             return { card: null, duplicate: false, saveResult };
           }
 
-          const finalMinted: MintedCard = {
-            ...minted,
-            storageStatus: saveResult.status,
-          };
-          const finalCards = [finalMinted, ...get().mintedCards];
-
+          retryMint = undefined;
+          const finalMinted = saveResult.library.cards.find(c => !c.isDemo && c.contentHash === contentHash)!;
           set({
-            mintedCards: finalCards,
-            nextMintSerial: serial + 1,
+            mintedCards: saveResult.library.cards,
+            nextMintSerial: saveResult.library.nextMintSerial,
             inspectMintedId: finalMinted.id,
             lastMintedCardId: finalMinted.id,
             mintInFlight: false,
@@ -2127,14 +2116,14 @@ export const useHoloStore = create<HoloState>()(
           });
 
           get().pushToast({
-            text:
+            text: duplicate ? '作品 ' + finalMinted.code + ' 已在此设备卡册中' :
               saveResult.status === 'fallback'
                 ? `藏品 ${finalMinted.code}「${finalMinted.title}」已降级保存至此设备（建议同时导出 JSON 备份）`
                 : `★ 藏品 ${finalMinted.code}「${finalMinted.title}」已压印并保存至此设备卡册！`,
             accent: saveResult.status === 'fallback' ? '#FFD60A' : '#00D4AA',
           });
 
-          return { card: finalMinted, duplicate: false, saveResult };
+          return { card: finalMinted, duplicate, saveResult };
         } catch (err) {
           const msg = err instanceof Error ? err.message : '未知存储异常';
           set({ mintInFlight: false, lastStorageError: msg });
@@ -2215,8 +2204,8 @@ export const useHoloStore = create<HoloState>()(
         const s = get();
         const target = s.mintedCards.find((m) => m.id === id);
         if (!target) return false;
-        const updated = s.mintedCards.filter((m) => m.id !== id);
-        const saveRes = await holoDb.saveMintedCards(updated);
+        const saveRes = await holoDb.saveMintedCards({ cards: s.mintedCards, nextMintSerial: s.nextMintSerial },
+          lib => ({ ...lib, cards: lib.cards.filter(c => c.id !== id) }));
         if (saveRes.status === 'failed') {
           get().pushToast({
             text: `删除藏品失败（${saveRes.error ?? '本地存储写入失败'}），已保持原卡册状态`,
@@ -2225,10 +2214,10 @@ export const useHoloStore = create<HoloState>()(
           return false;
         }
         const cacheKey = target.audioCacheKey ?? buildAudioCacheKey(target.snapshot);
-        void holoDb.deleteAudioCacheIfUnused(cacheKey, updated, s.forgeDraft);
+        void holoDb.deleteAudioCacheIfUnused(cacheKey, saveRes.library.cards, s.forgeDraft);
 
         set({
-          mintedCards: updated,
+          mintedCards: saveRes.library.cards, nextMintSerial: saveRes.library.nextMintSerial,
           inspectMintedId: s.inspectMintedId === id ? null : s.inspectMintedId,
           lastMintedCardId: s.lastMintedCardId === id ? null : s.lastMintedCardId,
         });
@@ -2236,7 +2225,15 @@ export const useHoloStore = create<HoloState>()(
       },
 
       importProjectFile: async (rawProject) => {
-        const validation = validateProjectFile(rawProject);
+        const strict = ProjectSchema.safeParse(rawProject);
+        const isV3 = (rawProject as {schema?:string})?.schema === 'holobeat.project.v3';
+        if (isV3 && !strict.success) {
+          get().pushToast({ text: '工程数据格式或取值无效。' }); return false;
+        }
+        // A validated v3 file is already native. Re-running v2 migration can alter soundSeed and A/B cells.
+        const validation = isV3 && strict.success
+          ? { ok: true, project: strict.data, warnings: [], error: undefined }
+          : validateProjectFile(rawProject);
         if (!validation.ok || !validation.project) {
           get().pushToast({
             text: `导入失败：${validation.error ?? '无效的工程 JSON 文件'}（已有作品未受影响）`,
@@ -2246,20 +2243,37 @@ export const useHoloStore = create<HoloState>()(
         }
 
         const project = validation.project;
+        await get().hydrateFromIndexedDb();
         const s = get();
+        const incoming = project.card?.snapshot ?? project.draft?.snapshot;
+        if (incoming) {
+          try {
+            const lib = await holoDb.loadLibrary({ cards:s.mintedCards, nextMintSerial:s.nextMintSerial });
+            if (!await snapshotIdMatches(incoming, [s.forgeDraft.snapshot, ...lib.cards.map(c => c.snapshot)])) {
+              get().pushToast({ text: '导入失败：该快照编号已用于不同的编曲或音色，请核对工程来源。' });
+              return false;
+            }
+          } catch {
+            get().pushToast({ text: '未能核对工程与已有快照编号，本次导入已取消。' });
+            return false;
+          }
+        }
 
         if (project.kind === 'minted-card' && project.card) {
-          const serial = s.nextMintSerial;
-          const importedCard: MintedCard = {
-            ...project.card,
-            id: createStableId('imported'),
-            serialNumber: serial,
-            code: `#MY-${String(serial).padStart(2, '0')}`,
-            idempotencyKey: createStableId('imp-key'),
-            createdAt: Date.now(),
-          };
-          const updated = [importedCard, ...s.mintedCards];
-          const saveRes = await holoDb.saveMintedCards(updated);
+          const source = project.card;
+          const contentHash = await mintContentHash(source);
+          const requestId = createStableId('import');
+          const saveRes = await holoDb.saveMintedCards({cards:s.mintedCards,nextMintSerial:s.nextMintSerial}, async lib => {
+            if (!await snapshotIdMatches(source.snapshot, lib.cards.map(c => c.snapshot))) {
+              throw new Error('快照编号与另一件作品的音乐内容冲突');
+            }
+            if (lib.cards.some(c => c.contentHash === contentHash)) return lib;
+            const serial = lib.nextMintSerial;
+            const imported = { ...source, id:createStableId('imported'), serialNumber: serial,
+              code:'#MY-' + String(serial).padStart(2, '0'), idempotencyKey:requestId, requestId,
+              contentHash, designVersion:CARD_DESIGN_VERSION, createdAt:Date.now(), waveformIsRealPcm:false };
+            return {cards:[imported, ...lib.cards], nextMintSerial:serial+1};
+          });
           if (saveRes.status === 'failed') {
             get().pushToast({
               text: `导入保存失败：${saveRes.error ?? '设备存储写入失败'}`,
@@ -2267,9 +2281,9 @@ export const useHoloStore = create<HoloState>()(
             });
             return false;
           }
+          const importedCard = saveRes.library.cards.find(c => c.contentHash === contentHash)!;
           set({
-            mintedCards: updated,
-            nextMintSerial: serial + 1,
+            mintedCards: saveRes.library.cards, nextMintSerial: saveRes.library.nextMintSerial,
             inspectMintedId: importedCard.id,
             lastMintedCardId: importedCard.id,
             activePage: 'forge',
@@ -2316,6 +2330,18 @@ export const useHoloStore = create<HoloState>()(
     }),
     {
       name: 'holobeat-studio-v3',
+      storage: createJSONStorage(() => ({
+        getItem: (key) => { try { return localStorage.getItem(key); } catch { return null; } },
+        setItem: (key, value) => {
+          try { localStorage.setItem(key, value); }
+          catch {
+            // Editor preferences are best effort. A quota error must never undo a committed IDB mint.
+            if (!warnedPreferences) console.warn('HoloBeat: editor preferences could not be saved');
+            warnedPreferences = true;
+          }
+        },
+        removeItem: (key) => localStorage.removeItem(key),
+      })),
       partialize: (state) => ({
         reducedMotion: state.reducedMotion,
         bpm: state.bpm,
@@ -2347,3 +2373,17 @@ export const useHoloStore = create<HoloState>()(
     }
   )
 );
+
+function displayedSnapshot(state: HoloState) {
+  if (state.activePage !== 'forge') return null;
+  return state.mintedCards.find(c => c.id === state.inspectMintedId)?.snapshot ?? state.forgeDraft.snapshot;
+}
+useHoloStore.subscribe((state, previous) => {
+  if (state.activePage !== 'forge' ||
+      (previous.activePage === state.activePage && state.inspectMintedId === previous.inspectMintedId &&
+       state.forgeDraft.snapshot === previous.forgeDraft.snapshot && state.mintedCards === previous.mintedCards)) return;
+  const snapshot = displayedSnapshot(state);
+  if (snapshot && !previewDigests.has(snapshot.id)) {
+    previewDigests.set(snapshot.id, audibleDigest(snapshot).catch(() => 'unverified'));
+  }
+});

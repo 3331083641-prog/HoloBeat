@@ -185,6 +185,12 @@ export interface CompositionSnapshot {
 }
 
 export interface RenderArtifact {
+  contentHash?: string;
+  pcmHash?: string;
+  fxVersion?: string;
+  audioAssetVersion?: string;
+  channelCount?: number;
+  cacheStatus?: 'hit' | 'stored' | 'unavailable';
   cacheKey: string;
   snapshotId: string;
   contentSignature: string;
@@ -241,7 +247,7 @@ export interface MintRequest {
   artId: string;
   stickers: PlacedSticker[];
   remixOrigin: RemixOrigin | null;
-  contentHash: string;
+  contentHash: Promise<string>;
   assetVersion: string;
   createdAt: number;
 }
@@ -259,6 +265,9 @@ export interface MintedCard {
   rendererVersion?: string;
   serialNumber: number; // Strictly monotonic integer
   code: string; // e.g. "#MY-01" or "#示例-01"
+  requestId?: string;
+  contentHash?: string;
+  designVersion?: number;
   idempotencyKey: string; // Full contentHash (musical snapshot + title + rarity + foil + art + stickers)
   title: string;
   rarity: ForgeRarity;
@@ -288,6 +297,13 @@ export interface PinballQuantizePreview {
   ghostSteps: boolean[][]; // 4 x 32 preview matrix
   trackCardIds: (string | null)[];
   totalSourceEvents: number;
+  cells: (StepCell | null)[][];
+  grid: '1/16';
+  movedCount: number;
+  velocityChangedCount: number;
+  pitchMappedCount: number;
+  lengthChangedCount: number;
+  invalidEvents?: number;
   selectedSourceEvents: number;
   mappedCount: number;
   mergedCollisions: number;

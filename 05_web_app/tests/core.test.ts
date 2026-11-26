@@ -189,7 +189,7 @@ test('Swing-aware Holo Motion orb touches down at exact swung millisecond onset'
   const orbAtSwungStep1 = evaluateSequencerTrackOrb({
     steps,
     category: 'PERC',
-    stepFloat: step1Ms / 125, // 1.2
+    clock: 'uniform', stepFloat: step1Ms / 125, // 1.2 uniform steps at this swung onset
     bpm,
     swing,
     getPadCenter: (s) => ({ x: s * 100, y: 200 }),
@@ -298,7 +298,7 @@ test('Schema validation rejects malformed JSON files and safely migrates legacy 
 test('Storage persistence accurately reports failure when writes fail (never lies about success)', async () => {
   holoDb.setTestWriteFailureMode('all-fail');
   try {
-    const res = await holoDb.saveMintedCards([]);
+    const res = await holoDb.saveMintedCards({ cards: [], nextMintSerial: 1 }, lib => lib);
     assert.equal(res.status, 'failed');
     assert.ok(res.error && res.error.length > 0);
   } finally {
