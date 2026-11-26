@@ -790,6 +790,7 @@ async function snapshotIdMatches(incoming: CompositionSnapshot, known: (Composit
 
 let retryMint: { contentHash: string; requestId: string } | undefined;
 let warnedPreferences = false;
+let warnedPinballRecording = false;
 let warnedDraft = false;
 function persistDraft(draft: ForgeDraft) {
   void holoDb.saveForgeDraft(draft).then(saved => {
@@ -1621,7 +1622,25 @@ export const useHoloStore = create<HoloState>()(
         });
       },
 
-      setPinballRecordedEvents: (events) => set({ pinballRecordedEvents: events }),
+      setPinballRecordedEvents: (events) => {
+        const recording = events.map((event) => ({ ...event }));
+        set({ pinballRecordedEvents: recording });
+        try {
+          const saved = JSON.parse(localStorage.getItem('holobeat-studio-v3') ?? 'null');
+          if (JSON.stringify(saved?.state?.pinballRecordedEvents) !== JSON.stringify(recording)) {
+            throw new Error('Recording readback differs from the current take');
+          }
+          warnedPinballRecording = false;
+        } catch {
+          if (!warnedPinballRecording) {
+            warnedPinballRecording = true;
+            get().pushToast({
+              text: '录音更新未能写入本机存储，当前修改仅保留在内存；刷新可能恢复旧录音，请先恢复存储权限或释放空间。',
+              accent: '#FF5C2B',
+            });
+          }
+        }
+      },
 
       sendPinballToForge: (events) => {
         const s = get();
@@ -2365,6 +2384,7 @@ export const useHoloStore = create<HoloState>()(
         pinballToys: state.pinballToys,
         pinballBindCardId: state.pinballBindCardId,
         pinballDropperX: state.pinballDropperX,
+        pinballAutoDrop: state.pinballAutoDrop,
         pinballGravity: state.pinballGravity,
         pinballDropRate: state.pinballDropRate,
         pinballBounce: state.pinballBounce,

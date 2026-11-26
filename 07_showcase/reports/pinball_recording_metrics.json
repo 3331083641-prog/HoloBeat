@@ -1,0 +1,132 @@
+{
+  "timestampUtc": "2026-11-26T07:01:09.306117+00:00",
+  "passed": true,
+  "browsers": {
+    "chrome": {
+      "checks": {
+        "manualCollision": true,
+        "navigationRestored": true,
+        "refreshRestored": true,
+        "restoredNoAutoBalls": true,
+        "quantizedOriginal": true,
+        "draftContainsOriginal": true,
+        "mintedExactSnapshot": true,
+        "mintedReloaded": true,
+        "continuedRecording": true,
+        "pausedWindowResumed": true,
+        "eightSecondWindow": true,
+        "clearNavigation": true,
+        "clearRefresh": true,
+        "collisionAfterClear": true
+      },
+      "browserVersion": "158.0.8127.89",
+      "originalEvents": 3,
+      "originalDurationMs": 249,
+      "originalDigest": "71351d59342cc38c893415d88d94b9f8bd4b72887523513f5e9a5344c5927f8f",
+      "navigationIdle": {
+        "frames": 289,
+        "maxBalls": 0,
+        "observedMs": 1803
+      },
+      "reloadIdle": {
+        "frames": 293,
+        "maxBalls": 0,
+        "observedMs": 1805
+      },
+      "mappedSteps": 2,
+      "frozenRecordingDigest": "66fe36cebe2482990f69a65fce80a2e81fb24eec4c51f9f8fc67efe91c83fae3",
+      "agedIdle": {
+        "frames": 1323,
+        "maxBalls": 0,
+        "observedMs": 8152
+      },
+      "eventsBeforeExpiry": 4,
+      "retainedAfterPausedWindow": 4,
+      "firstBatchAfterResuming": 5,
+      "eventsAfterActiveWindow": 16,
+      "resumedDurationMs": 7904,
+      "clearReturnIdle": {
+        "frames": 295,
+        "maxBalls": 0,
+        "observedMs": 1802
+      },
+      "clearReloadIdle": {
+        "frames": 296,
+        "maxBalls": 0,
+        "observedMs": 1803
+      },
+      "newEventsAfterClear": 1,
+      "pageErrorCount": 0
+    },
+    "edge": {
+      "checks": {
+        "manualCollision": true,
+        "navigationRestored": true,
+        "refreshRestored": true,
+        "restoredNoAutoBalls": true,
+        "quantizedOriginal": true,
+        "draftContainsOriginal": true,
+        "mintedExactSnapshot": true,
+        "mintedReloaded": true,
+        "continuedRecording": true,
+        "pausedWindowResumed": true,
+        "eightSecondWindow": true,
+        "clearNavigation": true,
+        "clearRefresh": true,
+        "collisionAfterClear": true
+      },
+      "browserVersion": "158.0.4370.33",
+      "originalEvents": 3,
+      "originalDurationMs": 140,
+      "originalDigest": "24b447bdb25fa5f6fe3865e8190d39e9237f889f73c0b7e4e179b1504cf8fa03",
+      "navigationIdle": {
+        "frames": 291,
+        "maxBalls": 0,
+        "observedMs": 1803
+      },
+      "reloadIdle": {
+        "frames": 295,
+        "maxBalls": 0,
+        "observedMs": 1802
+      },
+      "mappedSteps": 2,
+      "frozenRecordingDigest": "7af56c0d05719762202be5f529b8e42a8c6c7626debb7e71326aef86e4a3c05a",
+      "agedIdle": {
+        "frames": 1321,
+        "maxBalls": 0,
+        "observedMs": 8155
+      },
+      "eventsBeforeExpiry": 4,
+      "retainedAfterPausedWindow": 4,
+      "firstBatchAfterResuming": 5,
+      "eventsAfterActiveWindow": 1,
+      "resumedDurationMs": 0,
+      "clearReturnIdle": {
+        "frames": 298,
+        "maxBalls": 0,
+        "observedMs": 1804
+      },
+      "clearReloadIdle": {
+        "frames": 298,
+        "maxBalls": 0,
+        "observedMs": 1802
+      },
+      "newEventsAfterClear": 1,
+      "pageErrorCount": 0
+    }
+  },
+  "sourceCommit": "504aed02293548c97316685f4960cfcfc08edfad",
+  "sourceSha256AtStart": {
+    "05_web_app/src/pages/PinballPage.tsx": "4939fcd1a3a66e7483d5ddc79bb518e7b155803e927350035b2a7cc011e821a7",
+    "05_web_app/src/store/useHoloStore.ts": "666a5222af04e8d9e7e7db0e21b24003e127310f6a940a35b6a7a3b76770fcb5"
+  },
+  "preflight": {
+    "/health": 200,
+    "/generate": 404
+  },
+  "sourceSha256AtEnd": {
+    "05_web_app/src/pages/PinballPage.tsx": "4939fcd1a3a66e7483d5ddc79bb518e7b155803e927350035b2a7cc011e821a7",
+    "05_web_app/src/store/useHoloStore.ts": "666a5222af04e8d9e7e7db0e21b24003e127310f6a940a35b6a7a3b76770fcb5"
+  },
+  "sourceUnchangedDuringRun": true
+}

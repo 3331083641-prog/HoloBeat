@@ -266,13 +266,14 @@ export const PinballPage: React.FC = () => {
     }))
   );
   const recordedBufferRef = useRef<(PinballRecordedEvent & { absTime: number })[]>([]);
+  const recordingNeedsResumeRef = useRef(false);
 
   const [selectedToyId, setSelectedToyId] = useState<string | null>(null);
   const [gridSnap, setGridSnap] = useState(true);
   const [combo, setCombo] = useState(0);
   const comboRef = useRef(0);
   const [hitDots, setHitDots] = useState<HitDot[]>([]);
-  const [timelineEvents, setTimelineEvents] = useState<PinballRecordedEvent[]>(storedPinballEvents);
+  const timelineEvents = storedPinballEvents;
   const [playingRec, setPlayingRec] = useState(false);
 
   // Choreographed Show mode state
@@ -310,9 +311,11 @@ export const PinballPage: React.FC = () => {
         ...ev,
         absTime: base + ev.timeOffsetMs,
       }));
-      setTimelineEvents(storedPinballEvents);
+      recordingNeedsResumeRef.current = true;
+      // Leave the recovered phrase intact until the user starts dropping balls again.
+      setPinballAutoDrop(false);
     }
-  }, [storedPinballEvents]);
+  }, [storedPinballEvents, setPinballAutoDrop]);
 
   const dragStateRef = useRef<{
     mode: 'none' | 'dropper' | 'toy';
@@ -355,12 +358,9 @@ export const PinballPage: React.FC = () => {
     const raw = recordedBufferRef.current;
     if (raw.length === 0) return [];
     const start = raw[0].absTime;
-    return raw.map((ev) => ({
-      timeOffsetMs: Math.max(0, Math.round(ev.absTime - start)),
-      cardId: ev.cardId,
-      note: ev.note,
-      velocity: ev.velocity,
-      color: ev.color,
+    return raw.map(({ absTime, ...ev }) => ({
+      ...ev,
+      timeOffsetMs: Math.max(0, Math.round(absTime - start)),
     }));
   }, []);
 
@@ -369,6 +369,15 @@ export const PinballPage: React.FC = () => {
     if (!engine) return;
     const state = useHoloStore.getState();
     if (state.pinballMode !== 'free') return;
+
+    if (recordingNeedsResumeRef.current) {
+      // Browsing a recovered phrase is paused time. Resume its clock when dropping a new ball.
+      const now = performance.now();
+      const lastHit = recordedBufferRef.current[recordedBufferRef.current.length - 1]?.absTime ?? now;
+      const shift = now - lastHit;
+      recordedBufferRef.current = recordedBufferRef.current.map((event) => ({ ...event, absTime: event.absTime + shift }));
+      recordingNeedsResumeRef.current = false;
+    }
 
     if (ballsRef.current.length >= MAX_BALLS) {
       const oldest = ballsRef.current.shift();
@@ -598,6 +607,7 @@ export const PinballPage: React.FC = () => {
       if (state.pinballMode !== 'free') return;
 
       const nowMs = performance.now();
+      let recordedCollision = false;
 
       event.pairs.forEach((pair) => {
         const bodyA = pair.bodyA.parent ?? pair.bodyA;
@@ -689,15 +699,7 @@ export const PinballPage: React.FC = () => {
         const cutoff = nowMs - RECORDING_WINDOW_MS;
         recordedBufferRef.current = recordedBufferRef.current.filter((e) => e.absTime >= cutoff);
 
-        const firstT = recordedBufferRef.current[0]?.absTime ?? nowMs;
-        const normalizedSnap: PinballRecordedEvent[] = recordedBufferRef.current.map((e) => ({
-          timeOffsetMs: Math.max(0, Math.round(e.absTime - firstT)),
-          cardId: e.cardId,
-          note: e.note,
-          velocity: e.velocity,
-          color: e.color,
-        }));
-        setTimelineEvents(normalizedSnap);
+        recordedCollision = true;
 
         comboRef.current += 1;
         setCombo(comboRef.current);
@@ -710,10 +712,15 @@ export const PinballPage: React.FC = () => {
           },
         ]);
       });
+      if (recordedCollision) {
+        // Save each physics batch synchronously, including before a navigation or reload.
+        setPinballRecordedEvents(getNormalizedRecording());
+      }
     });
 
     const initialDropTimer = window.setTimeout(() => {
-      if (useHoloStore.getState().pinballMode === 'free') {
+      const state = useHoloStore.getState();
+      if (state.pinballMode === 'free' && state.pinballAutoDrop && state.pinballRecordedEvents.length === 0) {
         dropSingleBall(true);
       }
     }, 150);
@@ -1551,7 +1558,7 @@ export const PinballPage: React.FC = () => {
       engineRef.current = null;
       ballsRef.current = [];
     };
-  }, [syncToyBodies, spawnVfx, dropSingleBall]);
+  }, [syncToyBodies, spawnVfx, dropSingleBall, getNormalizedRecording, setPinballRecordedEvents]);
 
   useEffect(() => {
     syncToyBodies(false);
@@ -1692,7 +1699,7 @@ export const PinballPage: React.FC = () => {
       setPlayingRec(false);
       return;
     }
-    const evs = timelineEvents.length > 0 ? timelineEvents : getNormalizedRecording();
+    const evs = useHoloStore.getState().pinballRecordedEvents;
     if (evs.length === 0) return;
     setPlayingRec(true);
     await holoAudio.playPinballRecording(evs, undefined, () => setPlayingRec(false));
@@ -1700,7 +1707,7 @@ export const PinballPage: React.FC = () => {
 
   const handleClearRecording = () => {
     recordedBufferRef.current = [];
-    setTimelineEvents([]);
+    recordingNeedsResumeRef.current = false;
     setPinballRecordedEvents([]);
     holoAudio.stopPinballRecording();
     setPlayingRec(false);
@@ -1708,13 +1715,13 @@ export const PinballPage: React.FC = () => {
   };
 
   const handleRecToForge = () => {
-    const evs = timelineEvents.length > 0 ? timelineEvents : getNormalizedRecording();
+    const evs = useHoloStore.getState().pinballRecordedEvents;
     const ok = sendPinballToForge(evs);
     if (ok) playSfx('mintStamp');
   };
 
   const handleSendToBeatQuantize = () => {
-    const evs = timelineEvents.length > 0 ? timelineEvents : getNormalizedRecording();
+    const evs = useHoloStore.getState().pinballRecordedEvents;
     const ok = sendPinballToBeatQuantize(evs);
     if (ok) playSfx('cartridgeLock');
   };
