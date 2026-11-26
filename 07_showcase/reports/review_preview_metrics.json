@@ -1,0 +1,166 @@
+{
+  "passed": true,
+  "testedCommit": "4820a617ee74de4727bda3b57661fb2812b9f6c2",
+  "modes": {
+    "root-chrome": {
+      "passed": true,
+      "wav": {
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 16,
+        "dataSize": 1080768,
+        "duration": 5.629,
+        "peak": 32767,
+        "final10msPeak": 0
+      },
+      "images": {
+        "decoded": 29,
+        "visible": 20,
+        "paths": [
+          "/assets/stickers/clapper.webp",
+          "/assets/stickers/bell.webp",
+          "/assets/stickers/coin.webp",
+          "/assets/stickers/spoon.webp",
+          "/assets/stickers/spatula.webp",
+          "/assets/stickers/cassette.webp",
+          "/assets/stickers/raindrop.webp",
+          "/assets/stickers/cicada.webp",
+          "/assets/stickers/bolt.webp",
+          "/assets/stickers/note.webp",
+          "/assets/stickers/starburst.webp",
+          "/assets/stickers/crown.webp",
+          "/assets/cards/bamboo-cat.webp",
+          "/assets/stickers/clapper.webp",
+          "/assets/stickers/bell.webp",
+          "/assets/cards/night-sizzle.webp",
+          "/assets/cards/bamboo-cat.webp",
+          "/assets/cards/street-bell.webp",
+          "/assets/cards/lucky-coin.webp",
+          "/assets/cards/night-sizzle.webp"
+        ]
+      },
+      "pageErrors": [],
+      "assetErrors": []
+    },
+    "root-edge": {
+      "passed": true,
+      "wav": {
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 16,
+        "dataSize": 1080768,
+        "duration": 5.629,
+        "peak": 32768,
+        "final10msPeak": 0
+      },
+      "images": {
+        "decoded": 29,
+        "visible": 20,
+        "paths": [
+          "/assets/stickers/clapper.webp",
+          "/assets/stickers/bell.webp",
+          "/assets/stickers/coin.webp",
+          "/assets/stickers/spoon.webp",
+          "/assets/stickers/spatula.webp",
+          "/assets/stickers/cassette.webp",
+          "/assets/stickers/raindrop.webp",
+          "/assets/stickers/cicada.webp",
+          "/assets/stickers/bolt.webp",
+          "/assets/stickers/note.webp",
+          "/assets/stickers/starburst.webp",
+          "/assets/stickers/crown.webp",
+          "/assets/cards/bamboo-cat.webp",
+          "/assets/stickers/clapper.webp",
+          "/assets/stickers/bell.webp",
+          "/assets/cards/night-sizzle.webp",
+          "/assets/cards/bamboo-cat.webp",
+          "/assets/cards/street-bell.webp",
+          "/assets/cards/lucky-coin.webp",
+          "/assets/cards/night-sizzle.webp"
+        ]
+      },
+      "pageErrors": [],
+      "assetErrors": []
+    },
+    "subpath-chrome": {
+      "passed": true,
+      "wav": {
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 16,
+        "dataSize": 1080768,
+        "duration": 5.629,
+        "peak": 32768,
+        "final10msPeak": 0
+      },
+      "images": {
+        "decoded": 29,
+        "visible": 20,
+        "paths": [
+          "/holobeat/assets/stickers/clapper.webp",
+          "/holobeat/assets/stickers/bell.webp",
+          "/holobeat/assets/stickers/coin.webp",
+          "/holobeat/assets/stickers/spoon.webp",
+          "/holobeat/assets/stickers/spatula.webp",
+          "/holobeat/assets/stickers/cassette.webp",
+          "/holobeat/assets/stickers/raindrop.webp",
+          "/holobeat/assets/stickers/cicada.webp",
+          "/holobeat/assets/stickers/bolt.webp",
+          "/holobeat/assets/stickers/note.webp",
+          "/holobeat/assets/stickers/starburst.webp",
+          "/holobeat/assets/stickers/crown.webp",
+          "/holobeat/assets/cards/bamboo-cat.webp",
+          "/holobeat/assets/stickers/clapper.webp",
+          "/holobeat/assets/stickers/bell.webp",
+          "/holobeat/assets/cards/night-sizzle.webp",
+          "/holobeat/assets/cards/bamboo-cat.webp",
+          "/holobeat/assets/cards/street-bell.webp",
+          "/holobeat/assets/cards/lucky-coin.webp",
+          "/holobeat/assets/cards/night-sizzle.webp"
+        ]
+      },
+      "pageErrors": [],
+      "assetErrors": []
+    },
+    "subpath-edge": {
+      "passed": true,
+      "wav": {
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 16,
+        "dataSize": 1080768,
+        "duration": 5.629,
+        "peak": 32767,
+        "final10msPeak": 0
+      },
+      "images": {
+        "decoded": 29,
+        "visible": 20,
+        "paths": [
+          "/holobeat/assets/stickers/clapper.webp",
+          "/holobeat/assets/stickers/bell.webp",
+          "/holobeat/assets/stickers/coin.webp",
+          "/holobeat/assets/stickers/spoon.webp",
+          "/holobeat/assets/stickers/spatula.webp",
+          "/holobeat/assets/stickers/cassette.webp",
+          "/holobeat/assets/stickers/raindrop.webp",
+          "/holobeat/assets/stickers/cicada.webp",
+          "/holobeat/assets/stickers/bolt.webp",
+          "/holobeat/assets/stickers/note.webp",
+          "/holobeat/assets/stickers/starburst.webp",
+          "/holobeat/assets/stickers/crown.webp",
+          "/holobeat/assets/cards/bamboo-cat.webp",
+          "/holobeat/assets/stickers/clapper.webp",
+          "/holobeat/assets/stickers/bell.webp",
+          "/holobeat/assets/cards/night-sizzle.webp",
+          "/holobeat/assets/cards/bamboo-cat.webp",
+          "/holobeat/assets/cards/street-bell.webp",
+          "/holobeat/assets/cards/lucky-coin.webp",
+          "/holobeat/assets/cards/night-sizzle.webp"
+        ]
+      },
+      "pageErrors": [],
+      "assetErrors": []
+    }
+  }
+}

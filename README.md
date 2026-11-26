@@ -8,9 +8,19 @@
 
 ---
 
+## 本轮复审与启动（2026-11-26）
+
+双击根目录 [Start-HoloBeat.cmd](./Start-HoloBeat.cmd)，从当前 **main** 的05_web_app / 06_backend源码启动。入口检查分支、依赖和进程归属；见[一键启动说明](./一键启动.md)。
+
+前端 **57/57**、后端 **52/52**；Chrome/Edge定点回归各 **18/18**，录音恢复各 **14/14**，production根路径与/holobeat/四组验证通过。详见[当前复审报告](./07_showcase/reports/review_reliability_results.md)、[机器结果](./07_showcase/reports/review_metrics.json)、[生产验证](./07_showcase/reports/review_preview_metrics.json)。
+
+| 本轮Chrome：谱系归档与真实PCM | 本轮Edge：生产子路径运行 |
+| --- | --- |
+| ![Chrome当前工坊](./07_showcase/screenshots/review-20261126/chrome-forge.png) | ![Edge生产子路径](./07_showcase/screenshots/review-20261126/edge-preview-subpath.png) |
+
 ## 一、核心创作闭环：四工作台实景展示
 
-> 以下 10 张均为最新 V3.2 版本的**真实浏览器运行截图**（全部 29 项 GPT Image 2 实绘声卡主角、哑光模切贴纸与微缩街巷舞台背景均已接入）。
+> 以下 10 张保留自 V3.2 视觉设计基线，均为**真实浏览器运行截图**（全部 29 项 GPT Image 2 实绘声卡主角、哑光模切贴纸与微缩街巷舞台背景均已接入）。
 
 ### 01 声卡盲盒：街巷声源收集、翻背档案与策展声景
 | 全息声卡赏析（标杆主角：二八大杠车铃） | 翻看卡背（声源小图标、市井档案与合成配方） |
@@ -71,10 +81,10 @@ npm start
 
 ### 3. 运行全量自动化校验（单测 + 接口测试 + Playwright 严格 E2E）
 ```bash
-# 前端类型检查、生产构建与 9 项核心引擎单测
+# 前端类型检查、生产构建与 57 项回归
 cd 05_web_app && npm run build && npm test
 
-# 后端类型检查与接口/嵌套校验/只读分享展页测试
+# 后端类型检查与 52 项接口/迁移/分享回归
 cd 06_backend && npm run typecheck && npm test
 
 # 启动前端（及可选后端）后运行严格 Playwright E2E、4 视口验收与截图导出

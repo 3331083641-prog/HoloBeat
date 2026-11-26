@@ -1,5 +1,5 @@
 {
-  "timestampUtc": "2026-11-26T08:33:54.271976+00:00",
+  "timestampUtc": "2026-11-26T09:40:06.704536+00:00",
   "passed": true,
   "browsers": {
     "chrome": {
@@ -20,38 +20,38 @@
         "collisionAfterClear": true
       },
       "browserVersion": "158.0.8127.89",
-      "originalEvents": 3,
-      "originalDurationMs": 273,
-      "originalDigest": "d03fe2002c75766644008b7368f34919760bf4386a964284ff92dbb8b86d5e95",
+      "originalEvents": 2,
+      "originalDurationMs": 115,
+      "originalDigest": "0192c36e8accc450f52d56ad5eafa262e32829681be39c4c07c65ba54410c09a",
       "navigationIdle": {
-        "frames": 297,
+        "frames": 291,
         "maxBalls": 0,
         "observedMs": 1803
       },
       "reloadIdle": {
-        "frames": 298,
+        "frames": 160,
         "maxBalls": 0,
-        "observedMs": 1804
+        "observedMs": 1803
       },
       "mappedSteps": 2,
-      "frozenRecordingDigest": "2a5550b62a599a796f4e84773b998784d4ed2fa6e4e62ca6989ab29cb7109bd7",
+      "frozenRecordingDigest": "69fdf4f43e03688809a6a09c399a7fd6545b29ab35eb65d731ff1b1e93d82e59",
       "agedIdle": {
-        "frames": 1317,
+        "frames": 863,
         "maxBalls": 0,
-        "observedMs": 8154
+        "observedMs": 8168
       },
-      "eventsBeforeExpiry": 4,
-      "retainedAfterPausedWindow": 4,
-      "firstBatchAfterResuming": 5,
-      "eventsAfterActiveWindow": 10,
-      "resumedDurationMs": 6980,
+      "eventsBeforeExpiry": 3,
+      "retainedAfterPausedWindow": 3,
+      "firstBatchAfterResuming": 4,
+      "eventsAfterActiveWindow": 2,
+      "resumedDurationMs": 6595,
       "clearReturnIdle": {
-        "frames": 294,
+        "frames": 246,
         "maxBalls": 0,
-        "observedMs": 1804
+        "observedMs": 1801
       },
       "clearReloadIdle": {
-        "frames": 296,
+        "frames": 288,
         "maxBalls": 0,
         "observedMs": 1804
       },
@@ -77,56 +77,56 @@
       },
       "browserVersion": "158.0.4370.33",
       "originalEvents": 2,
-      "originalDurationMs": 31,
-      "originalDigest": "36d78f31bf37e6552d32304ea161048beb032186c17a2140999120085956e8e3",
+      "originalDurationMs": 103,
+      "originalDigest": "6105c19d60430abb856cdb0abc865946b9221684804e32fea3d1c27bb2b2dc43",
       "navigationIdle": {
-        "frames": 295,
+        "frames": 293,
         "maxBalls": 0,
-        "observedMs": 1803
+        "observedMs": 1801
       },
       "reloadIdle": {
-        "frames": 294,
+        "frames": 263,
         "maxBalls": 0,
-        "observedMs": 1804
+        "observedMs": 1806
       },
-      "mappedSteps": 1,
-      "frozenRecordingDigest": "202aac447f4ef8ea7057ead12543d305dfb3bb1b0092b73cbacd864f5240c240",
+      "mappedSteps": 2,
+      "frozenRecordingDigest": "c61b9a0c2bb18c0c1e5dd8bf0364d3740bb260a95e8d2c448a6885ca27dce240",
       "agedIdle": {
-        "frames": 1302,
+        "frames": 1308,
         "maxBalls": 0,
-        "observedMs": 8154
+        "observedMs": 8151
       },
       "eventsBeforeExpiry": 3,
       "retainedAfterPausedWindow": 3,
       "firstBatchAfterResuming": 4,
-      "eventsAfterActiveWindow": 2,
-      "resumedDurationMs": 7616,
+      "eventsAfterActiveWindow": 3,
+      "resumedDurationMs": 6866,
       "clearReturnIdle": {
-        "frames": 297,
+        "frames": 296,
         "maxBalls": 0,
-        "observedMs": 1805
+        "observedMs": 1802
       },
       "clearReloadIdle": {
-        "frames": 284,
+        "frames": 295,
         "maxBalls": 0,
-        "observedMs": 1804
+        "observedMs": 1801
       },
       "newEventsAfterClear": 1,
       "pageErrorCount": 0
     }
   },
-  "sourceCommit": "568cc6d47427bc2cccc641f3c5156b231c119552",
+  "sourceCommit": "4de723ee85d48122cbf22e7681228ad2586973fa",
   "sourceSha256AtStart": {
-    "05_web_app/src/pages/PinballPage.tsx": "4939fcd1a3a66e7483d5ddc79bb518e7b155803e927350035b2a7cc011e821a7",
-    "05_web_app/src/store/useHoloStore.ts": "666a5222af04e8d9e7e7db0e21b24003e127310f6a940a35b6a7a3b76770fcb5"
+    "05_web_app/src/pages/PinballPage.tsx": "ab9b1bee3a5079887fb5914dc5cc1c79a4ad6a0dca1a49eac220812de783e6c9",
+    "05_web_app/src/store/useHoloStore.ts": "e98a5f11bdfae6963f132a3548577106ee9ecd9b41402867b2bc74ef46b16bf4"
   },
   "preflight": {
     "/health": 200,
     "/generate": 404
   },
   "sourceSha256AtEnd": {
-    "05_web_app/src/pages/PinballPage.tsx": "4939fcd1a3a66e7483d5ddc79bb518e7b155803e927350035b2a7cc011e821a7",
-    "05_web_app/src/store/useHoloStore.ts": "666a5222af04e8d9e7e7db0e21b24003e127310f6a940a35b6a7a3b76770fcb5"
+    "05_web_app/src/pages/PinballPage.tsx": "ab9b1bee3a5079887fb5914dc5cc1c79a4ad6a0dca1a49eac220812de783e6c9",
+    "05_web_app/src/store/useHoloStore.ts": "e98a5f11bdfae6963f132a3548577106ee9ecd9b41402867b2bc74ef46b16bf4"
   },
   "sourceUnchangedDuringRun": true
 }

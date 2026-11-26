@@ -1,0 +1,70 @@
+{
+  "timestampUtc": "2026-11-26T09:47:58.729584+00:00",
+  "baseline": "e9ad983772c18aac6c39f3b2afb2abc94fa68023",
+  "testedCommit": "4820a617ee74de4727bda3b57661fb2812b9f6c2",
+  "browsers": {
+    "chrome": {
+      "checks": {
+        "keyboardPadsAndHeldFx": true,
+        "rejectV2-snapshot-reload": true,
+        "rejectV2-pinballEvents-reload": true,
+        "rejectV2-pinballScene-reload": true,
+        "coldCache-pause": true,
+        "coldCache-card": true,
+        "coldCache-page": true,
+        "coldCache-A-stop-B": true,
+        "quant-to-raw-stop": true,
+        "raw-to-quant-stop": true,
+        "beat-to-raw-stop": true,
+        "raw-to-beat-stop": true,
+        "localAncestorThenRemixShare": true,
+        "independentAlbumsNumberOne": true,
+        "downloadImportCanonicalShare": true,
+        "importedAncestorRenumberedRemixShare": true,
+        "sharedProjectDownloadImport": true,
+        "historicalSqliteRepairDownloadImport": true
+      },
+      "errors": [],
+      "version": "158.0.8127.89",
+      "archiveIds": [
+        "minted-61bd188f-a9aa-4c85-841b-c53914806d84",
+        "minted-9fbb4512-d5ef-428f-b372-2ff699505f24",
+        "minted-cb45cb5d-2d3f-4f99-a764-ce4f90f27112"
+      ]
+    },
+    "edge": {
+      "checks": {
+        "keyboardPadsAndHeldFx": true,
+        "rejectV2-snapshot-reload": true,
+        "rejectV2-pinballEvents-reload": true,
+        "rejectV2-pinballScene-reload": true,
+        "coldCache-pause": true,
+        "coldCache-card": true,
+        "coldCache-page": true,
+        "coldCache-A-stop-B": true,
+        "quant-to-raw-stop": true,
+        "raw-to-quant-stop": true,
+        "beat-to-raw-stop": true,
+        "raw-to-beat-stop": true,
+        "localAncestorThenRemixShare": true,
+        "independentAlbumsNumberOne": true,
+        "downloadImportCanonicalShare": true,
+        "importedAncestorRenumberedRemixShare": true,
+        "sharedProjectDownloadImport": true,
+        "historicalSqliteRepairDownloadImport": true
+      },
+      "errors": [],
+      "version": "158.0.4370.33",
+      "archiveIds": [
+        "minted-437bd29c-0ffc-4fd9-9c07-076174b55a3b",
+        "minted-eadd8848-931c-4f50-95a1-f0e376b257d1",
+        "minted-94501084-311b-4aaa-a29b-533cc89481e5"
+      ]
+    }
+  },
+  "passed": true,
+  "restart": {
+    "before": 7,
+    "after": 7
+  }
+}

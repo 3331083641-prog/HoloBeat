@@ -1,0 +1,19 @@
+{
+  "baseline": "e9ad983772c18aac6c39f3b2afb2abc94fa68023",
+  "expectedFailuresBeforeFix": true,
+  "storageAndLineage": {
+    "tests": 9,
+    "pass": 1,
+    "fail": 8
+  },
+  "archiveAndContour": {
+    "tests": 3,
+    "pass": 0,
+    "fail": 3
+  },
+  "chromeActualAudioDefects": {
+    "coldPauseIncorrectlyStartsNativeSource": true,
+    "rawOverlapsSnapshot": true,
+    "stopTransportLeavesAuditions": true
+  }
+}
