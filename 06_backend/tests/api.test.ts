@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import test, { type TestContext } from 'node:test';
+import { buildMintIdempotencyKey } from '../../shared/card-content.ts';
 import { prepareDefaultDirectory } from '../src/archiveDirectory.ts';
 import { ArchiveDatabase } from '../src/db.ts';
 import { buildApp, listenOptions } from '../src/server.ts';
@@ -379,4 +380,46 @@ test('loopback write quota is shared by session and scoped to one server instanc
   for(let n=0;n<60;n++) assert.equal((await post('/api/shares',{cardId:'missing'})).statusCode,404);
   assert.equal((await post('/api/cards',makeCard())).statusCode,429);
   assert.equal(await count(),0);
+});
+
+test('old V3 archive is replayable after the browser computes a digest and refreshes its PCM',async t=>{
+  const {app,post,count}=await service(t);
+  const archived=structuredClone(showcaseProject.card);
+  archived.storageStatus='fallback';
+  archived.waveformIsRealPcm=false;
+  const original=await post('/api/cards',archived);
+  assert.equal(original.statusCode,201);
+  const incoming={...archived,storageStatus:'primary',waveformIsRealPcm:true,waveformBars:[0.1,0.8],
+    contentHash:await buildMintIdempotencyKey(archived)};
+  const replay=await post('/api/cards',incoming);
+  assert.equal(replay.statusCode,200,replay.body);
+  assert.equal(replay.json().created,false);
+  assert.deepEqual(replay.json().card,archived);
+  const changed={...incoming,foil:'gold'};
+  changed.contentHash=await buildMintIdempotencyKey(changed);
+  assert.equal((await post('/api/cards',changed)).statusCode,409);
+  assert.equal(await count(),1);
+  assert.deepEqual((await app.inject('/api/cards')).json().cards,[archived]);
+});
+test('archive created by the old field-stripping V3 writer recognizes the original local work',async t=>{
+  const full=structuredClone(showcaseProject.card);
+  const file=tempDb(t);
+  const stored=structuredClone(full);
+  for(const key of ['capturedAt','rendererVersion','assetVersion','soundSeed','pinballEvents','pinballScene'])
+    delete stored.snapshot[key];
+  for(const e of stored.snapshot.events) for(const key of ['sourceX','sourceY','color']) delete e[key];
+  const db=new DatabaseSync(file);
+  db.exec(legacySql);
+  db.prepare(`INSERT INTO minted_cards(id,serial_number,code,idempotency_key,title,rarity,foil,art_id,
+    source_type,is_demo,lineage_depth,payload_json,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+    stored.id,stored.serialNumber,stored.code,stored.idempotencyKey,stored.title,stored.rarity,stored.foil,
+    stored.artId,stored.sourceType,0,0,JSON.stringify(stored),stored.createdAt);
+  db.close();
+  const {app,post,count}=await service(t,file);
+  try {
+    const response=await post('/api/cards',{...full,contentHash:await buildMintIdempotencyKey(full)});
+    assert.equal(response.statusCode,200,response.body);
+    assert.deepEqual(response.json().card,stored);
+    assert.equal(await count(),1);
+  } finally { await app.close(); }
 });

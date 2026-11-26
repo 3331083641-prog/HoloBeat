@@ -29,6 +29,28 @@ function decode(payload: unknown): MintedCard {
   }
 }
 
+// Device persistence and waveform caches can change after the creative work is frozen.
+function archivedWork(card: MintedCard) {
+  const { storageStatus, waveformBars, waveformIsRealPcm, audioCacheKey, contentHash, ...work } = card;
+  return work;
+}
+
+function isArchiveRetry(stored: MintedCard, submitted: MintedCard) {
+  if (stored.contentHash && submitted.contentHash && stored.contentHash !== submitted.contentHash) return false;
+  const existing = archivedWork(stored);
+  const incoming = archivedWork(submitted);
+  if (isDeepStrictEqual(existing, incoming)) return true;
+
+  // The original V3 API stripped these specific snapshot/event fields when saving a row.
+  // Compare exactly what that writer could persist. Preserve its original archive bytes.
+  if (stored.schemaVersion !== 3 || stored.contentHash || !stored.snapshot ||
+      stored.snapshot.capturedAt !== undefined || !incoming.snapshot) return false;
+  const { capturedAt, rendererVersion, assetVersion, soundSeed, pinballEvents, pinballScene,
+    events, ...oldSnapshot } = incoming.snapshot;
+  const oldEvents = events.map(({ sourceX, sourceY, color, ...event }) => event);
+  return isDeepStrictEqual(existing, { ...incoming, snapshot: { ...oldSnapshot, events: oldEvents } });
+}
+
 export class ArchiveDatabase {
   private db: DatabaseSync;
   private closed = false;
@@ -108,7 +130,7 @@ export class ArchiveDatabase {
         .all(card.id, card.idempotencyKey, card.requestId ?? null, card.contentHash ?? null);
       if (rows.length) {
         const existing = decode(rows[0].payload_json);
-        if (rows.length === 1 && isDeepStrictEqual(existing, card)) return { created: false, card: existing };
+        if (rows.length === 1 && isArchiveRetry(existing, card)) return { created: false, card: existing };
         throw new ArchiveError(409, 'ARCHIVE_CONFLICT', 'Request, content or card identity already exists with different data');
       }
       this.db.prepare(`INSERT INTO minted_cards(id,serial_number,code,idempotency_key,title,rarity,foil,art_id,
