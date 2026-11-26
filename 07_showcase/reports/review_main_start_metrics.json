@@ -1,0 +1,23 @@
+{
+  "head": "92fc0753008abb08d9d0b7cc14deb138cb28aabc",
+  "worktree": "D:\\HoloBeat",
+  "backendHealth": {
+    "ok": true,
+    "service": "holobeat-archive-backend",
+    "version": "3.0.0",
+    "cardsCount": 0
+  },
+  "checks": {
+    "chrome": {
+      "decodedVisibleImages": 20,
+      "pageErrors": [],
+      "passed": true
+    },
+    "edge": {
+      "decodedVisibleImages": 20,
+      "pageErrors": [],
+      "passed": true
+    }
+  },
+  "temporaryDatabase": true
+}

@@ -4,8 +4,8 @@
 
 ## 受测版本与方法
 
-- 产品代码：4820a617ee74de4727bda3b57661fb2812b9f6c2。
-- Production preview：4820a617ee74de4727bda3b57661fb2812b9f6c2，与定点E2E相同。
+- 产品代码：92fc0753008abb08d9d0b7cc14deb138cb28aabc。
+- Production preview：92fc0753008abb08d9d0b7cc14deb138cb28aabc，与定点E2E相同。
 - 录音恢复回归：4de723ee85d48122cbf22e7681228ad2586973fa；此后只修改归档客户端的canonical父编号核对，没有变更录音/存储/音频引擎。
 - 最终交付在这些提交上增加报告、截图、README及CI运行时配置；main 启动验证另见下方记录。
 - 本机 Node 24.15.0；GitHub Actions 配置与本机一致的 Node 24.15.0。
@@ -17,7 +17,7 @@
 | 问题 | 根因与修复 | 真实验证 |
 |---|---|---|
 | V2 覆盖有效草稿 | 非空快照转换失败原先变成null；现在明确拒绝，转换后统一当前Schema，存储再次验证；保存前不修改草稿/选择/编号/卡册 | broken snapshot、非法pinballEvents/scene/remixOrigin；失败后刷新恢复原作；合法空草稿、速度与零力度保留 |
-| Forge 取消后仍响起 | 请求身份原先在渲染后建立；现在点击时建立，覆盖缓存、渲染、解码、播放，换卡/隐藏/卸载仅清理所属会话 | 冷缓存播放→暂停/换卡/切页/A停B；原生AudioBufferSourceNode stop/disconnect、旧onended清空 |
+| Forge 取消后仍响起 | 请求身份原先在渲染后建立；现在点击时建立，覆盖缓存、渲染、解码、播放，换卡/隐藏/卸载仅清理所属会话；只按不可变快照ID识别作品，等价PCM元数据落盘不误停试听 | 冷缓存播放→暂停/换卡/切页/A停B；原生AudioBufferSourceNode stop/disconnect、旧onended清空 |
 | 原录音/量化/Beat叠播 | 不同入口只停止部分音源；入口现在同步取消其他作品会话及准备任务，停止按钮停止全部作品试听 | 四种切换及停止；检查原录音timer、buffer音源、释放声部；跨过最后原音符时间观察旧回调不再执行 |
 | 卡册编号冲突 | 全库serial/code唯一；SQLite user_version=3改为libraryId+本地编号唯一；旧数据使用legacy命名空间 | 两独立浏览器各自#MY-01成功；v0/v2备份升级、重复迁移、保留旧分享 |
 | 归档恢复身份 | 导入后的本地ID被当成冲突；现在返回canonicalId和业务结果，客户端验证完整内容再分享 | 下载→另一卡册导入→归档/分享返回原归档；原作和重混均重新导入、父编号变化后也正确恢复；异内容复用requestId仍409；去重收据绑定请求 |
@@ -45,7 +45,7 @@
 | 前端 npm run build | 通过；既有大bundle、静态/动态混合导入提示保留 |
 | 后端 npm run typecheck | 通过 |
 | 后端 npm test | 52/52，保留原47项 |
-| Chrome / Edge定点E2E | 各18/18，JS错误0 |
+| Chrome / Edge定点E2E | 各19/19，JS错误0 |
 | SQLite真实进程重启 | 7→7作品（含历史原件） |
 | Production root/subpath × Chrome/Edge | 4/4；每组真实解码29项WebP，资源错误0 |
 | Production WAV下载 | 4/4 RIFF/WAVE；48kHz、双声道、16bit、dataSize=1080768、5.629秒；非静音，最后10ms峰值0 |
@@ -95,5 +95,11 @@
 - 本轮生产WAV为黑盒实测；旧完整WAV/FX/WebM矩阵报告保留，未冒充本轮全部重跑。
 - 不覆盖不同机器同时编辑同库、断电级损坏恢复及所有声卡驱动组合。
 - 无完整原件的历史音乐缺失保留为原始存档下载，不承诺完整重混。
+- 取消试听立即使所属请求与音源失效；已经启动的共享离线PCM计算可能完成缓存填充，但旧请求不能继续解码、启动声音或更新新请求UI。
 
 修复前原生音频复现：隔离e9ad983中，Chrome实际观察到冷缓存暂停后AudioBufferSource仍启动、原录音与快照同时存活、stopTransport后两者仍存活；[修复前机器证据](review_before_metrics.json)。本轮对应双浏览器测试断言这些旧行为已消除。
+
+## main 一键启动验证
+
+Start-HoloBeat.cmd -CheckOnly：通过，Source=D:\HoloBeat，Branch=main。
+使用 .cache/review-main-start.sqlite 临时数据库真实启动两次：第一次验证bba2e21，第二次验证92fc075。入口只重启自己管理的进程（frontend 15040→44908，backend 1904→49044），没有停止其他服务。两次/health=200、/generate=404，5173实际加载根目录最新源码；第二次另用Chrome/Edge独立上下文，各解码20项当前界面图片、JS错误0。见[main启动机器结果](review_main_start_metrics.json)。最后通过-Stop关闭本轮临时服务。默认用户SQLite未打开；下次普通双击仍指向主目录main及原默认档案路径。

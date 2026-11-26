@@ -12,7 +12,7 @@
 
 双击根目录 [Start-HoloBeat.cmd](./Start-HoloBeat.cmd)，从当前 **main** 的05_web_app / 06_backend源码启动。入口检查分支、依赖和进程归属；见[一键启动说明](./一键启动.md)。
 
-前端 **57/57**、后端 **52/52**；Chrome/Edge定点回归各 **18/18**，录音恢复各 **14/14**，production根路径与/holobeat/四组验证通过。详见[当前复审报告](./07_showcase/reports/review_reliability_results.md)、[机器结果](./07_showcase/reports/review_metrics.json)、[生产验证](./07_showcase/reports/review_preview_metrics.json)。
+前端 **57/57**、后端 **52/52**；Chrome/Edge定点回归各 **19/19**，录音恢复各 **14/14**，production根路径与/holobeat/四组验证通过。详见[当前复审报告](./07_showcase/reports/review_reliability_results.md)、[机器结果](./07_showcase/reports/review_metrics.json)、[生产验证](./07_showcase/reports/review_preview_metrics.json)。
 
 | 本轮Chrome：谱系归档与真实PCM | 本轮Edge：生产子路径运行 |
 | --- | --- |

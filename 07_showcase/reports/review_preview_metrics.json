@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "testedCommit": "4820a617ee74de4727bda3b57661fb2812b9f6c2",
+  "testedCommit": "92fc0753008abb08d9d0b7cc14deb138cb28aabc",
   "modes": {
     "root-chrome": {
       "passed": true,
@@ -10,7 +10,7 @@
         "bitDepth": 16,
         "dataSize": 1080768,
         "duration": 5.629,
-        "peak": 32767,
+        "peak": 32768,
         "final10msPeak": 0
       },
       "images": {
@@ -130,7 +130,7 @@
         "bitDepth": 16,
         "dataSize": 1080768,
         "duration": 5.629,
-        "peak": 32767,
+        "peak": 32768,
         "final10msPeak": 0
       },
       "images": {
