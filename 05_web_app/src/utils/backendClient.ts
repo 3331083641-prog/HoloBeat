@@ -122,9 +122,11 @@ async function syncCard(card: MintedCard,
     if (work.parentCardId) {
       const parent = options.ancestors?.find(c => (c.id === work.parentCardId || c.workId === work.parentCardId));
       if (parent) {
-        if (parent.title !== work.parentTitle || parent.code !== work.parentCode || parent.lineageDepth+1 !== work.lineageDepth)
+        if (parent.title !== work.parentTitle || parent.lineageDepth+1 !== work.lineageDepth)
           throw new ArchiveError('PARENT_METADATA_CONFLICT','本地原作与重混来源不一致，请恢复正确原作');
         const savedParent = await archive(parent);
+        if (parent.code !== work.parentCode && savedParent.code !== work.parentCode)
+          throw new ArchiveError('PARENT_METADATA_CONFLICT','来源编号与本地及已验证归档原作均不一致');
         outgoing = {...work,parentCardId:savedParent.id,parentTitle:savedParent.title,parentCode:savedParent.code};
         outgoing.contentHash = await buildMintIdempotencyKey(outgoing);
       }

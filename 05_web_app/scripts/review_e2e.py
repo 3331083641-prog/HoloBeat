@@ -203,6 +203,16 @@ def run_browser(p,name,base,api,metrics,temp):
       assert restored['imported']['id']!=card['original']['id']
       assert restored['shared']['id']==card['original']['id']
       checks['downloadImportCanonicalShare']=True
+      restored_child=q.evaluate('''async(card)=>{
+        const ok=await S.getState().importProjectFile({schema:'holobeat.project.v3',exportedAt:Date.now(),kind:'minted-card',card});
+        if(!ok) throw Error('remix import failed');
+        const child=S.getState().mintedCards.find(c=>c.workId===card.id);
+        const result=await client.syncCardToBackend(child,{ancestors:S.getState().mintedCards});
+        if(result.status!=='SHARED') throw Error(JSON.stringify(result));
+        return await client.fetchSharedCard(result.share.token);
+      }''',card['child'])
+      assert restored_child['id']==card['child']['id']
+      checks['importedAncestorRenumberedRemixShare']=True
       other.close()
       exhibit=context.new_page();exhibit.goto(card['share']['shareUrl'])
       exhibit.get_by_role('button',name='▶ 试听音符轮廓').click()

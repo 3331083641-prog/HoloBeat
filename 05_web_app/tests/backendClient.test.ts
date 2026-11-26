@@ -1,3 +1,4 @@
+import { buildMintIdempotencyKey } from '../../shared/card-content.ts';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -72,4 +73,22 @@ test('hung service times out and cancels both bounded attempts', async t => {
   assert.equal(result.status,'SYNC_FAILED');
   if (result.status==='SYNC_FAILED') assert.equal(result.code,'TIMEOUT');
   assert.equal(attempts,2);
+});
+
+test('imported ancestor local numbering may differ from validated canonical parent metadata',async t=>{
+  const localParent={...card,id:'imported-parent',workId:card.id,code:'#MY-09',serialNumber:9,libraryId:'second'};
+  const child={...card,id:'child',title:'Remix',idempotencyKey:'child-request',code:'#MY-10',serialNumber:10,
+    parentCardId:card.id,parentCode:card.code,parentTitle:card.title,lineageDepth:card.lineageDepth+1};
+  child.contentHash=await buildMintIdempotencyKey(child);
+  const writes:string[]=[];
+  t.mock.method(globalThis,'fetch',async(url:string,init:RequestInit)=>{
+    if(url.endsWith('/session')) return json({writeToken:'test-session'});
+    const submitted=JSON.parse(String(init.body));writes.push(submitted.id);
+    return json({created:submitted.id==='child',card:submitted.id==='child'?submitted:card,
+      canonicalId:submitted.id==='child'?child.id:card.id,outcome:submitted.id==='child'?'CREATED':'RESTORED'});
+  });
+  const result=await syncCardToBackend(child,{share:false,ancestors:[localParent]});
+  assert.equal(result.status,'ARCHIVED');
+  assert.equal('canonicalId' in result && result.canonicalId,child.id);
+  assert.deepEqual(writes,['imported-parent','child']);
 });
