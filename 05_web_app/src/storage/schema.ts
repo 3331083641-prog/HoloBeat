@@ -122,7 +122,7 @@ function validateAndMigrateSnapshot(
 
     const rawFx = (bs.liveFx ?? {}) as Record<string, unknown>;
     beatSnapshot = {
-      bpm: Math.min(180, Math.max(60, Math.round(isFiniteNum(bs.bpm) ? bs.bpm : (s.bpm as number)))),
+      bpm: Math.min(240, Math.max(40, isFiniteNum(bs.bpm) ? bs.bpm : (s.bpm as number))),
       swing: isFiniteNum(bs.swing) ? Math.min(0.6, Math.max(0, bs.swing)) : 0,
       scale: VALID_SCALES.has(bs.scale as ScaleId) ? (bs.scale as ScaleId) : (s.scale as ScaleId),
       bars,
@@ -153,7 +153,7 @@ function validateAndMigrateSnapshot(
       timeOffsetMs: Math.round(ev.timeOffsetMs),
       durationMs: isFiniteNum(ev.durationMs) ? Math.max(40, Math.min(10_000, ev.durationMs)) : 240,
       pitch: ev.pitch.slice(0, 8),
-      velocity: isFiniteNum(ev.velocity) ? Math.min(1, Math.max(0.15, ev.velocity)) : 0.8,
+      velocity: isFiniteNum(ev.velocity) ? Math.min(1, Math.max(0, ev.velocity)) : 0.8,
       cardId: VALID_CARD_IDS.has(ev.cardId) ? ev.cardId : 'card-01',
       trackCategory: VALID_CATEGORIES.has(ev.trackCategory as TrackCategory)
         ? (ev.trackCategory as TrackCategory)
@@ -184,7 +184,8 @@ function validateAndMigrateSnapshot(
     capturedAt: isFiniteNum(s.capturedAt) ? s.capturedAt : Date.now(),
     durationMs: Math.round(s.durationMs),
     tailMs: isFiniteNum(s.tailMs) ? Math.round(s.tailMs) : beatSnapshot?.liveFx.echo ? 1450 : 880,
-    bpm: Math.round(s.bpm),
+    bpm: s.bpm,
+    soundSeed: isFiniteNum(s.soundSeed) ? s.soundSeed : undefined,
     swing: isFiniteNum(s.swing) ? s.swing : beatSnapshot?.swing ?? 0,
     scale: s.scale as ScaleId,
     bars: beatSnapshot?.bars ?? (s.bars === 1 ? 1 : 2),

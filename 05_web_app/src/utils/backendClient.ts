@@ -23,8 +23,8 @@ class ArchiveError extends Error {
   }
 }
 export type ArchiveResult =
-  | { status: 'LOCAL_ONLY' | 'ARCHIVED' | 'REVOKED' }
-  | { status: 'SHARED'; share: ShareLinkResult }
+  | { status: 'LOCAL_ONLY' | 'ARCHIVED' | 'REVOKED'; canonicalId?: string; archiveOutcome?: string }
+  | { status: 'SHARED'; share: ShareLinkResult; canonicalId?: string; archiveOutcome?: string }
   | { status: 'SYNC_FAILED' | 'SHARE_FAILED'; error: string; code: FailureCode; httpStatus?: number };
 
 async function request(path: string, init: RequestInit = {}, signal?: AbortSignal) {
@@ -113,6 +113,7 @@ async function syncCard(card: MintedCard,
   options: { share?: boolean; localOnly?: boolean; signal?: AbortSignal; ancestors?: MintedCard[] } = {}): Promise<ArchiveResult> {
   if (options.localOnly) return { status: 'LOCAL_ONLY' };
   let canonical: MintedCard;
+  let archiveOutcome: string | undefined;
   const visited = new Set<string>();
   const archive = async (work: MintedCard): Promise<MintedCard> => {
     if (visited.has(work.id)) throw new ArchiveError('PARENT_METADATA_CONFLICT','作品谱系存在循环');
@@ -137,11 +138,14 @@ async function syncCard(card: MintedCard,
         parsed.data.parentTitle !== outgoing.parentTitle || parsed.data.parentCode !== outgoing.parentCode) {
       throw new ArchiveError('BAD_RESPONSE','归档内容验证失败；请用完整原件修复历史裁剪档案');
     }
+    archiveOutcome = typeof saved.outcome === "string" ? saved.outcome : undefined;
     return parsed.data;
   };
   try { canonical = await archive(card); }
   catch (error) { return failure('SYNC_FAILED', error); }
-  return options.share === false ? { status:'ARCHIVED' } : createCardShare(canonical.id,undefined,options.signal);
+  if (options.share === false) return { status:'ARCHIVED', canonicalId:canonical.id, archiveOutcome };
+  const shared = await createCardShare(canonical.id,undefined,options.signal);
+  return shared.status === 'SHARED' ? {...shared,canonicalId:canonical.id,archiveOutcome} : shared;
 }
 // Preserve the redesign's existing Forge controls, including its error toast and HTML exhibit URL.
 export async function syncCardToBackend(card: MintedCard, options: Parameters<typeof syncCard>[1] = {}) {

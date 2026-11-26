@@ -103,3 +103,20 @@ test('failed valid draft persistence leaves selection, serial, album and stored 
     assert.deepEqual(await holoDb.loadForgeDraft(),original);
   }finally{holoDb.setTestWriteFailureMode('none');}
 });
+
+test('valid V2 music preserves supported BPM and explicit silent velocity',async()=>{
+  const store=await fresh();
+  store.setState({bpm:204});
+  store.getState().sendBeatToForge();
+  const draft=structuredClone(store.getState().forgeDraft);
+  const snapshot=draft.snapshot!;
+  const ratio=snapshot.bpm/204;
+  snapshot.bpm=204;snapshot.beatSnapshot!.bpm=204;snapshot.durationMs=480000/204;
+  snapshot.events.forEach(e=>{e.timeOffsetMs*=ratio;e.durationMs*=ratio;});
+  snapshot.events[0].velocity=0;
+  const result=validateProjectFile({schema:'holobeat.project.v2',kind:'forge-draft',exportedAt:Date.now(),draft});
+  assert.equal(result.ok,true);
+  assert.equal(result.project!.draft!.snapshot!.bpm,204);
+  assert.equal(result.project!.draft!.snapshot!.events[0].velocity,0);
+  assert.equal(result.project!.draft!.snapshot!.soundSeed,draft.snapshot!.soundSeed);
+});
