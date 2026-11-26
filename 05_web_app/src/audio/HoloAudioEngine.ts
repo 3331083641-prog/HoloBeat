@@ -11,7 +11,8 @@ import type {
 } from '../types/holo';
 import {
   CHORD_PROGRESSIONS,
-  defaultVelocityForStep,
+  compileBeatToEvents, getStepTimeMs, applyQuantizedTracks, createBeatCompositionSnapshot,
+  refreshQuantizePreview, normalizePinballEvents,
   normalizeTrackState,
   resolveNoteForStep,
 } from './compositionEngine';
@@ -50,10 +51,11 @@ export interface SynthVoiceRack {
   dispose: () => void;
 }
 
-export function createVoiceRack(destination: Tone.InputNode): SynthVoiceRack {
-  const rackGain = new Tone.Gain(0.95).connect(destination);
+export function createVoiceRack(destination: Tone.InputNode, context = Tone.getContext()): SynthVoiceRack {
+  const rackGain = new Tone.Gain({context, gain: 0.95}).connect(destination);
 
   const kick = new Tone.MembraneSynth({
+    context,
     pitchDecay: 0.042,
     octaves: 5.5,
     oscillator: { type: 'sine' },
@@ -61,6 +63,7 @@ export function createVoiceRack(destination: Tone.InputNode): SynthVoiceRack {
   }).connect(rackGain);
 
   const subKick = new Tone.MembraneSynth({
+    context,
     pitchDecay: 0.068,
     octaves: 4.5,
     oscillator: { type: 'triangle' },
@@ -68,57 +71,60 @@ export function createVoiceRack(destination: Tone.InputNode): SynthVoiceRack {
   }).connect(rackGain);
 
   const woodSnap = new Tone.Synth({
+    context,
     oscillator: { type: 'triangle' },
     envelope: { attack: 0.001, decay: 0.055, sustain: 0, release: 0.035 },
   }).connect(rackGain);
 
-  const whiteFilter = new Tone.Filter(3800, 'bandpass').connect(rackGain);
+  const whiteFilter = new Tone.Filter({ context, frequency: 3800, type: 'bandpass' }).connect(rackGain);
   whiteFilter.Q.value = 2.6;
   const whiteNoise = new Tone.NoiseSynth({
+    context,
     noise: { type: 'white' },
     envelope: { attack: 0.001, decay: 0.085, sustain: 0, release: 0.045 },
   }).connect(whiteFilter);
 
-  const pinkFilter = new Tone.Filter(1900, 'bandpass').connect(rackGain);
+  const pinkFilter = new Tone.Filter({ context, frequency: 1900, type: 'bandpass' }).connect(rackGain);
   pinkFilter.Q.value = 1.2;
   const pinkNoise = new Tone.NoiseSynth({
+    context,
     noise: { type: 'pink' },
     envelope: { attack: 0.008, decay: 0.22, sustain: 0.03, release: 0.14 },
   }).connect(pinkFilter);
 
-  const bellPoly = new Tone.PolySynth(Tone.FMSynth, {
+  const bellPoly = new Tone.PolySynth<Tone.FMSynth>({ context, voice: Tone.FMSynth, options: {
     harmonicity: 3.05,
     modulationIndex: 6.2,
     oscillator: { type: 'sine' },
     modulation: { type: 'triangle' },
     envelope: { attack: 0.002, decay: 0.34, sustain: 0.02, release: 0.42 },
     modulationEnvelope: { attack: 0.002, decay: 0.15, sustain: 0, release: 0.14 },
-  }).connect(rackGain);
+  } }).connect(rackGain);
   bellPoly.maxPolyphony = 10;
   bellPoly.volume.value = -3;
 
-  const squareFilter = new Tone.Filter(3600, 'lowpass').connect(rackGain);
+  const squareFilter = new Tone.Filter({ context, frequency: 3600, type: 'lowpass' }).connect(rackGain);
   squareFilter.Q.value = 1.2;
-  const squarePoly = new Tone.PolySynth(Tone.Synth, {
+  const squarePoly = new Tone.PolySynth<Tone.Synth>({ context, voice: Tone.Synth, options: {
     oscillator: { type: 'pulse', width: 0.28 },
     envelope: { attack: 0.003, decay: 0.15, sustain: 0.05, release: 0.16 },
-  }).connect(squareFilter);
+  } }).connect(squareFilter);
   squarePoly.maxPolyphony = 8;
   squarePoly.volume.value = -8.5;
 
-  const pluckPoly = new Tone.PolySynth(Tone.Synth, {
+  const pluckPoly = new Tone.PolySynth<Tone.Synth>({ context, voice: Tone.Synth, options: {
     oscillator: { type: 'triangle' },
     envelope: { attack: 0.002, decay: 0.28, sustain: 0.04, release: 0.36 },
-  }).connect(rackGain);
+  } }).connect(rackGain);
   pluckPoly.maxPolyphony = 10;
   pluckPoly.volume.value = -4;
 
-  const padFilter = new Tone.Filter(2100, 'lowpass').connect(rackGain);
+  const padFilter = new Tone.Filter({ context, frequency: 2100, type: 'lowpass' }).connect(rackGain);
   padFilter.Q.value = 1.4;
-  const padPoly = new Tone.PolySynth(Tone.Synth, {
+  const padPoly = new Tone.PolySynth<Tone.Synth>({ context, voice: Tone.Synth, options: {
     oscillator: { type: 'fatsawtooth', count: 2, spread: 18 },
     envelope: { attack: 0.03, decay: 0.32, sustain: 0.16, release: 0.48 },
-  }).connect(padFilter);
+  } }).connect(padFilter);
   padPoly.maxPolyphony = 8;
   padPoly.volume.value = -13.5;
 
@@ -161,12 +167,12 @@ export function triggerCardOnRack(
   opts: TriggerOptions = {}
 ) {
   const now = opts.time ?? Tone.now();
-  const vel = Math.min(1, Math.max(0.15, (opts.velocity ?? 0.82) * (opts.gain ?? 1)));
+  const vel = Math.min(1, Math.max(0, (opts.velocity ?? 0.82) * (opts.gain ?? 1)));
   const tone = opts.tone ?? 0.5;
   const scaleId = opts.scale ?? 'PENTA_C';
   const stepIdx = opts.stepIndex ?? 0;
   const chosenNote = opts.note ?? resolveNoteForStep(scaleId, stepIdx, tone);
-  const noteDur = opts.durationSec ? Math.min(1.8, Math.max(0.06, opts.durationSec)) : undefined;
+  const noteDur = opts.durationSec;
 
   const beatQuarter = Math.floor((stepIdx % 16) / 4);
   const chord = CHORD_PROGRESSIONS[scaleId][beatQuarter];
@@ -174,8 +180,7 @@ export function triggerCardOnRack(
   const pitchShiftSemis = Math.round((tone - 0.5) * 6);
   const shiftFreq = (baseHz: number) => baseHz * Math.pow(2, pitchShiftSemis / 12);
 
-  try {
-    switch (cardId) {
+  switch (cardId) {
       case 'card-01': {
         rack.kick.triggerAttackRelease(shiftFreq(58), '16n', now, vel * 0.96);
         rack.woodSnap.triggerAttackRelease(shiftFreq(740), '64n', now, vel * 0.44);
@@ -276,9 +281,6 @@ export function triggerCardOnRack(
       default: {
         rack.pluckPoly.triggerAttackRelease(chosenNote, noteDur ?? '8n', now, vel * 0.65);
       }
-    }
-  } catch {
-    // Prevent Tone scheduling exceptions on extreme rapid triggers
   }
 }
 
@@ -295,6 +297,9 @@ class HoloAudioEngine {
   private bitCrusher!: Tone.BitCrusher;
   private streetEcho!: Tone.FeedbackDelay;
   private roomReverb!: Tone.Freeverb;
+  private previewReverb!: Tone.Freeverb;
+  private transportOutput!: Tone.Gain;
+  private previewOutput!: Tone.Gain;
   private compressor!: Tone.Compressor;
   private limiter!: Tone.Limiter;
   private fft!: Tone.FFT;
@@ -302,12 +307,9 @@ class HoloAudioEngine {
   private meter!: Tone.Meter;
 
   private trackFilters: Tone.Filter[] = [];
-  private trackChannels: Tone.Channel[] = [];
+  private trackChannels: Tone.Gain[] = [];
   private trackRacks: SynthVoiceRack[] = [];
   private previewRack!: SynthVoiceRack;
-  private snapshotRack!: SynthVoiceRack;
-  private snapshotBitCrusher!: Tone.BitCrusher;
-  private snapshotEcho!: Tone.FeedbackDelay;
 
   private sfxSynth!: Tone.Synth;
   private sfxPoly!: Tone.PolySynth<Tone.Synth>;
@@ -320,16 +322,21 @@ class HoloAudioEngine {
   private lastScratchTime = 0;
   private lastKnobTickTime = 0;
   private pinballTimers: number[] = [];
+  private pinballSession = 0;
+  private previewSession = 0;
+  private lastPreviewAudioTime = 0;
+  private overlapRacks = new Map<SynthVoiceRack, number>();
+  private repeatRacks: SynthVoiceRack[] = [];
+  private transportSession = 0;
+  private transportStartSec = 0;
+  private snapshotFrame = 0;
 
   // Session-guarded Frozen Snapshot & Canonical WAV Playback State
   private playbackSessionId = 0;
   private snapshotActive = false;
   private snapshotStartAudioSec = 0;
-  private snapshotLeadInMs = 0;
   private snapshotDurationMs = 0;
-  private snapshotTimers: number[] = [];
   private activeBufferSource: AudioBufferSourceNode | null = null;
-  private mediaStreamDest: MediaStreamAudioDestinationNode | null = null;
 
   async ensureStarted(): Promise<void> {
     if (Tone.getContext().state !== 'running') {
@@ -345,7 +352,6 @@ class HoloAudioEngine {
 
   private initGraph() {
     if (this.initialized) return;
-    this.initialized = true;
 
     this.limiter = new Tone.Limiter(-1).toDestination();
     this.compressor = new Tone.Compressor({
@@ -355,11 +361,10 @@ class HoloAudioEngine {
       release: 0.14,
     }).connect(this.limiter);
 
-    this.roomReverb = new Tone.Freeverb({
-      roomSize: 0.28,
-      dampening: 4200,
-      wet: 0.12,
-    }).connect(this.compressor);
+    this.transportOutput = new Tone.Gain(0).connect(this.compressor);
+    this.previewOutput = new Tone.Gain(1).connect(this.compressor);
+    this.roomReverb = this.createRoom(this.transportOutput);
+    this.previewReverb = this.createRoom(this.previewOutput);
 
     this.fft = new Tone.FFT(32);
     this.waveform = new Tone.Waveform(128);
@@ -381,7 +386,7 @@ class HoloAudioEngine {
     this.masterBus = new Tone.Gain(0.96).connect(this.bitCrusher);
 
     for (let i = 0; i < 4; i++) {
-      const channel = new Tone.Channel(0, 0).connect(this.masterBus);
+      const channel = new Tone.Gain(1).connect(this.masterBus);
       const filter = new Tone.Filter(12000, 'lowpass').connect(channel);
       const rack = createVoiceRack(filter);
       this.trackChannels.push(channel);
@@ -389,17 +394,22 @@ class HoloAudioEngine {
       this.trackRacks.push(rack);
     }
 
-    this.previewRack = createVoiceRack(this.roomReverb);
+    this.previewRack = createVoiceRack(this.previewReverb);
+    this.initSfx();
+    this.initialized = true;
+    this.setupSequencer();
+    this.syncFromStore();
+    document.addEventListener('visibilitychange', () => { if (document.hidden) this.stopAllPlayback(); });
+    useHoloStore.subscribe((state, previous) => {
+      if (state.activePage !== previous.activePage) this.stopAllPlayback();
+    });
+  }
 
-    this.snapshotEcho = new Tone.FeedbackDelay({
-      delayTime: '8n.',
-      feedback: 0.42,
-      wet: 0,
-    }).connect(this.roomReverb);
-    this.snapshotBitCrusher = new Tone.BitCrusher(4).connect(this.snapshotEcho);
-    this.snapshotBitCrusher.wet.value = 0;
-    this.snapshotRack = createVoiceRack(this.snapshotBitCrusher);
+  private createRoom(output: Tone.Gain) {
+    return new Tone.Freeverb({ roomSize: 0.28, dampening: 4200, wet: 0.12 }).connect(output);
+  }
 
+  private initSfx() {
     this.sfxSynth = new Tone.Synth({
       oscillator: { type: 'triangle' },
       envelope: { attack: 0.001, decay: 0.042, sustain: 0, release: 0.028 },
@@ -409,7 +419,7 @@ class HoloAudioEngine {
     this.sfxPoly = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'triangle' },
       envelope: { attack: 0.006, decay: 0.26, sustain: 0.05, release: 0.4 },
-    }).connect(this.roomReverb);
+    }).connect(this.compressor);
     this.sfxPoly.maxPolyphony = 6;
     this.sfxPoly.volume.value = -10;
 
@@ -420,8 +430,6 @@ class HoloAudioEngine {
     }).connect(this.sfxNoiseFilter);
     this.sfxNoise.volume.value = -18;
 
-    this.setupSequencer();
-    this.syncFromStore();
   }
 
   private setupSequencer() {
@@ -439,60 +447,31 @@ class HoloAudioEngine {
               ? 16 + (rawStep % 16)
               : rawStep;
 
-        const tracks = state.tracks;
-        const anySolo = tracks.some((t) => t.solo);
-        const stepSec = 60 / Math.max(40, state.bpm) / 4;
-
-        tracks.forEach((rawTrack, idx) => {
-          const track = normalizeTrackState(rawTrack, bars);
-          const isMuted = track.mute || (anySolo && !track.solo);
-          if (isMuted) return;
-          if (!track.steps[step]) return;
-
-          const rack = this.trackRacks[idx];
-          if (!rack) return;
-
-          const cell = track.stepCells?.[step];
-          const isAccented = Boolean(track.accents?.[step]);
-          const baseVel = cell?.velocity ?? defaultVelocityForStep(step, isAccented);
-          const grooveVel = Math.min(1, isAccented ? Math.max(0.95, baseVel) : baseVel);
-          const pitchOffset = cell?.pitchOffset ?? 0;
-          const lenMult = cell?.lengthSteps ?? 1;
-          const explicitNote =
-            track.category === 'MELODY'
-              ? resolveNoteForStep(state.scale, step, track.tone, pitchOffset)
-              : undefined;
-          const baseDurMult =
-            track.category === 'VIBE' ? 2.4 : track.category === 'MELODY' ? 1.35 : 0.85;
-
-          triggerCardOnRack(rack, track.cardId, {
-            time,
-            note: explicitNote,
-            velocity: grooveVel,
-            tone: track.tone,
-            stepIndex: step,
-            durationSec: stepSec * baseDurMult * lenMult,
-            scale: state.scale,
-          });
-
-          if (state.liveFx.stutter) {
-            const sub = stepSec * 0.5;
-            triggerCardOnRack(rack, track.cardId, {
-              time: time + sub,
-              note: explicitNote,
-              velocity: Math.max(0.35, grooveVel * 0.68),
-              tone: Math.min(1, track.tone + 0.14),
-              stepIndex: step,
-              durationSec: stepSec * 0.45,
-              scale: state.scale,
-            });
+        const events = compileBeatToEvents({ ...state, bars, activePhraseLoop: loopMode });
+        const relative = bars === 2 && loopMode === 'AB' ? step : step % 16;
+        const straightMs = relative * 15000 / state.bpm;
+        const hitTime = time + (getStepTimeMs(relative, state.bpm, state.swing) - straightMs) / 1000;
+        const session = this.transportSession;
+        for (const ev of events) {
+          if (ev.stepIndex !== step) continue;
+          const rack = ev.id.endsWith('-stut')
+            ? (this.repeatRacks[ev.trackIndex] ??= createVoiceRack(this.trackFilters[ev.trackIndex]))
+            : this.trackRacks[ev.trackIndex];
+          const onset = Math.max(time, time + (ev.timeOffsetMs - straightMs) / 1000);
+          if (document.documentElement.dataset.measureMotion === 'true') {
+            performance.mark('holobeat-live-note', { detail: { id: ev.id, trackIndex: ev.trackIndex,
+              stepIndex: ev.stepIndex, clockMs: onset * 1000 } });
           }
-        });
+          triggerCardOnRack(rack, ev.cardId, { time: onset,
+            note: ev.pitch, velocity: ev.velocity, tone: ev.tone, stepIndex: step, durationSec: ev.durationMs / 1000,
+            scale: state.scale });
+        }
 
         Tone.getDraw().schedule(() => {
+          if (session !== this.transportSession) return;
           this.currentStep = step;
           this.stepListeners.forEach((fn) => fn(step));
-        }, time);
+        }, hitTime);
       },
       steps,
       '16n'
@@ -500,12 +479,21 @@ class HoloAudioEngine {
     this.sequence.start(0);
   }
 
+  private enableTransportOutput(enabled: boolean) {
+    const {tracks} = useHoloStore.getState();
+    const solo = tracks.some(track => track.solo);
+    const audible = tracks.some(track => !track.mute && track.volume > 0 && (!solo || track.solo));
+    this.transportOutput.gain.setValueAtTime(enabled && audible ? 1 : 0, Tone.immediate());
+  }
+
   syncFromStore() {
     if (!this.initialized) return;
     const state = useHoloStore.getState();
     Tone.getDestination().mute = state.muted;
-    Tone.getTransport().bpm.rampTo(state.bpm, 0.05);
-    Tone.getTransport().swing = state.swing;
+    this.enableTransportOutput(Tone.getTransport().state === 'started');
+    Tone.getTransport().bpm.value = state.bpm;
+    this.streetEcho.delayTime.value = 45 / state.bpm;
+    Tone.getTransport().swing = 0;
     Tone.getTransport().swingSubdivision = '16n';
 
     this.bitCrusher.wet.rampTo(state.liveFx.bitcrush ? 0.8 : 0, 0.04);
@@ -516,9 +504,13 @@ class HoloAudioEngine {
       const ch = this.trackChannels[idx];
       const filt = this.trackFilters[idx];
       if (!ch || !filt) return;
-      const db = t.volume <= 0.01 ? -60 : Tone.gainToDb(t.volume);
-      ch.volume.rampTo(db, 0.04);
-      ch.mute = t.mute || (anySolo && !t.solo);
+      const gain = t.mute || (anySolo && !t.solo) ? 0 : t.volume;
+      if (gain === 0) {
+        ch.gain.cancelScheduledValues(Tone.immediate());
+        ch.gain.setValueAtTime(0, Tone.immediate());
+      } else if (ch.gain.value !== gain) {
+        ch.gain.rampTo(gain, 0.04);
+      }
       const freq = 650 * Math.pow(21.5, t.tone);
       filt.frequency.rampTo(freq, 0.04);
     });
@@ -528,62 +520,129 @@ class HoloAudioEngine {
    * Returns exact continuous step position driven by Tone.Transport audio clock
    * across 0..16 (1-bar / A / B loop) or 0..32 (2-bar A+B loop).
    */
+  getAudioClockMs(): number { return Tone.immediate() * 1000; }
+
   getTransportStepFloat(): number {
     if (!this.initialized) return -1;
     const transport = Tone.getTransport();
     if (transport.state !== 'started') return -1;
     const state = useHoloStore.getState();
-    const bpm = Math.max(40, transport.bpm.value || state.bpm);
-    const stepSec = 60 / bpm / 4;
-    const posSec = Math.max(0, transport.seconds);
-    const raw32 = (posSec / stepSec) % 32;
+    const now = Tone.immediate();
+    if (now < this.transportStartSec) return -1;
+    const ticks = transport.getTicksAtTime(now);
+    const raw = (ticks / (transport.PPQ / 4)) % 32;
+    const ms = raw * 15000 / state.bpm;
+    let step = Math.floor(raw);
+    if (ms < getStepTimeMs(step, state.bpm, state.swing)) step = Math.max(0, step - 1);
+    const start = getStepTimeMs(step, state.bpm, state.swing);
+    const end = getStepTimeMs(step + 1, state.bpm, state.swing);
+    const raw32 = step + (ms - start) / (end - start);
     if (state.beatBars === 1 || state.beatPhraseLoop === 'A') return raw32 % 16;
     if (state.beatPhraseLoop === 'B') return 16 + (raw32 % 16);
     return raw32;
   }
 
   async togglePlay(): Promise<boolean> {
+    const session = ++this.transportSession;
     await this.ensureStarted();
+    if (session !== this.transportSession || document.hidden) return false;
     this.stopSnapshotPlayback();
     this.syncFromStore();
     const transport = Tone.getTransport();
     if (transport.state === 'started') {
-      transport.pause();
+      transport.pause(Tone.immediate());
+      this.silenceTransport();
       useHoloStore.getState().setIsPlaying(false);
       return false;
     } else {
-      transport.start();
+      this.enableTransportOutput(true);
+      this.transportStartSec = Tone.now();
+      transport.start(this.transportStartSec);
       useHoloStore.getState().setIsPlaying(true);
       return true;
     }
   }
 
   async startTransport(): Promise<void> {
+    const session = ++this.transportSession;
     await this.ensureStarted();
+    if (session !== this.transportSession || document.hidden) return;
     this.stopSnapshotPlayback();
     this.syncFromStore();
     if (Tone.getTransport().state !== 'started') {
-      Tone.getTransport().start();
+      this.enableTransportOutput(true);
+      this.transportStartSec = Tone.now();
+      Tone.getTransport().start(this.transportStartSec);
       useHoloStore.getState().setIsPlaying(true);
     }
   }
 
   stopTransport(): void {
+    ++this.transportSession;
     if (!this.initialized) return;
-    Tone.getTransport().stop();
+    this.transportOutput.gain.setValueAtTime(0, Tone.immediate());
+    if (Tone.getTransport().state !== "stopped") this.silenceTransport();
+    Tone.getTransport().stop(Tone.immediate());
     this.currentStep = -1;
     this.stepListeners.forEach((fn) => fn(-1));
     useHoloStore.getState().setIsPlaying(false);
   }
 
   /**
-   * Stop ALL active audio streams cleanly (workspace switch, pagehide, cancel, unseal)
+   * Stop ALL active audio streams cleanly (used on workspace switch / page close / unseal)
    */
+  private silenceTransport() {
+    this.transportOutput.gain.setValueAtTime(0, Tone.immediate());
+    this.repeatRacks.forEach(rack => rack.dispose());
+    this.repeatRacks = [];
+    this.trackRacks.forEach((rack, index) => {
+      rack.dispose();
+      this.trackRacks[index] = createVoiceRack(this.trackFilters[index]);
+    });
+    // Disconnect the previous delay line so echoes cannot bleed into the next session.
+    this.transportOutput.disconnect();
+    this.transportOutput.dispose();
+    this.transportOutput = new Tone.Gain(0).connect(this.compressor);
+    this.masterBus.disconnect();
+    this.bitCrusher.dispose();
+    this.streetEcho.dispose();
+    this.roomReverb.dispose();
+    this.roomReverb = this.createRoom(this.transportOutput);
+    this.streetEcho = new Tone.FeedbackDelay({ delayTime: 45 / useHoloStore.getState().bpm,
+      feedback: 0.42, wet: useHoloStore.getState().liveFx.echo ? 0.48 : 0 }).connect(this.roomReverb);
+    this.bitCrusher = new Tone.BitCrusher(4).connect(this.streetEcho);
+    this.bitCrusher.wet.value = useHoloStore.getState().liveFx.bitcrush ? 0.8 : 0;
+    this.masterBus.connect(this.bitCrusher);
+  }
+
   stopAllPlayback(): void {
-    this.playbackSessionId += 1;
     this.stopTransport();
     this.stopPinballRecording();
     this.stopSnapshotPlayback();
+    if (this.initialized) {
+      this.sfxSynth.dispose();
+      this.sfxPoly.dispose();
+      this.sfxNoise.dispose();
+      this.sfxNoiseFilter.dispose();
+      this.initSfx();
+    }
+  }
+
+  private silencePreview() {
+    ++this.previewSession;
+    for (const [rack, timer] of this.overlapRacks) {
+      window.clearTimeout(timer);
+      rack.dispose();
+    }
+    this.overlapRacks.clear();
+    if (this.initialized) {
+      this.previewOutput.gain.setValueAtTime(0, Tone.immediate());
+      this.previewRack.dispose();
+      this.previewReverb.dispose();
+      this.previewReverb = this.createRoom(this.previewOutput);
+      this.previewRack = createVoiceRack(this.previewReverb);
+      this.lastPreviewAudioTime = 0;
+    }
   }
 
   subscribeStep(fn: StepListener): () => void {
@@ -608,195 +667,92 @@ class HoloAudioEngine {
       leadInMs?: number;
     } = {}
   ): Promise<number> {
-    await this.ensureStarted();
-    this.stopTransport();
-    this.stopPinballRecording();
     this.stopSnapshotPlayback();
-
-    const sessionId = ++this.playbackSessionId;
-    const leadInMs = opts.leadInMs ?? 20;
-
-    try {
-      const arrayBuf = await wavBlob.arrayBuffer();
-      if (sessionId !== this.playbackSessionId) return sessionId;
-
-      const rawCtx = Tone.getContext().rawContext as AudioContext;
-      const decoded = await rawCtx.decodeAudioData(arrayBuf.slice(0));
-      if (sessionId !== this.playbackSessionId) return sessionId;
-
-      const source = rawCtx.createBufferSource();
-      source.buffer = decoded;
-      // Connect cleanly into Tone.Limiter input node so mute, meter, and MediaStreamCapture work!
-      const toneInput = (this.limiter as unknown as { input: AudioNode }).input;
-      if (toneInput) {
-        source.connect(toneInput);
-      } else {
-        source.connect(rawCtx.destination);
-      }
-
-      const startAt = rawCtx.currentTime + leadInMs / 1000;
-      this.activeBufferSource = source;
-      this.snapshotActive = true;
-      this.snapshotLeadInMs = leadInMs;
-      this.snapshotStartAudioSec = Tone.now();
-      this.snapshotDurationMs = Math.round(decoded.duration * 1000);
-
-      if (opts.events && opts.onEvent) {
-        const onEv = opts.onEvent;
-        opts.events.forEach((ev) => {
-          const t = window.setTimeout(() => {
-            if (sessionId === this.playbackSessionId && this.snapshotActive) {
-              onEv(ev);
-            }
-          }, leadInMs + ev.timeOffsetMs);
-          this.snapshotTimers.push(t);
-        });
-      }
-
-      source.onended = () => {
-        if (sessionId !== this.playbackSessionId) return;
-        this.activeBufferSource = null;
-        this.snapshotActive = false;
-        this.clearSnapshotTimers();
-        opts.onComplete?.();
-      };
-
-      source.start(startAt);
-      return sessionId;
-    } catch {
-      if (sessionId === this.playbackSessionId) {
-        this.snapshotActive = false;
-        opts.onComplete?.();
-      }
-      return sessionId;
-    }
+    return this.startAudioBlob(wavBlob, opts, this.playbackSessionId);
   }
 
-  /**
-   * Play ANY frozen immutable CompositionSnapshot cleanly with session-guarded timing!
-   * Used by Choreographed Pinball Show for deterministic note-event animation callbacks.
-   */
-  async playCompositionSnapshot(
-    snapshot: CompositionSnapshot,
-    cbs: SnapshotPlaybackCallbacks = {}
-  ): Promise<void> {
+  private async startAudioBlob(wavBlob: Blob, opts: SnapshotPlaybackCallbacks & {
+    events?: PerformanceEvent[], loopMs?: number }, session: number): Promise<number> {
     await this.ensureStarted();
+    if (session !== this.playbackSessionId || document.hidden) return session;
     this.stopTransport();
     this.stopPinballRecording();
-    this.stopSnapshotPlayback();
-
-    const sessionId = ++this.playbackSessionId;
-    const leadInMs = cbs.leadInMs ?? 60;
-    const events = snapshot.events;
-    if (events.length === 0) {
-      cbs.onComplete?.();
-      return;
-    }
-
-    const fx = snapshot.beatSnapshot?.liveFx ?? { bitcrush: false, echo: false, stutter: false };
-    const stepSec = 60 / Math.max(40, snapshot.bpm) / 4;
-    this.snapshotBitCrusher.wet.value = fx.bitcrush ? 0.8 : 0;
-    this.snapshotEcho.delayTime.value = stepSec * 3;
-    this.snapshotEcho.wet.value = fx.echo ? 0.48 : 0;
-
-    const schedulePass = () => {
-      if (sessionId !== this.playbackSessionId) return;
-      this.clearSnapshotTimers();
-      this.snapshotActive = true;
-      this.snapshotLeadInMs = leadInMs;
-      this.snapshotDurationMs = Math.max(800, snapshot.durationMs);
-
-      const baseAudioTime = Tone.now() + 0.04;
-      this.snapshotStartAudioSec = baseAudioTime;
-      const tracksByIdx = snapshot.beatSnapshot?.tracks;
-
-      events.forEach((ev) => {
-        const fireTime = baseAudioTime + (leadInMs + ev.timeOffsetMs) / 1000;
-        const trackVol = tracksByIdx?.[ev.trackIndex]?.volume ?? 0.85;
-        const useExplicitNote =
-          snapshot.sourceType === 'pinball' ||
-          ev.trackCategory === 'MELODY' ||
-          ev.trackCategory === 'PERC';
-
-        triggerCardOnRack(this.snapshotRack, ev.cardId, {
-          time: fireTime,
-          note: useExplicitNote ? ev.pitch : undefined,
-          velocity: ev.velocity,
-          gain: trackVol,
-          tone: ev.tone ?? 0.5,
-          stepIndex: ev.stepIndex ?? 0,
-          durationSec: Math.max(0.06, ev.durationMs / 1000),
-          scale: snapshot.scale,
-        });
-
-        Tone.getDraw().schedule(() => {
-          if (sessionId === this.playbackSessionId && this.snapshotActive) {
-            cbs.onEvent?.(ev);
-          }
-        }, fireTime);
-      });
-
-      const tailMs = snapshot.tailMs ?? 180;
-      const totalMs = leadInMs + this.snapshotDurationMs + Math.min(350, tailMs);
-      const doneTimer = window.setTimeout(() => {
-        if (sessionId !== this.playbackSessionId || !this.snapshotActive) return;
-        if (cbs.loop) {
-          schedulePass();
-        } else {
-          this.snapshotActive = false;
-          cbs.onComplete?.();
-        }
-      }, totalMs);
-      this.snapshotTimers.push(doneTimer);
+    const ctx = Tone.getContext().rawContext as AudioContext;
+    const buffer = await ctx.decodeAudioData(await wavBlob.arrayBuffer());
+    if (session !== this.playbackSessionId || document.hidden) return session;
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = Boolean(opts.loop);
+    if (source.loop) source.loopEnd = (opts.loopMs ?? buffer.duration * 1000) / 1000;
+    Tone.connect(source, this.limiter);
+    this.activeBufferSource = source;
+    this.snapshotActive = true;
+    this.snapshotStartAudioSec = ctx.currentTime + (opts.leadInMs ?? 20) / 1000;
+    this.snapshotDurationMs = source.loop ? source.loopEnd * 1000 : 0;
+    let i = 0;
+    let previous = -Infinity;
+    const events = opts.events ?? [];
+    const tick = () => {
+      if (session !== this.playbackSessionId) return;
+      const ms = this.getSnapshotPlaybackMs();
+      if (ms < previous) i = 0;
+      previous = ms;
+      while (i < events.length && events[i].timeOffsetMs <= ms) opts.onEvent?.(events[i++]);
+      this.snapshotFrame = requestAnimationFrame(tick);
     };
+    source.onended = () => {
+      if (session !== this.playbackSessionId) return;
+      this.stopSnapshotPlayback();
+      opts.onComplete?.();
+    };
+    source.start(this.snapshotStartAudioSec);
+    if (opts.onEvent) this.snapshotFrame = requestAnimationFrame(tick);
+    return session;
+  }
 
-    schedulePass();
+  async playCompositionSnapshot(snapshot: CompositionSnapshot, cbs: SnapshotPlaybackCallbacks = {}) {
+    this.stopSnapshotPlayback();
+    const session = this.playbackSessionId;
+    if (!snapshot.events.length) { cbs.onComplete?.(); return; }
+    try {
+      const { renderCompositionSnapshotCached } = await import('./wavExporter');
+      const artifact = await renderCompositionSnapshotCached(snapshot);
+      if (session !== this.playbackSessionId) return;
+      await this.startAudioBlob(artifact.wavBlob, { ...cbs, events: snapshot.events, loopMs: snapshot.durationMs }, session);
+    } catch (error) {
+      if (session === this.playbackSessionId) {
+        this.stopSnapshotPlayback();
+        cbs.onComplete?.();
+        useHoloStore.getState().pushToast({ text: '作品音频播放失败，请重试。' });
+        console.warn('Snapshot playback failed',error);
+      }
+    }
   }
 
   /** Audition the quantized grid preview right next to the raw pinball recording for honest A/B comparison */
   async playQuantizedPreview(preview: PinballQuantizePreview, scale: ScaleId): Promise<void> {
-    await this.ensureStarted();
-    this.stopPinballRecording();
     const state = useHoloStore.getState();
-    const stepMs = (60 / Math.max(40, preview.bpm) / 4) * 1000;
-    const totalSteps = preview.targetBars * 16;
-
-    for (let step = 0; step < totalSteps; step++) {
-      const delay = Math.round(step * stepMs);
-      const timer = window.setTimeout(() => {
-        preview.ghostSteps.forEach((row, tIdx) => {
-          if (!row[step]) return;
-          const cardId = preview.trackCardIds[tIdx] ?? state.tracks[tIdx]?.cardId ?? 'card-01';
-          triggerCardOnRack(this.previewRack, cardId, {
-            stepIndex: step,
-            velocity: 0.82,
-            scale,
-          });
-        });
-      }, delay);
-      this.pinballTimers.push(timer);
-    }
+    preview = refreshQuantizePreview(preview, { ...state, scale });
+    const tracks = applyQuantizedTracks(state.tracks, state.collection, preview, 'replace');
+    const snap = createBeatCompositionSnapshot({ bars:preview.targetBars,bpm:preview.bpm,swing:state.swing,
+      activePhraseLoop:preview.targetBars === 2 ? 'AB' : 'A', scale,liveFx:state.liveFx,tracks });
+    await this.playCompositionSnapshot(snap);
   }
 
   getSnapshotPlaybackMs(): number {
     if (!this.initialized || !this.snapshotActive) return -1;
-    const elapsedMs = (Tone.now() - this.snapshotStartAudioSec) * 1000;
-    return elapsedMs - this.snapshotLeadInMs;
+    const elapsed = (Tone.immediate() - this.snapshotStartAudioSec) * 1000;
+    return elapsed >= 0 && this.snapshotDurationMs > 0 ? elapsed % this.snapshotDurationMs : elapsed;
   }
 
   isSnapshotPlaying(): boolean {
     return this.snapshotActive;
   }
 
-  private clearSnapshotTimers() {
-    this.snapshotTimers.forEach((t) => window.clearTimeout(t));
-    this.snapshotTimers = [];
-  }
-
   stopSnapshotPlayback(): void {
     this.playbackSessionId += 1;
     this.snapshotActive = false;
-    this.clearSnapshotTimers();
+    cancelAnimationFrame(this.snapshotFrame);
 
     if (this.activeBufferSource) {
       try {
@@ -809,41 +765,30 @@ class HoloAudioEngine {
       this.activeBufferSource = null;
     }
 
-    if (this.initialized) {
-      try {
-        this.snapshotRack.padPoly.releaseAll();
-        this.snapshotRack.bellPoly.releaseAll();
-        this.snapshotRack.pluckPoly.releaseAll();
-        this.snapshotRack.squarePoly.releaseAll();
-      } catch {
-        // Ignore release errors
-      }
-    }
-  }
-
-  async getAudioCaptureStream(): Promise<MediaStream | null> {
-    await this.ensureStarted();
-    try {
-      const rawCtx = Tone.getContext().rawContext as AudioContext;
-      if (typeof rawCtx.createMediaStreamDestination !== 'function') return null;
-      if (!this.mediaStreamDest) {
-        this.mediaStreamDest = rawCtx.createMediaStreamDestination();
-        this.limiter.connect(this.mediaStreamDest);
-      }
-      return this.mediaStreamDest.stream;
-    } catch {
-      return null;
-    }
   }
 
   async previewCard(cardId: string, opts: TriggerOptions = {}): Promise<void> {
+    const session = this.previewSession;
     await this.ensureStarted();
+    if (session !== this.previewSession || document.hidden) return;
     this.syncFromStore();
+    this.previewOutput.gain.setValueAtTime(1, Tone.immediate());
     const card = getCardById(cardId);
     const scale = opts.scale ?? useHoloStore.getState().scale;
     const now = Tone.now() + 0.01;
+    // Rapid physical collisions can overlap the same monophonic multi-strike instrument.
+    // Keep the second collision on a separate rack without moving its timestamp.
+    const overlapping = now < this.lastPreviewAudioTime;
+    const rack = overlapping ? createVoiceRack(this.previewReverb) : this.previewRack;
+    if (overlapping) {
+      this.overlapRacks.set(rack, window.setTimeout(() => {
+        rack.dispose();
+        this.overlapRacks.delete(rack);
+      }, 1400));
+    }
+    this.lastPreviewAudioTime = now + 0.06;
 
-    triggerCardOnRack(this.previewRack, card.id, {
+    triggerCardOnRack(rack, card.id, {
       ...opts,
       time: now,
       scale,
@@ -856,13 +801,13 @@ class HoloAudioEngine {
         resolveNoteForStep(scale, 2, 0.5),
         resolveNoteForStep(scale, 8, 0.5),
       ];
-      triggerCardOnRack(this.previewRack, card.id, {
+      triggerCardOnRack(rack, card.id, {
         note: notes[1],
         time: now + 0.14,
         scale,
         velocity: 0.74,
       });
-      triggerCardOnRack(this.previewRack, card.id, {
+      triggerCardOnRack(rack, card.id, {
         note: notes[2],
         time: now + 0.28,
         scale,
@@ -876,40 +821,40 @@ class HoloAudioEngine {
     onEvent?: (ev: PinballRecordedEvent) => void,
     onComplete?: () => void
   ): Promise<void> {
-    await this.ensureStarted();
     this.stopPinballRecording();
-    if (!events.length) {
+    const session = this.pinballSession;
+    await this.ensureStarted();
+    if (session !== this.pinballSession || document.hidden) return;
+    const playable = normalizePinballEvents(events);
+    if (!playable.length) {
       onComplete?.();
       return;
     }
 
     const scale = useHoloStore.getState().scale;
-    const minOffset = events.reduce((m, e) => Math.min(m, e.timeOffsetMs), events[0].timeOffsetMs);
-    let maxDelay = 0;
-
-    events.forEach((ev) => {
-      const delay = Math.max(0, ev.timeOffsetMs - minOffset);
-      if (delay > maxDelay) maxDelay = delay;
+    let endMs = 0;
+    for (const hit of playable) {
+      endMs = Math.max(endMs, hit.timeOffsetMs + hit.durationMs);
       const timer = window.setTimeout(() => {
-        triggerCardOnRack(this.previewRack, ev.cardId, {
-          note: ev.note,
-          velocity: ev.velocity,
-          scale,
+        if (session !== this.pinballSession) return;
+        void this.previewCard(hit.cardId, {
+          note: hit.pitch, velocity: hit.velocity, durationSec: hit.durationMs / 1000, scale,
         });
-        onEvent?.(ev);
-      }, delay);
+        onEvent?.({ ...hit, note: hit.pitch });
+      }, hit.timeOffsetMs);
       this.pinballTimers.push(timer);
-    });
-
+    }
     const endTimer = window.setTimeout(() => {
-      onComplete?.();
-    }, maxDelay + 500);
+      if (session === this.pinballSession) onComplete?.();
+    }, endMs + 1500);
     this.pinballTimers.push(endTimer);
   }
 
   stopPinballRecording() {
+    ++this.pinballSession;
     this.pinballTimers.forEach((t) => window.clearTimeout(t));
     this.pinballTimers = [];
+    this.silencePreview();
   }
 
   async playSfx(
@@ -930,9 +875,12 @@ class HoloAudioEngine {
     param = 0.5
   ) {
     if (useHoloStore.getState().muted) return;
+    const session = this.previewSession;
     try {
       await this.ensureStarted();
+      if (session !== this.previewSession || document.hidden) return;
       const now = Tone.now();
+      this.previewOutput.gain.setValueAtTime(1, Tone.immediate());
       switch (kind) {
         case 'bootChime': {
           const notes = ['C5', 'G5', 'B5', 'D6'];

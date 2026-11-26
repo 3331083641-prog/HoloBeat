@@ -17,7 +17,7 @@ import type {
 } from '../types/holo';
 
 export const SCHEMA_VERSION = 3;
-export const RENDERER_VERSION = 'holobeat-dsp-3';
+export const RENDERER_VERSION = 'holobeat-dsp-5';
 export const ASSET_VERSION = 'assets-v3';
 
 /**
@@ -194,6 +194,13 @@ export function computeBeatDurationMs(bpm: number, bars: 1 | 2): number {
   return Math.round(16 * (bars === 1 ? 1 : 2) * stepMs);
 }
 
+/** One pass plus the last sounding voice, room release and optional delay feedback. */
+export function compositionRenderSeconds(snapshot: CompositionSnapshot): number {
+  const lastEndMs = snapshot.events.reduce((end, ev) => Math.max(end, ev.timeOffsetMs + ev.durationMs), 0);
+  const decayMs = snapshot.events.length ? 1500 + (snapshot.beatSnapshot?.liveFx.echo ? 450000 / snapshot.bpm : 0) : 0;
+  return Math.max(snapshot.durationMs, lastEndMs + decayMs) / 1000;
+}
+
 /** Exact acoustic tail duration in milliseconds based on active FX. */
 export function computeBeatTailMs(liveFx: { echo: boolean }): number {
   return liveFx.echo ? 1450 : 880;
@@ -207,7 +214,7 @@ export function computeBeatTailMs(liveFx: { echo: boolean }): number {
 export function compileBeatToEvents(snapshot: BeatSnapshot): PerformanceEvent[] {
   const safeBpm = Math.max(40, snapshot.bpm || 116);
   const stepMs = (60 / safeBpm / 4) * 1000;
-  const bars: 1 | 2 = snapshot.bars === 1 ? 1 : 2;
+  const bars: 1 | 2 = snapshot.bars === 2 ? 2 : 1;
   const phraseLoop: BeatPhraseLoop = snapshot.activePhraseLoop ?? (bars === 1 ? 'A' : 'AB');
   const startStep = phraseLoop === 'B' && bars === 2 ? 16 : 0;
   const totalSteps = bars === 1 || phraseLoop === 'A' || phraseLoop === 'B' ? 16 : 32;
@@ -235,20 +242,8 @@ export function compileBeatToEvents(snapshot: BeatSnapshot): PerformanceEvent[] 
       const pitchOffset = cell?.pitchOffset ?? 0;
       const lenMult = cell?.lengthSteps ?? 1;
 
-      const pitch =
-        track.category === 'MELODY'
-          ? resolveNoteForStep(snapshot.scale, stepIdx, track.tone, pitchOffset)
-          : track.category === 'VIBE'
-            ? CHORD_PROGRESSIONS[snapshot.scale][Math.floor((stepIdx % 16) / 4) % 4][0]
-            : track.category === 'PERC'
-              ? stepIdx % 4 === 0
-                ? 'G5'
-                : 'D6'
-              : 'C3';
-
-      const baseDurMult =
-        track.category === 'VIBE' ? 2.4 : track.category === 'MELODY' ? 1.35 : 0.85;
-      const durationMs = Math.round(stepMs * baseDurMult * lenMult);
+      const pitch = pitchAtCell(track.category, snapshot.scale, stepIdx, track.tone, pitchOffset);
+      const durationMs = Math.round(stepMs * durationInSteps(track.category) * lenMult);
 
       events.push({
         id: `ev-${trackIdx}-${relIdx}`,
@@ -286,22 +281,23 @@ export function compileBeatToEvents(snapshot: BeatSnapshot): PerformanceEvent[] 
   return events;
 }
 
-export function normalizePinballEvents(
+function normalizeRecording(
   rawEvents: PinballRecordedEvent[]
-): PerformanceEvent[] {
+) {
   if (rawEvents.length === 0) return [];
-  const minTime = rawEvents.reduce((m, e) => Math.min(m, e.timeOffsetMs), rawEvents[0].timeOffsetMs);
+  const valid = rawEvents.filter(ev => Number.isFinite(ev.timeOffsetMs));
+  const minTime = valid.reduce((m, e) => Math.min(m, Math.max(0, e.timeOffsetMs)), Infinity);
 
-  return rawEvents
+  return valid
     .map((ev, idx) => {
       const card = getCardById(ev.cardId);
       const trackIndex = Math.max(0, CATEGORY_ORDER.indexOf(card.category));
-      return {
+      const event: PerformanceEvent = {
         id: ev.id ?? `pb-ev-${idx}-${ev.timeOffsetMs}`,
         timeOffsetMs: Math.max(0, Math.round(ev.timeOffsetMs - minTime)),
-        durationMs: ev.durationMs ?? 260,
-        pitch: ev.note,
-        velocity: Math.min(1, Math.max(0.2, ev.velocity)),
+        durationMs: Number.isFinite(ev.durationMs) && ev.durationMs! > 0 ? ev.durationMs! : 260,
+        pitch: /^[A-G](?:#|b)?[0-8]$/.test(ev.note) ? ev.note : 'C4',
+        velocity: Math.min(1, Math.max(0, Number.isFinite(ev.velocity) ? ev.velocity : 0.8)),
         cardId: ev.cardId,
         trackCategory: card.category,
         trackIndex,
@@ -309,8 +305,13 @@ export function normalizePinballEvents(
         sourceY: ev.sourceY,
         color: ev.color || CATEGORY_META[card.category].color,
       };
+      return { original: ev, event };
     })
-    .sort((a, b) => a.timeOffsetMs - b.timeOffsetMs);
+    .sort((a, b) => a.event.timeOffsetMs - b.event.timeOffsetMs);
+}
+
+export function normalizePinballEvents(raw: PinballRecordedEvent[]): PerformanceEvent[] {
+  return normalizeRecording(raw).map(hit => hit.event);
 }
 
 /**
@@ -355,9 +356,7 @@ export function computeCompositionContentSignature(snapshot: Pick<
 }
 
 export function buildAudioCacheKey(snapshot: CompositionSnapshot): string {
-  const sig = snapshot.contentSignature ?? computeCompositionContentSignature(snapshot);
-  const rv = snapshot.rendererVersion ?? RENDERER_VERSION;
-  return `${rv}::${sig}`;
+  return RENDERER_VERSION + '::' + snapshot.id;
 }
 
 /**
@@ -367,7 +366,7 @@ export function createBeatCompositionSnapshot(
   beat: BeatSnapshot,
   opts: { isDemo?: boolean; title?: string } = {}
 ): CompositionSnapshot {
-  const bars: 1 | 2 = beat.bars === 1 ? 1 : 2;
+  const bars: 1 | 2 = beat.bars === 2 ? 2 : 1;
   const activePhraseLoop: BeatPhraseLoop = beat.activePhraseLoop ?? (bars === 1 ? 'A' : 'AB');
   const effectiveBars: 1 | 2 = activePhraseLoop === 'AB' && bars === 2 ? 2 : 1;
 
@@ -411,6 +410,7 @@ export function createBeatCompositionSnapshot(
     beatSnapshot: clonedBeat,
     events,
   };
+  partial.tailMs = Math.round(compositionRenderSeconds(partial) * 1000 - durationMs);
   partial.contentSignature = computeCompositionContentSignature(partial);
   partial.soundSeed = fnv1aHash32(partial.contentSignature);
   return partial;
@@ -462,9 +462,28 @@ export function createPinballCompositionSnapshot(
     },
     events,
   };
+  partial.tailMs = Math.round(compositionRenderSeconds(partial) * 1000 - durationMs);
   partial.contentSignature = computeCompositionContentSignature(partial);
   partial.soundSeed = fnv1aHash32(partial.contentSignature);
   return partial;
+}
+
+function midiNumber(note: string) {
+  const m = /^([A-G])([#b]?)([0-8])$/.exec(note);
+  if (!m) return NaN;
+  const pitchClasses: Record<string, number> = { C:0,D:2,E:4,F:5,G:7,A:9,B:11 };
+  return pitchClasses[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + (1+Number(m[3]))*12;
+}
+
+function pitchAtCell(category: TrackCategory, scale: ScaleId, step: number, tone: number, offset: number) {
+  if (category === 'MELODY') return resolveNoteForStep(scale, step, tone, offset);
+  if (category === 'VIBE') return CHORD_PROGRESSIONS[scale][Math.floor((step % 16) / 4)][0];
+  if (category === 'PERC') return step % 4 === 0 ? 'G5' : 'D6';
+  return 'C3';
+}
+
+function durationInSteps(category: TrackCategory) {
+  return category === 'VIBE' ? 2.4 : category === 'MELODY' ? 1.35 : 0.85;
 }
 
 /**
@@ -478,17 +497,21 @@ export function quantizePinballToBeatPreview(
     startMs?: number;
     endMs?: number;
     targetBars?: 1 | 2;
+    scale?: ScaleId;
+    tracks?: TrackState[];
+    swing?: number;
   } = {}
 ): PinballQuantizePreview {
-  const normalized = normalizePinballEvents(rawEvents);
-  const maxAllMs = normalized.reduce((m, e) => Math.max(m, e.timeOffsetMs), 0);
-  const selectedStartMs = Math.max(0, options.startMs ?? 0);
-  const selectedEndMs = Math.max(selectedStartMs, options.endMs ?? maxAllMs);
+  const normalized = normalizeRecording(rawEvents);
+  const maxAllMs = normalized.reduce((m, hit) => Math.max(m, hit.event.timeOffsetMs), 0);
+  bpm = Number.isFinite(bpm) ? Math.min(180, Math.max(60, bpm)) : 120;
+  const selectedStartMs = Math.max(0, Number.isFinite(options.startMs) ? options.startMs! : 0);
+  const selectedEndMs = Math.max(selectedStartMs, Number.isFinite(options.endMs) ? options.endMs! : maxAllMs);
   const targetBars: 1 | 2 = options.targetBars === 2 ? 2 : 1;
   const targetSteps = targetBars * 16;
 
   const selected = normalized.filter(
-    (e) => e.timeOffsetMs >= selectedStartMs && e.timeOffsetMs <= selectedEndMs
+    ({event}) => event.timeOffsetMs >= selectedStartMs && event.timeOffsetMs <= selectedEndMs
   );
 
   const ghostSteps: boolean[][] = Array.from({ length: 4 }, () => Array<boolean>(32).fill(false));
@@ -501,28 +524,59 @@ export function quantizePinballToBeatPreview(
   let totalShiftMs = 0;
   let maxShiftMs = 0;
 
-  selected.forEach((ev) => {
-    const relMs = Math.max(0, ev.timeOffsetMs - selectedStartMs);
-    const wrappedMs = relMs % loopMs;
-    const rawStepFloat = wrappedMs / stepMs;
-    const snappedStep = Math.round(rawStepFloat);
-    const stepIdx = snappedStep % targetSteps;
-    const idealMs = snappedStep * stepMs;
-    const shiftMs = Math.abs(wrappedMs - idealMs);
-    totalShiftMs += shiftMs;
-    if (shiftMs > maxShiftMs) maxShiftMs = shiftMs;
-
-    const tIdx = ev.trackIndex;
-    if (!ghostSteps[tIdx][stepIdx]) {
-      ghostSteps[tIdx][stepIdx] = true;
-      mappedCount++;
-    } else {
+  const scale = options.scale ?? 'PENTA_C';
+  const swing = options.swing ?? 0;
+  const grid = Array.from({length:targetSteps+1}, (_,i) => getStepTimeMs(i,bpm,swing));
+  const cells: (StepCell | null)[][] = ghostSteps.map(row => row.map(() => null));
+  const slots = new Map<number, { step: number; hits: typeof selected }>();
+  let movedCount = 0;
+  let velocityChangedCount = 0;
+  let pitchMappedCount = 0;
+  let lengthChangedCount = 0;
+  for (const hit of selected) {
+    const {event} = hit;
+    const relative = event.timeOffsetMs - selectedStartMs;
+    const wrapped = relative % loopMs;
+    const nearest = grid.reduce((best, time, i) =>
+      Math.abs(time-wrapped) < Math.abs(grid[best]-wrapped) ? i : best, 0);
+    const step = nearest % targetSteps;
+    const shift = Math.abs(wrapped - grid[nearest]);
+    totalShiftMs += shift;
+    maxShiftMs = Math.max(maxShiftMs,shift);
+    if (Math.abs(relative-grid[step]) > 0.5) movedCount++;
+    const idx = event.trackIndex;
+    const key = idx * targetSteps + step;
+    const slot = slots.get(key);
+    if (slot) {
+      slot.hits.push(hit);
       mergedCollisions++;
+    } else {
+      slots.set(key,{step,hits:[hit]});
+      ghostSteps[idx][step] = true;
+      mappedCount++;
     }
+    cardCounts[idx].set(event.cardId, (cardCounts[idx].get(event.cardId) ?? 0) + 1);
+  }
 
-    const prev = cardCounts[tIdx].get(ev.cardId) ?? 0;
-    cardCounts[tIdx].set(ev.cardId, prev + 1);
-  });
+  for (const {step,hits} of slots.values()) {
+    // A hardware pad stores one voice. Use the strongest collision; retain the first on ties.
+    const winner = hits.reduce((a,b) => a.event.velocity >= b.event.velocity ? a : b).event;
+    const tone = options.tracks?.[winner.trackIndex]?.tone ?? 0.5;
+    const offsets = winner.trackCategory === 'MELODY' ? [0,-1,1,-2,2,-3,3,-4,4] : [0];
+    const pitchDistance = (offset: number) => Math.abs(midiNumber(pitchAtCell(winner.trackCategory, scale, step, tone, offset)) - midiNumber(winner.pitch));
+    const pitchOffset = offsets.reduce((a,b) => pitchDistance(b)<pitchDistance(a) ? b : a);
+    const unitMs = stepMs * durationInSteps(winner.trackCategory);
+    const lengthSteps = ([1,2,4] as const).reduce<1|2|4>((a,b) =>
+      Math.abs(unitMs*b-winner.durationMs)<Math.abs(unitMs*a-winner.durationMs) ? b : a,1);
+    const velocity = Math.min(1,Math.max(0.35,winner.velocity));
+    cells[winner.trackIndex][step] = {on:true, velocity, pitchOffset, lengthSteps};
+    const playedPitch = midiNumber(pitchAtCell(winner.trackCategory, scale, step, tone, pitchOffset));
+    for (const {original,event} of hits) {
+      if (original.velocity !== velocity) velocityChangedCount++;
+      if (midiNumber(original.note) !== playedPitch) pitchMappedCount++;
+      if (Math.abs(event.durationMs - Math.round(unitMs*lengthSteps)) > 1) lengthChangedCount++;
+    }
+  }
 
   const trackCardIds = cardCounts.map((map) => {
     let bestId: string | null = null;
@@ -545,7 +599,9 @@ export function quantizePinballToBeatPreview(
     targetBars,
     ghostSteps,
     trackCardIds,
-    totalSourceEvents: normalized.length,
+    cells, movedCount, velocityChangedCount, pitchMappedCount, lengthChangedCount, grid: "1/16",
+    totalSourceEvents: rawEvents.length,
+    invalidEvents: rawEvents.length - normalized.length,
     selectedSourceEvents: selected.length,
     mappedCount,
     mergedCollisions,
@@ -554,6 +610,41 @@ export function quantizePinballToBeatPreview(
     durationMs: Math.max(0, selectedEndMs - selectedStartMs),
     bpm,
   };
+}
+
+export function refreshQuantizePreview(preview: PinballQuantizePreview,
+  target: Pick<BeatSnapshot, 'bpm' | 'tracks' | 'scale' | 'swing'>): PinballQuantizePreview {
+  return quantizePinballToBeatPreview(preview.sourceEvents, target.bpm, {
+    tracks: target.tracks,
+    scale: target.scale,
+    swing: target.swing,
+    startMs: preview.selectedStartMs,
+    endMs: preview.selectedEndMs,
+    targetBars: preview.targetBars,
+  });
+}
+
+export function applyQuantizedTracks(tracks: TrackState[], collection: string[],
+  preview: PinballQuantizePreview, mode: 'merge' | 'replace'): TrackState[] {
+  return tracks.map((input, i) => {
+    const track = normalizeTrackState(input,preview.targetBars);
+    const cells = track.stepCells!.map((cell, step) => {
+      const hit = preview.cells[i]?.[step];
+      return hit ? { ...hit } : { ...cell, on: mode === 'merge' && cell.on };
+    });
+    const suggested = preview.trackCardIds[i];
+    return { ...track, cardId: suggested && collection.includes(suggested) ? suggested : track.cardId,
+      stepCells: cells, steps: cells.map(cell => cell.on),
+      accents: track.accents!.map((accent,step) => preview.cells[i]?.[step] ? false : mode === 'merge' && accent) };
+  });
+}
+
+export function quantizeSummary(preview: PinballQuantizePreview) {
+  return '原音 ' + preview.totalSourceEvents + ' · 选中 ' + preview.selectedSourceEvents + ' → ' + preview.mappedCount +
+    ' 步 · ' + preview.targetBars + ' 小节 ' + preview.grid + ' · 合并 ' + preview.mergedCollisions +
+    ' · 移动 ' + preview.movedCount + ' · 力度调整 ' + preview.velocityChangedCount +
+    ' · 音高映射 ' + preview.pitchMappedCount + ' · 时值调整 ' + preview.lengthChangedCount +
+    ' · 无效时间 ' + (preview.invalidEvents ?? 0);
 }
 
 /**
@@ -685,37 +776,7 @@ export function applyMusicalVariationToTracks(
  * Extract REAL PCM RMS + peak waveform bars directly from a rendered AudioBuffer.
  * Returns normalized 0.1..1.0 envelope + actual peak amplitude (0..1).
  */
-export function extractRealWaveformBars(buffer: AudioBuffer, barCount = 28): number[] {
-  const ch0 = buffer.getChannelData(0);
-  const ch1 = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : ch0;
-  const totalSamples = ch0.length;
-  if (totalSamples === 0) return Array<number>(barCount).fill(0.12);
-
-  const sliceLen = Math.max(1, Math.floor(totalSamples / barCount));
-  const rawLevels: number[] = [];
-  let maxLvl = 0.001;
-
-  for (let i = 0; i < barCount; i++) {
-    const start = i * sliceLen;
-    const end = Math.min(totalSamples, start + sliceLen);
-    let sumSq = 0;
-    let peak = 0;
-    const step = Math.max(1, Math.floor((end - start) / 256));
-    let n = 0;
-    for (let s = start; s < end; s += step) {
-      const sample = (Math.abs(ch0[s]) + Math.abs(ch1[s])) * 0.5;
-      sumSq += sample * sample;
-      if (sample > peak) peak = sample;
-      n++;
-    }
-    const rms = Math.sqrt(sumSq / Math.max(1, n));
-    const combined = rms * 0.55 + peak * 0.45;
-    if (combined > maxLvl) maxLvl = combined;
-    rawLevels.push(combined);
-  }
-
-  return rawLevels.map((v) => Math.min(1, Math.max(0.1, +(v / maxLvl).toFixed(3))));
-}
+export { extractRealWaveformBars } from './pcm.ts';
 
 /**
  * Deterministic event-energy waveform preview (used synchronously before async PCM render completes).

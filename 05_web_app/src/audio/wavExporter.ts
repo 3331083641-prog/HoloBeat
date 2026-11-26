@@ -1,15 +1,13 @@
 import * as Tone from 'tone';
+import { audioBufferToWavBlob } from './pcm';
+export { audioBufferToWavBlob } from './pcm';
 import { createVoiceRack, triggerCardOnRack } from './HoloAudioEngine';
 import {
   RENDERER_VERSION,
-  buildAudioCacheKey,
-  compileBeatToEvents,
-  computeBeatDurationMs,
-  computeBeatTailMs,
+  buildAudioCacheKey, compositionRenderSeconds, createBeatCompositionSnapshot, createPinballCompositionSnapshot,
   computeCompositionContentSignature,
-  extractRealWaveformBars,
-  normalizeTrackState,
 } from './compositionEngine';
+import { contentDigest } from '../../../shared/card-content.ts';
 import { holoDb } from '../storage/holoDb';
 import type {
   BeatSnapshot,
@@ -29,266 +27,117 @@ export interface RenderedAudioResult {
   peakAmplitude: number;
 }
 
-export function audioBufferToWavBlob(buffer: AudioBuffer): { blob: Blob; peakAmplitude: number } {
-  const numChannels = Math.min(2, buffer.numberOfChannels);
-  const sampleRate = buffer.sampleRate;
-  const numFrames = buffer.length;
-  const bytesPerSample = 2; // 16-bit PCM
-  const blockAlign = numChannels * bytesPerSample;
-  const dataSize = numFrames * blockAlign;
-  const arrayBuffer = new ArrayBuffer(44 + dataSize);
-  const view = new DataView(arrayBuffer);
+const format = {
+  rendererVersion: RENDERER_VERSION,
+  audioAssetVersion: 'street-racks-v3',
+  fxVersion: 'room-delay-v2',
+  sampleRate: 48000,
+  channelCount: 2,
+};
 
-  const writeStr = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) {
-      view.setUint8(offset + i, str.charCodeAt(i));
-    }
-  };
-
-  writeStr(0, 'RIFF');
-  view.setUint32(4, 36 + dataSize, true);
-  writeStr(8, 'WAVE');
-  writeStr(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * blockAlign, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, 16, true);
-  writeStr(36, 'data');
-  view.setUint32(40, dataSize, true);
-
-  const channels: Float32Array[] = [];
-  for (let c = 0; c < numChannels; c++) {
-    channels.push(buffer.getChannelData(c));
-  }
-
-  let offset = 44;
-  let peakAbs = 0;
-  for (let i = 0; i < numFrames; i++) {
-    for (let c = 0; c < numChannels; c++) {
-      const sample = Math.max(-1, Math.min(1, channels[c][i]));
-      const abs = Math.abs(sample);
-      if (abs > peakAbs) peakAbs = abs;
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
-      offset += 2;
-    }
-  }
-
-  return {
-    blob: new Blob([arrayBuffer], { type: 'audio/wav' }),
-    peakAmplitude: Math.round(peakAbs * 32767),
-  };
+async function digestBlob(blob: Blob) {
+  const bytes = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+  return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * Render a frozen BeatSnapshot with exact bar count (respects 1-bar OR 2-bar A/B length!),
- * exact Swing, per-step velocity/pitchOffset/lengthSteps, Mute/Solo, BitCrusher, Street Echo & Stutter.
- */
-export async function renderBeatMixToAudioResult(
-  snapshot: BeatSnapshot,
-  barsOverride?: 1 | 2
-): Promise<RenderedAudioResult> {
-  const bars: 1 | 2 = barsOverride ?? (snapshot.bars === 1 ? 1 : 2);
-  const phraseLoop = snapshot.activePhraseLoop ?? (bars === 1 ? 'A' : 'AB');
-  const effectiveBars: 1 | 2 = phraseLoop === 'AB' && bars === 2 ? 2 : 1;
-
-  const effectiveSnap: BeatSnapshot = {
-    ...snapshot,
-    bars,
-    activePhraseLoop: phraseLoop,
-    tracks: snapshot.tracks.map((t) => normalizeTrackState(t, bars)),
-  };
-
-  const events = compileBeatToEvents(effectiveSnap);
-  const musicDurationSec = computeBeatDurationMs(effectiveSnap.bpm, effectiveBars) / 1000;
-  const tailSec = computeBeatTailMs(effectiveSnap.liveFx) / 1000;
-  const stepSec = 60 / Math.max(40, effectiveSnap.bpm) / 4;
-  const durationSec = musicDurationSec + tailSec;
-
-  const toneBuffer = await Tone.Offline(({ destination }) => {
-    const limiter = new Tone.Limiter(-1).connect(destination);
-    const compressor = new Tone.Compressor({
-      threshold: -15,
-      ratio: 3.2,
-      attack: 0.008,
-      release: 0.14,
-    }).connect(limiter);
-    const reverb = new Tone.Freeverb({
-      roomSize: 0.28,
-      dampening: 4200,
-      wet: 0.12,
-    }).connect(compressor);
-
-    const echo = new Tone.FeedbackDelay({
-      delayTime: stepSec * 3, // exact dotted 8th at snapshot BPM
-      feedback: 0.42,
-      wet: effectiveSnap.liveFx.echo ? 0.48 : 0,
-    }).connect(reverb);
-
-    const bitCrusher = new Tone.BitCrusher(4).connect(echo);
-    bitCrusher.wet.value = effectiveSnap.liveFx.bitcrush ? 0.8 : 0;
-
-    const masterBus = new Tone.Gain(0.96).connect(bitCrusher);
-
-    const trackRacks = effectiveSnap.tracks.map((track) => {
-      const ch = new Tone.Channel(
-        track.volume <= 0.01 ? -60 : Tone.gainToDb(track.volume),
-        0
-      ).connect(masterBus);
-      const filt = new Tone.Filter(650 * Math.pow(21.5, track.tone), 'lowpass').connect(ch);
-      return createVoiceRack(filt);
-    });
-
-    events.forEach((ev) => {
-      const rack = trackRacks[ev.trackIndex];
-      if (!rack) return;
-      const time = 0.03 + ev.timeOffsetMs / 1000;
-      if (time >= durationSec - 0.04) return;
-      const useExplicitNote = ev.trackCategory === 'MELODY' || ev.trackCategory === 'PERC';
-      triggerCardOnRack(rack, ev.cardId, {
-        time,
-        note: useExplicitNote ? ev.pitch : undefined,
-        velocity: ev.velocity,
-        tone: ev.tone ?? effectiveSnap.tracks[ev.trackIndex]?.tone ?? 0.5,
-        stepIndex: ev.stepIndex ?? 0,
-        durationSec: Math.max(0.05, ev.durationMs / 1000),
-        scale: effectiveSnap.scale,
-      });
-    });
-  }, durationSec);
-
-  const audioBuffer = toneBuffer.get() as AudioBuffer;
-  const { blob, peakAmplitude } = audioBufferToWavBlob(audioBuffer);
-  return {
-    wavBlob: blob,
-    waveformBars: extractRealWaveformBars(audioBuffer, 28),
-    durationSec,
-    musicDurationSec,
-    tailSec,
-    sampleRate: audioBuffer.sampleRate,
-    peakAmplitude,
-  };
-}
-
-export async function renderPinballToAudioResult(
-  events: PinballRecordedEvent[],
-  scale: ScaleId
-): Promise<RenderedAudioResult> {
-  const maxMs = events.reduce((m, e) => Math.max(m, e.timeOffsetMs), 800);
-  const musicDurationSec = Math.max(1.2, (maxMs + 400) / 1000);
-  const tailSec = 0.95;
-  const durationSec = Math.min(20, musicDurationSec + tailSec);
-
-  const toneBuffer = await Tone.Offline(({ destination }) => {
-    const limiter = new Tone.Limiter(-1).connect(destination);
-    const compressor = new Tone.Compressor({
-      threshold: -15,
-      ratio: 3.2,
-      attack: 0.008,
-      release: 0.14,
-    }).connect(limiter);
-    const reverb = new Tone.Freeverb({
-      roomSize: 0.3,
-      dampening: 4400,
-      wet: 0.14,
-    }).connect(compressor);
-    const rack = createVoiceRack(reverb);
-
-    events.forEach((ev) => {
-      const time = 0.04 + ev.timeOffsetMs / 1000;
-      if (time < durationSec - 0.1) {
-        triggerCardOnRack(rack, ev.cardId, {
-          time,
-          note: ev.note,
-          velocity: ev.velocity,
-          scale,
-        });
-      }
-    });
-  }, durationSec);
-
-  const audioBuffer = toneBuffer.get() as AudioBuffer;
-  const { blob, peakAmplitude } = audioBufferToWavBlob(audioBuffer);
-  return {
-    wavBlob: blob,
-    waveformBars: extractRealWaveformBars(audioBuffer, 28),
-    durationSec,
-    musicDurationSec,
-    tailSec,
-    sampleRate: audioBuffer.sampleRate,
-    peakAmplitude,
-  };
-}
-
-/**
- * In-memory deduplication map so concurrent callers (Forge waveform + Audition + Mint + Export)
- * share the exact same single Tone.Offline render promise!
- */
-const inFlightRenders = new Map<string, Promise<RenderArtifact>>();
-
-/**
- * Canonical Snapshot Renderer with content-addressed IndexedDB Audio Cache!
- * - Respects exact 1-bar OR 2-bar length (NEVER forces 1-bar into 2 bars!)
- * - Keyed by musical contentSignature + rendererVersion: editing title or stickers
- *   reuses the EXACT same rendered WAV artifact without re-synthesizing random noise!
- * - Shared identically by Forge Audition, Real PCM Waveform, WAV Export & Motion Card Export!
- */
-export async function renderCompositionSnapshotCached(
-  snapshot: CompositionSnapshot,
-  forceRerender = false
-): Promise<RenderArtifact> {
-  const contentSignature =
-    snapshot.contentSignature ?? computeCompositionContentSignature(snapshot);
-  const cacheKey = buildAudioCacheKey({ ...snapshot, contentSignature });
-
-  if (!forceRerender) {
-    const existingPromise = inFlightRenders.get(cacheKey);
-    if (existingPromise) return existingPromise;
-
-    const cached = await holoDb.getAudioCache(cacheKey, snapshot.id);
-    if (cached && cached.wavBlob && cached.wavBlob.size > 44) {
-      return cached;
-    }
+async function renderSnapshot(snapshot: CompositionSnapshot) {
+  const duration = compositionRenderSeconds(snapshot);
+  if (!Number.isFinite(duration) || duration <= 0 || duration > 180) {
+    throw new Error('导出支持含尾音在内最长 180 秒的作品');
   }
-
-  const job = (async (): Promise<RenderArtifact> => {
-    let result: RenderedAudioResult;
-    if (snapshot.sourceType === 'beat' && snapshot.beatSnapshot) {
-      // Strictly respect user's selected bars (1 or 2) — NEVER override with Math.max(2, ...)
-      const exactBars: 1 | 2 = snapshot.beatSnapshot.bars === 1 ? 1 : 2;
-      result = await renderBeatMixToAudioResult(snapshot.beatSnapshot, exactBars);
-    } else {
-      const evs = snapshot.pinballEvents ?? [];
-      result = await renderPinballToAudioResult(evs, snapshot.scale);
-    }
-
-    const artifact: RenderArtifact = {
-      cacheKey,
-      snapshotId: snapshot.id,
-      contentSignature,
-      rendererVersion: snapshot.rendererVersion ?? RENDERER_VERSION,
-      wavBlob: result.wavBlob,
-      waveformBars: result.waveformBars,
-      durationSec: result.durationSec,
-      musicDurationSec: result.musicDurationSec,
-      tailSec: result.tailSec,
-      sampleRate: result.sampleRate,
-      peakAmplitude: result.peakAmplitude,
-      cachedAt: Date.now(),
-    };
-
-    await holoDb.saveAudioCache(artifact);
-    return artifact;
-  })();
-
-  inFlightRenders.set(cacheKey, job);
+  const context = new Tone.OfflineContext(format.channelCount, duration, format.sampleRate);
+  const resources: { dispose(): unknown }[] = [];
+  function own<T extends { dispose(): unknown }>(node: T): T {
+    resources.push(node);
+    return node;
+  }
   try {
-    return await job;
+    context.transport.bpm.value = snapshot.bpm;
+    const limiter = own(new Tone.Limiter({ context, threshold: -1 })).connect(context.destination);
+    const compressor = own(new Tone.Compressor({ context, threshold: -15, ratio: 3.2,
+      attack: 0.008, release: 0.14 })).connect(limiter);
+    const room = own(new Tone.Freeverb({ context, roomSize: 0.28, dampening: 4200, wet: 0.12 })).connect(compressor);
+    const fx = snapshot.beatSnapshot?.liveFx;
+    const delay = fx?.echo
+      ? own(new Tone.FeedbackDelay({ context, delayTime: 45 / snapshot.bpm, feedback: 0.42, wet: 0.48 })).connect(room)
+      : room;
+    const bus = fx?.bitcrush ? own(new Tone.BitCrusher({ context, bits: 4 })).connect(delay) : delay;
+    if (bus instanceof Tone.BitCrusher) bus.wet.value = 0.8;
+    const master = own(new Tone.Gain({ context, gain: 0.96 })).connect(bus);
+    const lanes = new Map<number, { filter: Tone.Filter; racks: { rack: ReturnType<typeof createVoiceRack>; busyUntil: number }[] }>();
+    for (const ev of snapshot.events) {
+      let lane = lanes.get(ev.trackIndex);
+      if (!lane) {
+        const track = snapshot.beatSnapshot?.tracks[ev.trackIndex];
+        const gain = own(new Tone.Gain({ context, gain: track?.volume ?? 1 })).connect(master);
+        const filter = own(new Tone.Filter({ context, frequency: 650 * Math.pow(21.5, track?.tone ?? 1), type: 'lowpass' })).connect(gain);
+        lane = { filter, racks: [] };
+        lanes.set(ev.trackIndex, lane);
+      }
+      let voice = lane.racks.find(candidate => candidate.busyUntil <= ev.timeOffsetMs);
+      if (!voice) {
+        if (lane.racks.length >= 32) throw new Error('同轨同时发声超过 32 个音，无法完整渲染');
+        voice = { rack: own(createVoiceRack(lane.filter, context)), busyUntil: 0 };
+        lane.racks.push(voice);
+      }
+      voice.busyUntil = ev.timeOffsetMs + 60;
+      triggerCardOnRack(voice.rack, ev.cardId, { time: ev.timeOffsetMs / 1000,
+        durationSec: ev.durationMs / 1000, velocity: ev.velocity, tone: ev.tone, note: ev.pitch,
+        stepIndex: ev.stepIndex, scale: snapshot.scale });
+    }
+    const buffer = (await context.render()).get();
+    if (!buffer) throw new Error('未能渲染 PCM 音频');
+    const { blob, peakAmplitude, waveformBars } = audioBufferToWavBlob(buffer);
+    const musicDurationSec = snapshot.durationMs / 1000;
+    return { wavBlob: blob, waveformBars, durationSec: buffer.duration,
+      peakAmplitude, sampleRate: format.sampleRate, musicDurationSec, tailSec: Math.max(0, buffer.duration - musicDurationSec) };
   } finally {
-    inFlightRenders.delete(cacheKey);
+    for (const node of resources.reverse()) node.dispose();
+    context.dispose();
   }
+}
+
+const inFlight = new Map<string, Promise<RenderArtifact>>();
+
+export async function renderCompositionSnapshotCached(snapshot: CompositionSnapshot, forceRerender = false): Promise<RenderArtifact> {
+  const contentHash = await contentDigest({ events: snapshot.events, bpm: snapshot.bpm, scale: snapshot.scale,
+    durationMs: snapshot.durationMs, beat: snapshot.beatSnapshot, sourceType: snapshot.sourceType });
+  const cacheKey = buildAudioCacheKey(snapshot);
+  const jobKey = cacheKey + ':' + contentHash + ':' + forceRerender;
+  const pending = inFlight.get(jobKey);
+  if (pending) return pending;
+  const work = async (): Promise<RenderArtifact> => {
+    if (!forceRerender) {
+      const cached = await holoDb.getAudioCache(cacheKey);
+      if (cached && cached.contentHash === contentHash && cached.cacheKey === cacheKey && cached.snapshotId === snapshot.id &&
+          Object.entries(format).every(([k,v]) => cached[k as keyof typeof format] === v) &&
+          cached.wavBlob instanceof Blob && Array.isArray(cached.waveformBars) &&
+          cached.waveformBars.length === 28 && cached.waveformBars.every(n => Number.isFinite(n) && n >= 0 && n <= 1) &&
+          Math.abs(cached.durationSec - compositionRenderSeconds(snapshot)) <= 1 / format.sampleRate &&
+          cached.wavBlob.size === 44 + 4 * Math.round(cached.durationSec * format.sampleRate) &&
+          cached.pcmHash === await contentDigest([await digestBlob(cached.wavBlob), cached.waveformBars, cached.peakAmplitude])) {
+        return { ...cached, snapshotId: snapshot.id, cacheStatus: 'hit' };
+      }
+    }
+    const rendered = await renderSnapshot(snapshot);
+    const pcmHash = await contentDigest([await digestBlob(rendered.wavBlob), rendered.waveformBars, rendered.peakAmplitude]);
+    const artifact = { ...format, ...rendered, cacheKey, snapshotId: snapshot.id,
+      contentSignature: computeCompositionContentSignature(snapshot), contentHash, pcmHash, cachedAt: Date.now() };
+    const saved = await holoDb.saveAudioCache(artifact);
+    return { ...artifact, cacheStatus: saved ? 'stored' : 'unavailable' };
+  };
+  const promise = work();
+  inFlight.set(jobKey, promise);
+  try { return await promise; } finally { inFlight.delete(jobKey); }
+}
+
+export function renderBeatMixToAudioResult(beat: BeatSnapshot, bars = beat.bars): Promise<RenderedAudioResult> {
+  return renderSnapshot(createBeatCompositionSnapshot({ ...beat, bars }));
+}
+
+export function renderPinballToAudioResult(events: PinballRecordedEvent[], scale: ScaleId): Promise<RenderedAudioResult> {
+  return renderSnapshot(createPinballCompositionSnapshot(events,
+    { toys: [], scale, dropperX: 400, gravity: 1, dropRate: 1, bounce: 1 }, 120));
 }
 
 export async function renderBeatMixToWav(snapshot: BeatSnapshot, bars?: 1 | 2): Promise<Blob> {

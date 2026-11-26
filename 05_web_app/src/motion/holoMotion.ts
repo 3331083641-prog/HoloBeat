@@ -153,6 +153,8 @@ export function evaluateSequencerTrackOrb(params: {
   /** Optional explicit BPM & swing (0..0.6) for swing-exact touchdown alignment */
   bpm?: number;
   swing?: number;
+  /** Transport reports fractional progress between swung pads. Uniform input is in sixteenth-note units. */
+  clock?: "grid" | "uniform";
   /** Offset into track.steps (0 for Phrase A, 16 for Phrase B) */
   phraseOffset?: number;
   getPadCenter: (localStepIdx: number) => { x: number; y: number };
@@ -183,7 +185,11 @@ export function evaluateSequencerTrackOrb(params: {
 
   // Convert fractional stepFloat into exact current loop millisecond
   const localStepFloat = ((stepFloat % 16) + 16) % 16;
-  const currentMs = localStepFloat * stepMs;
+  const localStep = Math.floor(localStepFloat);
+  const startMs = getStepTimeMs(localStep, bpm, swing);
+  const endMs = getStepTimeMs(localStep + 1, bpm, swing);
+  const currentMs = params.clock === 'uniform' ? localStepFloat * stepMs
+    : startMs + (endMs - startMs) * (localStepFloat - localStep);
 
   // Compute exact swung onset times for every active pad in this 16-step phrase
   const timedSteps = activeIndices.map((idx) => ({

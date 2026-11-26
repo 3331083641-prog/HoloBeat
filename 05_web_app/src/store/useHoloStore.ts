@@ -15,7 +15,7 @@ import {
   makeDefaultStepCell,
   normalizeTrackState,
   quantizePinballToBeatPreview,
-  applyQuantizedTracks, quantizeSummary,
+  applyQuantizedTracks, quantizeSummary, refreshQuantizePreview,
 } from '../audio/compositionEngine.ts';
 import {
   CATEGORY_META,
@@ -1519,11 +1519,12 @@ export const useHoloStore = create<HoloState>()(
 
       applyPinballQuantize: (mode) => {
         const s = get();
-        const preview = s.pinballQuantizePreview;
-        if (!preview || mode === 'cancel') {
+        const saved = s.pinballQuantizePreview;
+        if (!saved || mode === 'cancel') {
           set({ pinballQuantizePreview: null });
           return;
         }
+        const preview = refreshQuantizePreview(saved, s);
         get().pushBeatUndo();
         const targetBars = preview.targetBars;
         set((curr) => ({

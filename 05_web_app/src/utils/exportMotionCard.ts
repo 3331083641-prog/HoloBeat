@@ -1,4 +1,3 @@
-import { holoAudio } from '../audio/HoloAudioEngine';
 import { renderCompositionSnapshotCached } from '../audio/wavExporter';
 import { loadCompositeCardArtworkCanvas } from '../components/artwork/CardArtwork';
 import { HOLO_FOIL_LIST, RARITY_META } from '../data/soundCards';
@@ -35,35 +34,29 @@ export interface MotionCardExportResult {
 const ZH_SANS = '"Noto Sans SC", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
 const HW_MONO = '"JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace';
 
-/**
- * Browser-native Animated Holographic Motion Card Recorder (.webm).
- * - Uses true work length + acoustic tail from the canonical rendered WAV artifact (NO 7000ms hard cut!)
- * - Plays the EXACT canonical WAV audio into MediaStreamDestination for bit-accurate audio parity
- * - Supports AbortSignal cancellation and cleans up streams, RAF, recorder & playback reliably!
- */
-export async function recordMotionCardWebm(
-  opts: MotionCardExportOptions
-): Promise<MotionCardExportResult> {
-  if (typeof MediaRecorder === 'undefined') {
-    throw new Error('当前浏览器不支持动态视频录制（缺少 MediaRecorder）');
-  }
-  if (opts.signal?.aborted) {
-    throw new Error('已取消动态闪卡导出');
-  }
-  if (typeof document !== 'undefined' && document.fonts?.ready) {
-    try {
-      await document.fonts.ready;
-    } catch {
-      // Continue with fallback font
-    }
-  }
+/** Record one frozen work and its acoustic tail using the redesigned card artwork. */
+export async function recordMotionCardWebm(opts: MotionCardExportOptions): Promise<MotionCardExportResult> {
+  if (typeof MediaRecorder === 'undefined') throw new Error('当前浏览器不支持动态视频录制');
+  if (opts.signal?.aborted || document.hidden) throw new Error('动态卡录制已取消');
 
-  // Always obtain the canonical rendered WAV artifact first (reuses IndexedDB cache!)
-  const artifact = await renderCompositionSnapshotCached(opts.snapshot);
-  if (opts.signal?.aborted) {
-    throw new Error('已取消动态闪卡导出');
+  let cancel!: () => void;
+  const aborted = new Promise<never>((_, reject) => {
+    cancel = () => reject(new Error('动态卡录制已取消'));
+  });
+  const hidden = () => { if (document.hidden) cancel(); };
+  opts.signal?.addEventListener('abort', cancel, { once: true });
+  document.addEventListener('visibilitychange', hidden);
+  window.addEventListener('pagehide', cancel);
+  try {
+    return await captureMotion(opts, aborted);
+  } finally {
+    opts.signal?.removeEventListener('abort', cancel);
+    document.removeEventListener('visibilitychange', hidden);
+    window.removeEventListener('pagehide', cancel);
   }
+}
 
+async function captureMotion(opts: MotionCardExportOptions, aborted: Promise<never>): Promise<MotionCardExportResult> {
   const mimeCandidates = [
     'video/webm;codecs=vp9,opus',
     'video/webm;codecs=vp8,opus',
@@ -71,6 +64,7 @@ export async function recordMotionCardWebm(
   ];
   const mimeType = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) ?? '';
 
+  if (!mimeType) throw new Error('浏览器没有可用的 WebM 音视频编码器');
   const W = 600;
   const H = 840;
   const canvas = document.createElement('canvas');
@@ -79,111 +73,53 @@ export async function recordMotionCardWebm(
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas 2D 上下文不可用');
 
-  const artImg = await loadCompositeCardArtworkCanvas(opts.artId);
-  const sortedStickers = [...opts.stickers].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
-  const stickerImgs = await Promise.all(
-    sortedStickers.map(async (stk) => ({
-      stk,
-      img: await loadStickerImage(stk.stickerId),
-    }))
-  );
+  const audio = new AudioContext();
+  const tracks = new Set<MediaStreamTrack>();
+  let recorder: MediaRecorder | undefined;
+  let source: AudioBufferSourceNode | undefined;
+  let destination: MediaStreamAudioDestinationNode | undefined;
+  let analyser: AnalyserNode | undefined;
+  let sourceStarted = false;
+  let frame = 0;
+  let watchdog = 0;
+  try {
+    await Promise.race([audio.resume(), aborted]);
+    if (document.fonts?.ready) await Promise.race([document.fonts.ready, aborted]);
+    const artifact = await Promise.race([renderCompositionSnapshotCached(opts.snapshot), aborted]);
+    const artImg = await Promise.race([loadCompositeCardArtworkCanvas(opts.artId), aborted]);
+    const sortedStickers = [...opts.stickers].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+    const stickerImgs = await Promise.race([Promise.all(sortedStickers.map(async stk => ({
+      stk, img: await loadStickerImage(stk.stickerId),
+    }))), aborted]);
+    const bytes = await Promise.race([artifact.wavBlob.arrayBuffer(), aborted]);
+    const buffer = await Promise.race([audio.decodeAudioData(bytes), aborted]);
+    source = audio.createBufferSource();
+    source.buffer = buffer;
+    destination = audio.createMediaStreamDestination();
+    const meterNode = audio.createAnalyser();
+    analyser = meterNode;
+    meterNode.fftSize = 256;
+    const meterData = new Float32Array(meterNode.fftSize);
+    source.connect(meterNode);
+    meterNode.connect(destination);
+    destination.stream.getTracks().forEach(track => tracks.add(track));
+    canvas.captureStream(30).getTracks().forEach(track => tracks.add(track));
+    const stream = new MediaStream([...tracks]);
+    if (!stream.getAudioTracks().some(track => track.readyState === 'live' && track.enabled) ||
+        !stream.getVideoTracks().some(track => track.readyState === 'live' && track.enabled)) {
+      throw new Error('浏览器未能创建有效的音频或视频轨');
+    }
+    recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 3600000 });
+    const activeRecorder = recorder;
+    const activeSource = source;
+    const durationMs = buffer.duration * 1000;
+    const chunks: BlobPart[] = [];
+    const foilMeta = HOLO_FOIL_LIST.find((f) => f.id === opts.foil) ?? HOLO_FOIL_LIST[0];
+    const rar = RARITY_META[opts.rarity];
+    const barColors = ['#7C3AED', '#FF3D9A', '#FF5C2B', '#FFD60A', '#00D4AA', '#38BDF8'];
+    const hitBursts: { x: number; y: number; color: string; age: number; cat: TrackCategory }[] = [];
 
-  const audioStream = await holoAudio.getAudioCaptureStream();
-  const canvasStream = canvas.captureStream(30);
-  const combined = new MediaStream();
-  canvasStream.getVideoTracks().forEach((t) => combined.addTrack(t));
-  const hasAudioTrack = Boolean(audioStream && audioStream.getAudioTracks().length > 0);
-  if (audioStream) {
-    audioStream.getAudioTracks().forEach((t) => combined.addTrack(t));
-  }
-
-  const recorder = new MediaRecorder(
-    combined,
-    mimeType ? { mimeType, videoBitsPerSecond: 3_600_000 } : undefined
-  );
-  const chunks: BlobPart[] = [];
-  recorder.ondataavailable = (ev) => {
-    if (ev.data && ev.data.size > 0) chunks.push(ev.data);
-  };
-
-  // Exact true work length + acoustic tail (NEVER hard-capped at 7000ms!)
-  const durationMs = Math.max(1800, Math.round(artifact.durationSec * 1000) + 120);
-  const foilMeta = HOLO_FOIL_LIST.find((f) => f.id === opts.foil) ?? HOLO_FOIL_LIST[0];
-  const rar = RARITY_META[opts.rarity];
-  const barColors = ['#7C3AED', '#FF3D9A', '#FF5C2B', '#FFD60A', '#00D4AA', '#38BDF8'];
-  const hitBursts: { x: number; y: number; color: string; age: number; cat: TrackCategory }[] = [];
-
-  return new Promise<MotionCardExportResult>((resolve, reject) => {
-    let rafId = 0;
-    let settled = false;
-
-    const cleanup = () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      holoAudio.stopSnapshotPlayback();
-      canvasStream.getVideoTracks().forEach((t) => {
-        try {
-          t.stop();
-        } catch {
-          // ignore
-        }
-      });
-      opts.signal?.removeEventListener('abort', onAbort);
-    };
-
-    const onAbort = () => {
-      if (settled) return;
-      settled = true;
-      try {
-        if (recorder.state !== 'inactive') recorder.stop();
-      } catch {
-        // ignore
-      }
-      cleanup();
-      reject(new Error('已取消动态闪卡导出'));
-    };
-
-    opts.signal?.addEventListener('abort', onAbort);
-
-    recorder.onerror = () => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      reject(new Error('视频编码器录制失败'));
-    };
-
-    recorder.onstop = () => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      const blob = new Blob(chunks, { type: mimeType || 'video/webm' });
-      if (blob.size < 256) {
-        reject(new Error('动态闪卡编码产物为空，请重试'));
-        return;
-      }
-      resolve({
-        blob,
-        mimeType: mimeType || 'video/webm',
-        durationMs,
-        hasAudioTrack,
-      });
-    };
-
-    recorder.start(100);
-    const startTs = performance.now();
-
-    void holoAudio.playAudioBlob(artifact.wavBlob, {
-      leadInMs: 40,
-      events: opts.snapshot.events,
-      onEvent: (ev) => {
-        const bx = 95 + (ev.timeOffsetMs / Math.max(1000, opts.snapshot.durationMs)) * (W - 190);
-        const by = 590 - ev.trackIndex * 16;
-        hitBursts.push({ x: bx, y: by, color: ev.color, age: 0, cat: ev.trackCategory });
-      },
-    });
-
-    const renderFrame = (now: number) => {
-      if (settled) return;
-      const elapsed = now - startTs;
+    const drawFrame = (elapsed: number) => {
       const prog = Math.min(1, elapsed / durationMs);
       opts.onProgress?.(Math.round(prog * 100));
 
@@ -211,7 +147,9 @@ export async function recordMotionCardWebm(
       const cx = (W - cardW) / 2 + swayX * 0.35;
       const cy = 68 + swayY * 0.4;
 
-      const meter = holoAudio.getMeterLevel();
+      meterNode.getFloatTimeDomainData(meterData);
+      const rms = Math.sqrt(meterData.reduce((sum, value) => sum + value * value, 0) / meterData.length);
+      const meter = Math.min(1, Math.max(0, (20 * Math.log10(Math.max(rms, 1e-8)) + 56) / 48));
       const aura = ctx.createRadialGradient(
         W / 2,
         cy + cardH / 2,
@@ -402,14 +340,61 @@ export async function recordMotionCardWebm(
         W / 2,
         812
       );
-
-      if (elapsed < durationMs) {
-        rafId = requestAnimationFrame(renderFrame);
-      } else {
-        if (recorder.state !== 'inactive') recorder.stop();
-      }
     };
 
-    rafId = requestAnimationFrame(renderFrame);
-  });
+    const recording = new Promise<MotionCardExportResult>((resolve, reject) => {
+      activeRecorder.onerror = () => reject(new Error('视频编码器录制失败'));
+      let finished = false;
+      activeRecorder.onstop = () => {
+        if (!finished || !chunks.length) reject(new Error('编码器提前停止或输出为空'));
+        else resolve({ blob: new Blob(chunks, { type: activeRecorder.mimeType }), mimeType: activeRecorder.mimeType, durationMs, hasAudioTrack: true });
+      };
+      activeRecorder.ondataavailable = ev => { if (ev.data.size) chunks.push(ev.data); };
+      const startSec = audio.currentTime;
+      let nextEvent = 0;
+      const renderFrame = () => {
+        try {
+          const elapsed = Math.max(0, (audio.currentTime - startSec) * 1000);
+          while (nextEvent < opts.snapshot.events.length &&
+                 opts.snapshot.events[nextEvent].timeOffsetMs <= elapsed) {
+            const ev = opts.snapshot.events[nextEvent++];
+            hitBursts.push({ x: 95 + ev.timeOffsetMs / Math.max(1000, opts.snapshot.durationMs) * (W - 190),
+              y: 590 - ev.trackIndex * 16, color: ev.color, age: 0, cat: ev.trackCategory });
+          }
+          drawFrame(elapsed);
+          frame = requestAnimationFrame(renderFrame);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      activeSource.onended = () => {
+        finished = true;
+        if (activeRecorder.state !== 'inactive') activeRecorder.stop();
+      };
+      renderFrame();
+      activeRecorder.start(100);
+      activeSource.start(startSec);
+      sourceStarted = true;
+      watchdog = window.setTimeout(() => reject(new Error('编码器未在作品结束后完成录制')), durationMs + 5000);
+    });
+    return await Promise.race([recording, aborted]);
+  } finally {
+    cancelAnimationFrame(frame);
+    window.clearTimeout(watchdog);
+    if (recorder) {
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      recorder.onerror = null;
+      if (recorder.state !== 'inactive') recorder.stop();
+    }
+    if (source) {
+      source.onended = null;
+      if (sourceStarted) source.stop();
+      source.disconnect();
+    }
+    for (const track of tracks) track.stop();
+    analyser?.disconnect();
+    destination?.disconnect();
+    await audio.close();
+  }
 }
