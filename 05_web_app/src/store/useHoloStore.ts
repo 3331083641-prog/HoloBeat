@@ -1839,10 +1839,10 @@ export const useHoloStore = create<HoloState>()(
           const safeAnchors = [
             { x: 18, y: 34, rot: -9 },
             { x: 82, y: 34, rot: 9 },
-            { x: 18, y: 66, rot: -6 },
-            { x: 82, y: 66, rot: 7 },
-            { x: 24, y: 24, rot: -12 },
-            { x: 76, y: 24, rot: 11 },
+            { x: 80, y: 27, rot: 10 },
+            { x: 20, y: 27, rot: -10 },
+            { x: 18, y: 70, rot: -6 },
+            { x: 82, y: 70, rot: 7 },
           ];
           const slot = safeAnchors[prev.length % safeAnchors.length];
           const nextSticker: PlacedSticker = {

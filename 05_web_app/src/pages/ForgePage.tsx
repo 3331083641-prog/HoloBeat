@@ -923,12 +923,14 @@ export const ForgePage: React.FC = () => {
                       addForgeSticker(stk.id);
                     }}
                     title={`添加「${stk.zhLabel}」贴纸`}
-                    className="brutal-pad h-[44px] rounded-xl bg-[#FFFDF8] hover:bg-[#FEF9C3] p-1 flex items-center justify-center group"
+                    className="brutal-pad h-[46px] rounded-xl bg-[#FFFDF8] hover:bg-[#FEF9C3] p-1 flex items-center justify-center group"
                   >
-                    <svg
-                      viewBox="0 0 64 64"
-                      className="w-7 h-7 group-hover:scale-110 transition-transform duration-150"
-                      dangerouslySetInnerHTML={{ __html: stk.svgInner }}
+                    <img
+                      src={stk.rasterUrl}
+                      alt={stk.zhLabel}
+                      draggable={false}
+                      decoding="async"
+                      className="w-9 h-9 object-contain drop-shadow-[0_1.5px_2px_rgba(26,26,31,0.25)] group-hover:scale-110 transition-transform duration-150"
                     />
                   </button>
                 ))}

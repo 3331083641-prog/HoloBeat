@@ -240,6 +240,7 @@ export const PinballPage: React.FC = () => {
   const playSfx = useHoloSfx();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stageBgImgRef = useRef<HTMLImageElement | null>(null);
   const viewTransformRef = useRef({ scale: 1, offsetX: 0, offsetY: 0, cssW: ARENA_W, cssH: ARENA_H });
   const engineRef = useRef<Matter.Engine | null>(null);
   const ballsRef = useRef<MarbleRecord[]>([]);
@@ -560,6 +561,18 @@ export const PinballPage: React.FC = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [undoPinball, redoPinball]);
 
+  // Preload high-craft GPT Image 2 micro-street stage backdrop for Choreographed Show mode
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/assets/scenes/pinball_stage_bg.webp';
+    img.onload = () => {
+      stageBgImgRef.current = img;
+    };
+    return () => {
+      stageBgImgRef.current = null;
+    };
+  }, []);
+
   useEffect(() => {
     const engine = Matter.Engine.create({
       gravity: { x: 0, y: useHoloStore.getState().pinballGravity, scale: 0.001 },
@@ -818,29 +831,58 @@ export const PinballPage: React.FC = () => {
     const drawShowBackdrop = (ctx: CanvasRenderingContext2D, cssW: number, cssH: number) => {
       ctx.fillStyle = '#14151B';
       ctx.fillRect(0, 0, cssW, cssH);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.038)';
-      ctx.lineWidth = 1;
-      for (let gx = 28; gx < cssW; gx += 32) {
-        ctx.beginPath();
-        ctx.moveTo(gx, 0);
-        ctx.lineTo(gx, cssH);
-        ctx.stroke();
-      }
-      for (let gy = 28; gy < cssH; gy += 32) {
-        ctx.beginPath();
-        ctx.moveTo(0, gy);
-        ctx.lineTo(cssW, gy);
-        ctx.stroke();
+      const stageImg = stageBgImgRef.current;
+      if (stageImg && stageImg.complete && stageImg.naturalWidth > 0) {
+        // Draw edge-framed micro-street architectural backdrop cleanly across full viewport
+        ctx.drawImage(stageImg, 0, 0, cssW, cssH);
+
+        // Live beat-synced glow directly aligned onto the real bottom 16-tile violet boardwalk!
+        const currMs = holoAudio.getSnapshotPlaybackMs();
+        const isLive = holoAudio.isSnapshotPlaying();
+        const dur = Math.max(1200, useHoloStore.getState().pinballShowSnapshot?.durationMs ?? 4000);
+        if (isLive && currMs >= 0) {
+          const prog = Math.min(0.999, currMs / dur);
+          const activeTile = Math.floor(prog * 16);
+          const tileW = cssW / 16;
+          const tileH = Math.max(16, cssH * 0.055);
+          const ty = cssH - tileH - 1;
+          const pulse = useHoloStore.getState().reducedMotion ? 0 : stagePulseRef.current;
+          ctx.save();
+          ctx.fillStyle = `rgba(255, 214, 10, ${0.24 + pulse * 0.25})`;
+          ctx.strokeStyle = '#FFD60A';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(activeTile * tileW + 3, ty, tileW - 6, tileH - 3, 4);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+      } else {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.038)';
+        ctx.lineWidth = 1;
+        for (let gx = 28; gx < cssW; gx += 32) {
+          ctx.beginPath();
+          ctx.moveTo(gx, 0);
+          ctx.lineTo(gx, cssH);
+          ctx.stroke();
+        }
+        for (let gy = 28; gy < cssH; gy += 32) {
+          ctx.beginPath();
+          ctx.moveTo(0, gy);
+          ctx.lineTo(cssW, gy);
+          ctx.stroke();
+        }
       }
     };
 
     /**
-     * Planar micro-street musical apparatus framing ONLY edges & bottom so >=60% central stage stays open & calm!
+     * Fallback procedural micro-street frame (only drawn before raster backdrop finishes loading).
      */
     const drawMicroStreetFrame = (ctx: CanvasRenderingContext2D, beatPulse: number, prog: number) => {
+      if (stageBgImgRef.current && stageBgImgRef.current.complete && stageBgImgRef.current.naturalWidth > 0) {
+        return;
+      }
       ctx.save();
-
-      // 1) Top tin-awning rain canopy motif (VIBE edge band y=72..98)
       ctx.strokeStyle = 'rgba(255, 214, 10, 0.22)';
       ctx.lineWidth = 1.6;
       ctx.beginPath();
@@ -851,7 +893,6 @@ export const PinballPage: React.FC = () => {
       }
       ctx.stroke();
 
-      // 2) Left & Right street arch brackets (bicycle-bell silhouette + neon tube edge pillars)
       ctx.strokeStyle = 'rgba(0, 212, 170, 0.24)';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -859,14 +900,6 @@ export const PinballPage: React.FC = () => {
       ctx.roundRect(ARENA_W - 36, 68, 22, ARENA_H - 136, 11);
       ctx.stroke();
 
-      // Side bell-dome ornament accents
-      ctx.fillStyle = 'rgba(255, 92, 43, 0.28)';
-      ctx.beginPath();
-      ctx.arc(25, 110, 6, Math.PI, 0);
-      ctx.arc(ARENA_W - 25, 110, 6, Math.PI, 0);
-      ctx.fill();
-
-      // 3) Bottom bamboo-slat rhythm boardwalk (y=608..636) reacting gently to BEAT hits
       const tileCount = 16;
       const startX = 68;
       const tileSpan = (ARENA_W - 136) / tileCount;
@@ -879,7 +912,7 @@ export const PinballPage: React.FC = () => {
             ? 'rgba(255, 214, 10, 0.14)'
             : 'rgba(255, 255, 255, 0.05)';
         ctx.strokeStyle = activeTile ? '#FFD60A' : 'rgba(255, 255, 255, 0.12)';
-        ctx.lineWidth = activeTile ? 1.8 : 1;
+        ctx.lineWidth = activeTile ? 2 : 1;
         ctx.beginPath();
         ctx.roundRect(tx + 2, 608, tileSpan - 4, 18, 4);
         ctx.fill();

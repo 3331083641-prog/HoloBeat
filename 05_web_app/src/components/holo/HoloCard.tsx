@@ -507,14 +507,16 @@ export const HoloCard: React.FC<HoloCardProps> = ({
                           zIndex: stk.zIndex ?? 1,
                           transform: `translate(-50%, -50%) scale(${stk.scale}) rotate(${stk.rotation}deg)`,
                         }}
-                        className={`absolute w-12 h-12 ${
+                        className={`absolute w-14 h-14 ${
                           editableStickers ? 'pointer-events-auto cursor-grab active:cursor-grabbing' : ''
                         } ${isSelected ? 'ring-2 ring-[#FFD60A] rounded-lg bg-black/30' : ''}`}
                       >
-                        <svg
-                          viewBox="0 0 64 64"
-                          className="w-full h-full drop-shadow-[2px_2px_0px_#1A1A1F]"
-                          dangerouslySetInnerHTML={{ __html: def.svgInner }}
+                        <img
+                          src={def.rasterUrl}
+                          alt={def.zhLabel}
+                          draggable={false}
+                          decoding="async"
+                          className="w-full h-full object-contain drop-shadow-[0_3px_5px_rgba(20,21,27,0.34)] pointer-events-none"
                         />
                         {isSelected && (
                           <div

@@ -2,7 +2,7 @@ import { holoAudio } from '../audio/HoloAudioEngine';
 import { renderCompositionSnapshotCached } from '../audio/wavExporter';
 import { loadCompositeCardArtworkCanvas } from '../components/artwork/CardArtwork';
 import { HOLO_FOIL_LIST, RARITY_META } from '../data/soundCards';
-import { getStickerById } from '../data/stickers';
+import { loadStickerImage } from '../data/stickers';
 import { TRACK_MOTION_PROFILES, drawTrackMotifShape } from '../motion/holoMotion';
 import type {
   CompositionSnapshot,
@@ -30,23 +30,6 @@ export interface MotionCardExportResult {
   mimeType: string;
   durationMs: number;
   hasAudioTrack: boolean;
-}
-
-function loadSvgImg(svgMarkup: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(img);
-    };
-    img.onerror = (err) => {
-      URL.revokeObjectURL(url);
-      reject(err);
-    };
-    img.src = url;
-  });
 }
 
 const ZH_SANS = '"Noto Sans SC", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif';
@@ -99,11 +82,10 @@ export async function recordMotionCardWebm(
   const artImg = await loadCompositeCardArtworkCanvas(opts.artId);
   const sortedStickers = [...opts.stickers].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
   const stickerImgs = await Promise.all(
-    sortedStickers.map(async (stk) => {
-      const def = getStickerById(stk.stickerId);
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="160" height="160">${def.svgInner}</svg>`;
-      return { stk, img: await loadSvgImg(svg) };
-    })
+    sortedStickers.map(async (stk) => ({
+      stk,
+      img: await loadStickerImage(stk.stickerId),
+    }))
   );
 
   const audioStream = await holoAudio.getAudioCaptureStream();

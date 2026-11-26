@@ -382,11 +382,11 @@ def run_suite():
         page.wait_for_selector("[data-testid='forge-mint-btn']")
         page.wait_for_timeout(1600)
 
-        # Customize title & place benchmark sticker
+        # Customize title & place crisp starburst sticker in upper-right safe margin
         title_input = page.locator("[data-testid='forge-title-input']")
         title_input.fill("清晨弄堂")
         page.wait_for_timeout(180)
-        page.locator("[data-testid='forge-sticker-clapper']").click()
+        page.locator("[data-testid='forge-sticker-starburst']").click()
         page.wait_for_timeout(320)
 
         # Check Forge Hero Card ratio & UI PCM badge (distinct from WAV PCM audio peak!)

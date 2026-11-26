@@ -1,7 +1,7 @@
 # HOLOBEAT · 声卡造物局 — 工程测试、一致性与实测性能报告（V3.0）
 
-- **测试时间**：`2026-11-26 00:31:54`
-- **基线提交**：`ef9019d`（`feat/huacan-deep-redesign` 接入全部 16 张 GPT Image 2 实绘主角卡后实测）
+- **测试时间**：`2026-11-26 11:17:07`
+- **基线提交**：`cb97527`（`feat/huacan-deep-redesign` 接入全部 **29/29** GPT Image 2 实绘视觉资产后最终实测）
 - **测试环境**：Windows 11 (`AMD64`) · Python `3.12.4` · Node.js `v24.15.0`
 - **验证浏览器**：Google Chrome `158.0.8127.89` · Microsoft Edge `158.0.4370.33`
 - **原始机器指标文件**：[`e2e_metrics.json`](./e2e_metrics.json)（本文所有数据 100% 与该文件严格一致）
@@ -49,11 +49,11 @@
 
 | 指标项 | 实测值 | 说明 |
 | :--- | :--- | :--- |
-| 首屏冷加载时间 | **1079.5 ms** | 本地 Vite 开发服务下含全套离线中文字体与实绘声卡加载 |
+| 首屏冷加载时间 | **1010.2 ms** | 本地 Vite 开发服务下含全套离线中文字体与 29 项实绘资产 |
 | 盲盒页 Hero Card 舞台高度占比 (1080p) | **66.3%** | `ResizeObserver` 动态自适应 |
 | 工坊页 Hero Card 舞台高度占比 (1080p) | **60.5%** | 兼顾上下按钮与 3D 倾斜安全边距 |
-| 02 插卡编曲 Holo Motion 帧率 | **148.0 FPS** | 平均帧耗时 `6.76 ms`，最大帧耗时 `24.3 ms`（296 帧 / 2000 ms） |
-| 03 弹珠剧场自由实验帧率 | **159.4 FPS** | 平均帧耗时 `6.27 ms`，最大帧耗时 `14.7 ms`（峰值 9 球 / 上限 20 球，峰值 8 粒子） |
+| 02 插卡编曲 Holo Motion 帧率 | **148.3 FPS** | 平均帧耗时 `6.74 ms`，最大帧耗时 `27.5 ms`（297 帧 / 2003 ms） |
+| 03 弹珠剧场自由实验帧率 | **154.8 FPS** | 平均帧耗时 `6.46 ms`，最大帧耗时 `19.6 ms`（峰值 8 球 / 上限 20 球，峰值 5 粒子） |
 | Chrome / Edge 控制台报错数 | **0 / 0** | 零 `console.error`，零未捕获 `pageerror` |
 
 ---
@@ -62,14 +62,14 @@
 
 | 导出文件 | 大小 | 实测校验结果 |
 | :--- | :---: | :--- |
-| [`hutong-groove-gallery-poster.png`](../exports/hutong-groove-gallery-poster.png) | `1,052,729 B` | PNG 魔数合法，精确 `1200 × 1600` 像素，已合成高清实绘角色、声音纹章与真实声纹 |
-| [`hutong-groove.wav`](../exports/hutong-groove.wav) | `963,500 B` | `RIFF/WAVE` 合法，`48,000 Hz` 立体声 16-bit PCM，时长 `5.018 s`，峰值振幅 `21,540`（非静音） |
-| [`hutong-groove.holobeat.json`](../exports/hutong-groove.holobeat.json) | `40,229 B` | `schema: "holobeat.project.v3"`，`kind: "minted-card"`，`code: "#MY-01"`，可重新导入并拆封重混 |
-| [`hutong-groove-motion.webm`](../exports/hutong-groove-motion.webm) | `1,192,854 B` | EBML WebM 魔数 `0x1A45DFA3` 合法，按真实作品完整时长录制（含高清实绘主角） |
+| [`hutong-groove-gallery-poster.png`](../exports/hutong-groove-gallery-poster.png) | `1,124,026 B` | PNG 魔数合法，精确 `1200 × 1600` 像素，已合成实绘主角、哑光模切贴纸、声音纹章与真实声纹 |
+| [`hutong-groove.wav`](../exports/hutong-groove.wav) | `963,500 B` | `RIFF/WAVE` 合法，`48,000 Hz` 立体声 16-bit PCM，时长 `5.018 s`，峰值振幅 `21,522`（非静音） |
+| [`hutong-groove.holobeat.json`](../exports/hutong-groove.holobeat.json) | `40,232 B` | `schema: "holobeat.project.v3"`，`kind: "minted-card"`，`code: "#MY-01"`，可重新导入并拆封重混 |
+| [`hutong-groove-motion.webm`](../exports/hutong-groove-motion.webm) | `1,209,712 B` | EBML WebM 魔数 `0x1A45DFA3` 合法，按真实作品完整时长录制（含实绘主角与实绘贴纸） |
 
 ---
 
 ## 五、如实披露的当前边界与局限
 1. **视频容器格式**：浏览器原生 `MediaRecorder` 导出真实 `.webm` 动态卡；本机未预装 `ffmpeg`，因此不强行伪装或改后缀为 `.mp4`。
-2. **高精位图资产状态**：全部 **16 张声卡主角**均已接入实绘透明底高清位图（原始源图归档于 `08_assets/source/cards/*.png`，优化后 WebP 运行于 `05_web_app/public/assets/cards/*.webp`，同步覆盖实时卡面、PNG 海报与 WebM 动态卡）；12 枚哑光贴纸与编曲剧场舞台背景当前仍使用高精矢量/程序化绘制，后续可按 `08_assets/manifest.json` 同管线替换。
+2. **视觉资产完整度**：全站 **29/29** 核心实绘资产（16 张声卡主角 + 12 枚哑光模切贴纸 + 1 张编曲剧场微缩街巷舞台背景）已全部归档于 `08_assets/source/`，经透明抠图/光学居中压缩至 `08_assets/optimized/` 与 `05_web_app/public/assets/` 并完整登记于 `08_assets/manifest.json`；16 枚 32px UI 小图标保持轻量化矢量 SVG 渲染。
 3. **音画同步度量说明**：节拍台与编曲剧场通过共享 Web Audio 毫秒时钟（`getStepTimeMs` / `getSnapshotPlaybackMs`）实现算法级零漂移落点；实际端到端声卡输出延迟仍受操作系统与蓝牙音频设备硬件缓冲影响。

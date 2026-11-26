@@ -1,7 +1,7 @@
 import { buildSoundSigilData } from '../audio/compositionEngine';
 import { loadCompositeCardArtworkCanvas } from '../components/artwork/CardArtwork';
 import { HOLO_FOIL_LIST, RARITY_META } from '../data/soundCards';
-import { getStickerById } from '../data/stickers';
+import { loadStickerImage } from '../data/stickers';
 import type {
   CompositionSnapshot,
   ForgeRarity,
@@ -24,23 +24,6 @@ export interface ExportHoloPngOptions {
   isDemo?: boolean;
   lineageLabel?: string;
   sigilSnapshot?: CompositionSnapshot | null;
-}
-
-function loadSvgImage(svgMarkup: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(img);
-    };
-    img.onerror = (err) => {
-      URL.revokeObjectURL(url);
-      reject(err);
-    };
-    img.src = url;
-  });
 }
 
 function drawSoundSigilOnCanvas(
@@ -305,18 +288,20 @@ export async function renderHoloCardToPngBlob(opts: ExportHoloPngOptions): Promi
   const artImg = await loadCompositeCardArtworkCanvas(opts.artId);
   ctx.drawImage(artImg, pad, pad, innerW, artH);
 
-  // Stickers sorted by zIndex
+  // Stickers sorted by zIndex (real die-cut matte WebP with soft contact shadow)
   const sortedStickers = [...opts.stickers].sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
   for (const stk of sortedStickers) {
-    const def = getStickerById(stk.stickerId);
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="240" height="240">${def.svgInner}</svg>`;
-    const sImg = await loadSvgImage(svg);
+    const sImg = await loadStickerImage(stk.stickerId);
     const sx = pad + (stk.x / 100) * innerW;
     const sy = pad + (stk.y / 100) * artH;
-    const sSize = 132 * stk.scale;
+    const sSize = 152 * stk.scale;
     ctx.save();
     ctx.translate(sx, sy);
     ctx.rotate((stk.rotation * Math.PI) / 180);
+    ctx.shadowColor = 'rgba(20, 21, 27, 0.3)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 5;
     ctx.drawImage(sImg, -sSize / 2, -sSize / 2, sSize, sSize);
     ctx.restore();
   }
