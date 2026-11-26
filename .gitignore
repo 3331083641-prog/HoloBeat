@@ -4,6 +4,7 @@ dist/
 build/
 .vite/
 .cache/
+.worktrees/
 *.tsbuildinfo
 
 # Logs

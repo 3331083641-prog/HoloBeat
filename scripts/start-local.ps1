@@ -6,7 +6,7 @@ param(
     [string]$DbPath
 )
 $ErrorActionPreference = 'Stop'
-$branch = 'fix/v21-reliability-redesign'
+$branch = 'main'
 $entry = Split-Path -Parent $PSScriptRoot
 $source = $null
 foreach ($line in (& git -C $entry -c core.quotepath=false worktree list --porcelain)) {
@@ -15,7 +15,7 @@ foreach ($line in (& git -C $entry -c core.quotepath=false worktree list --porce
 }
 if (!$source) { throw "No checked-out worktree for $branch. See git worktree list." }
 
-# The copy in the primary checkout only locates the branch. Always run its current implementation.
+# Always run the main worktree implementation, including from another checkout.
 $implementation = Join-Path $source 'scripts\start-local.ps1'
 if ((Resolve-Path -LiteralPath $PSCommandPath).Path -ne (Resolve-Path -LiteralPath $implementation).Path) {
     & $implementation @PSBoundParameters
@@ -37,7 +37,7 @@ if (!$Stop) {
         if ($LASTEXITCODE -eq 1) { continue }
         if ($LASTEXITCODE -ne 0) { throw "Could not resolve $ref." }
         & git -C $source merge-base --is-ancestor $ref $head
-        if ($LASTEXITCODE -ne 0) { throw "New UI at $ref has not been integrated into $branch. Sync and verify the repair branch before launching." }
+        if ($LASTEXITCODE -ne 0) { throw "New UI at $ref has not been integrated into $branch. Sync and verify $branch before launching." }
     }
 }
 
