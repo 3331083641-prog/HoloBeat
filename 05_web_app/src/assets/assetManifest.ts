@@ -1,3 +1,4 @@
+import { assetUrl } from '../utils/assetUrl.ts';
 import { ASSET_VERSION } from '../audio/compositionEngine';
 import { SOUND_CARD_ART_BRIEFS } from '../data/artBriefs';
 import { STICKER_PACK } from '../data/stickers';
@@ -35,7 +36,7 @@ export const RUNTIME_ASSET_MANIFEST: {
       cardId: brief.cardId,
       usage: 'card-character' as const,
       sourceFile: `08_assets/source/cards/${brief.artId}.png`,
-      runtimeFile: `/assets/cards/${brief.artId}.webp`,
+      runtimeFile: assetUrl(`/assets/cards/${brief.artId}.webp`),
       fallbackMode: 'svg-inline' as const,
       dimensions: { width: 780, height: 960 },
       safeAreaPct: 14,
@@ -66,7 +67,7 @@ export const RUNTIME_ASSET_MANIFEST: {
       id: 'pinball-stage-bg',
       usage: 'stage-backdrop',
       sourceFile: '08_assets/source/scenes/pinball_stage_bg.jpg',
-      runtimeFile: '/assets/scenes/pinball_stage_bg.webp',
+      runtimeFile: assetUrl('/assets/scenes/pinball_stage_bg.webp'),
       fallbackMode: 'canvas-procedural',
       dimensions: { width: 1024, height: 682 },
       safeAreaPct: 65,

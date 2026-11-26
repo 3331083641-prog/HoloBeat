@@ -500,7 +500,7 @@ export const BeatDeckPage: React.FC = () => {
             data-testid="beat-stop-btn"
             onClick={() => {
               playSfx('click', 0.35);
-              holoAudio.stopTransport();
+              holoAudio.stopAllPlayback();
               resetMomentaryFx();
             }}
             className="brutal-btn h-[44px] px-3 rounded-xl bg-[#FFFDF8] text-[#1A1A1F] flex items-center gap-1 text-[13.5px] font-bold whitespace-nowrap"
@@ -1203,6 +1203,14 @@ export const BeatDeckPage: React.FC = () => {
                       <button
                         key={localIdx}
                         data-testid={`pad-${trackIdx}-${globalIdx}`}
+                        aria-pressed={isOn}
+                        onClick={(e) => {
+                          if (e.detail !== 0) return;
+                          pushBeatUndo();
+                          setSelectedCell({trackIdx,stepIdx:globalIdx});
+                          toggleStep(trackIdx,globalIdx,!isOn);
+                          if (!isOn) void holoAudio.previewCard(card.id,{stepIndex:globalIdx,tone:track.tone});
+                        }}
                         onContextMenu={(e) => {
                           e.preventDefault();
                           pushBeatUndo();
@@ -1335,6 +1343,20 @@ export const BeatDeckPage: React.FC = () => {
               <button
                 key={fx.key}
                 data-testid={`fx-${fx.key}`}
+                onKeyDown={(e) => {
+                  if (liveFxMode === 'momentary' && [' ','Enter'].includes(e.key)) {
+                    e.preventDefault();
+                    if (!e.repeat) setLiveFx(fx.key,true);
+                  }
+                }}
+                onKeyUp={(e) => {
+                  if (liveFxMode === 'momentary' && [' ','Enter'].includes(e.key)) {
+                    e.preventDefault();
+                    setLiveFx(fx.key,false);
+                  }
+                }}
+                onBlur={() => { if (liveFxMode === 'momentary') setLiveFx(fx.key,false); }}
+                onPointerCancel={() => { if (liveFxMode === 'momentary') setLiveFx(fx.key,false); }}
                 aria-pressed={active}
                 onPointerDown={() => {
                   if (liveFxMode === 'momentary') {
@@ -1383,7 +1405,7 @@ export const BeatDeckPage: React.FC = () => {
           data-testid="beat-to-pinball-btn"
           onClick={() => {
             playSfx('portalWarp');
-            holoAudio.stopTransport();
+            holoAudio.stopAllPlayback();
             performBeatInPinball();
           }}
           title={`冻结当前 ${beatBars} 小节（${workDurSec}s）送入弹珠剧场演出`}

@@ -1,3 +1,4 @@
+import { assetUrl } from '../utils/assetUrl.ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Matter from 'matter-js';
 import {
@@ -573,7 +574,7 @@ export const PinballPage: React.FC = () => {
   // Preload high-craft GPT Image 2 micro-street stage backdrop for Choreographed Show mode
   useEffect(() => {
     const img = new Image();
-    img.src = '/assets/scenes/pinball_stage_bg.webp';
+    img.src = assetUrl('/assets/scenes/pinball_stage_bg.webp');
     img.onload = () => {
       stageBgImgRef.current = img;
     };

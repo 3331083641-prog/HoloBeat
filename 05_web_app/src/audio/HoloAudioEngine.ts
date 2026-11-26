@@ -543,6 +543,8 @@ class HoloAudioEngine {
   }
 
   async togglePlay(): Promise<boolean> {
+    this.stopSnapshotPlayback();
+    this.stopPinballRecording();
     const session = ++this.transportSession;
     await this.ensureStarted();
     if (session !== this.transportSession || document.hidden) return false;
@@ -564,6 +566,8 @@ class HoloAudioEngine {
   }
 
   async startTransport(): Promise<void> {
+    this.stopSnapshotPlayback();
+    this.stopPinballRecording();
     const session = ++this.transportSession;
     await this.ensureStarted();
     if (session !== this.transportSession || document.hidden) return;
@@ -658,6 +662,21 @@ class HoloAudioEngine {
    * Play the EXACT canonical rendered WAV Blob (shared with WAV export & Motion Card!)
    * Routed through the master limiter so FFT, meter, mute, and MediaStreamCapture stay 100% live!
    */
+  beginSnapshotRequest(): number {
+    this.stopTransport();
+    this.stopPinballRecording();
+    this.stopSnapshotPlayback();
+    return this.playbackSessionId;
+  }
+
+  isSnapshotRequestCurrent(session: number): boolean {
+    return session === this.playbackSessionId && !document.hidden;
+  }
+
+  cancelSnapshotRequest(session: number): void {
+    if (session === this.playbackSessionId) this.stopSnapshotPlayback();
+  }
+
   async playAudioBlob(
     wavBlob: Blob,
     opts: {
@@ -665,10 +684,12 @@ class HoloAudioEngine {
       onEvent?: (ev: PerformanceEvent) => void;
       events?: PerformanceEvent[];
       leadInMs?: number;
+      requestSession?: number;
     } = {}
   ): Promise<number> {
-    this.stopSnapshotPlayback();
-    return this.startAudioBlob(wavBlob, opts, this.playbackSessionId);
+    const session = opts.requestSession ?? this.beginSnapshotRequest();
+    if (!this.isSnapshotRequestCurrent(session)) return session;
+    return this.startAudioBlob(wavBlob, opts, session);
   }
 
   private async startAudioBlob(wavBlob: Blob, opts: SnapshotPlaybackCallbacks & {
@@ -711,8 +732,7 @@ class HoloAudioEngine {
   }
 
   async playCompositionSnapshot(snapshot: CompositionSnapshot, cbs: SnapshotPlaybackCallbacks = {}) {
-    this.stopSnapshotPlayback();
-    const session = this.playbackSessionId;
+    const session = this.beginSnapshotRequest();
     if (!snapshot.events.length) { cbs.onComplete?.(); return; }
     try {
       const { renderCompositionSnapshotCached } = await import('./wavExporter');
@@ -821,6 +841,8 @@ class HoloAudioEngine {
     onEvent?: (ev: PinballRecordedEvent) => void,
     onComplete?: () => void
   ): Promise<void> {
+    this.stopTransport();
+    this.stopSnapshotPlayback();
     this.stopPinballRecording();
     const session = this.pinballSession;
     await this.ensureStarted();

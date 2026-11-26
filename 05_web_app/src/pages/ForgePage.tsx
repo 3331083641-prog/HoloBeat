@@ -197,16 +197,30 @@ export const ForgePage: React.FC = () => {
     (activeSnapshot && realWaveformMap[activeSnapshot.id]) || inspectedCard?.waveformIsRealPcm
   );
 
-  // Stop audition & cancel any in-progress motion export on unmount or card change
+  const auditionRef = useRef<number | null>(null);
+  const cancelAudition = () => {
+    const request = auditionRef.current;
+    auditionRef.current = null;
+    if (request !== null) holoAudio.cancelSnapshotRequest(request);
+  };
   useEffect(() => {
-    holoAudio.stopSnapshotPlayback();
+    cancelAudition();
     setIsPlayingSnapshot(false);
     setWaveformProgress(-1);
+    const hidden = () => {
+      if (document.hidden) {
+        cancelAudition();
+        setIsPlayingSnapshot(false);
+        setWaveformProgress(-1);
+      }
+    };
+    document.addEventListener('visibilitychange', hidden);
     return () => {
-      holoAudio.stopSnapshotPlayback();
+      cancelAudition();
+      document.removeEventListener('visibilitychange', hidden);
       motionAbortRef.current?.abort();
     };
-  }, [inspectMintedId, activeSnapshot?.id]);
+  }, [inspectMintedId, activeSnapshot]);
 
   // Live waveform playhead sweep loop during canonical WAV audition
   useEffect(() => {
@@ -241,24 +255,33 @@ export const ForgePage: React.FC = () => {
       pushToast({ text: '当前作品暂无可试听的音符事件', accent: '#FF5C2B' });
       return;
     }
-    if (isPlayingSnapshot) {
-      holoAudio.stopSnapshotPlayback();
+    if (auditionRef.current !== null) {
+      cancelAudition();
       setIsPlayingSnapshot(false);
       setWaveformProgress(-1);
       return;
     }
+    const request = holoAudio.beginSnapshotRequest();
+    auditionRef.current = request;
+    const current = () => auditionRef.current === request && holoAudio.isSnapshotRequestCurrent(request);
     setIsPlayingSnapshot(true);
     try {
       const artifact = await renderCompositionSnapshotCached(activeSnapshot);
+      if (!current()) return;
       setRealWaveformMap((prev) => ({ ...prev, [activeSnapshot.id]: artifact.waveformBars }));
       await holoAudio.playAudioBlob(artifact.wavBlob, {
         leadInMs: 40,
+        requestSession: request,
         onComplete: () => {
+          if (auditionRef.current !== request) return;
+          auditionRef.current = null;
           setIsPlayingSnapshot(false);
           setWaveformProgress(-1);
         },
       });
     } catch {
+      if (!current()) return;
+      cancelAudition();
       setIsPlayingSnapshot(false);
       setWaveformProgress(-1);
       pushToast({ text: '试听渲染遇到问题，请重试', accent: '#FF5C2B' });
@@ -462,7 +485,7 @@ export const ForgePage: React.FC = () => {
     if (!inspectedCard || syncingShare) return;
     setSyncingShare(true);
     playSfx('click', 0.8);
-    const res = await syncCardToBackend(inspectedCard);
+    const res = await syncCardToBackend(inspectedCard, { ancestors: mintedCards });
     setSyncingShare(false);
     if (res.ok && res.share) {
       try {

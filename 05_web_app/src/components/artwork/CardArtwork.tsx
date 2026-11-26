@@ -1,3 +1,4 @@
+import { assetUrl } from '../../utils/assetUrl.ts';
 import React from 'react';
 
 export interface ArtLayers {
@@ -888,7 +889,7 @@ export const RASTER_CARD_ART_IDS = new Set<string>([
 ]);
 
 export function getRasterCardArtUrl(artId: string): string | null {
-  return RASTER_CARD_ART_IDS.has(artId) ? `/assets/cards/${artId}.webp` : null;
+  return RASTER_CARD_ART_IDS.has(artId) ? assetUrl(`/assets/cards/${artId}.webp`) : null;
 }
 
 export function getArtworkLayers(artId: string): ArtLayers {
