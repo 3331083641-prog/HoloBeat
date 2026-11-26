@@ -250,7 +250,8 @@ def main():
         env={'PORT':str(api_port),'HOST':'127.0.0.1','HOLOBEAT_DB_PATH':str(Path(temp)/'review.sqlite')}
         with service([node,'--experimental-strip-types','src/server.ts'],BACK,env) as backend:
           wait_service(api+'/health',backend)
-          assert get(api+'/generate')[0]==404\n          assert b'holobeat.raw-archive.v1' in get(api+'/share/review-history')[1]
+          assert get(api+'/generate')[0]==404
+          assert b'holobeat.raw-archive.v1' in get(api+'/share/review-history')[1]
           with service([node,'node_modules/vite/bin/vite.js','--config','scripts/vite.reliability.config.ts',
               '--host','127.0.0.1','--port',str(port)],FRONT,{'VITE_HOLOBEAT_API_URL':api}) as front:
             wait_service(base,front)
