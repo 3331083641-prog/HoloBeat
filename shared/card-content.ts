@@ -39,7 +39,7 @@ export function buildMintIdempotencyKey(params: {
   return contentDigest({
     snapshot: { ...music, events: events.map(({ id, ...ev }) => ev),
       pinballEvents: pinballEvents?.map(({ id, ...ev }) => ev) },
-    title: params.title.normalize('NFC').trim().toUpperCase(),
+    title: params.title.normalize('NFC').trim(),
     rarity: params.rarity, foil: params.foil, artId: params.artId,
     stickers: params.stickers.map(({ uid, ...sticker }) => sticker),
     assetVersion: params.assetVersion,

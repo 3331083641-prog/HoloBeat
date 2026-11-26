@@ -423,3 +423,31 @@ test('archive created by the old field-stripping V3 writer recognizes the origin
     assert.equal(await count(),1);
   } finally { await app.close(); }
 });
+
+test('case-only title edits produce distinct content and independently archived works',async t=>{
+  const {app,post,count}=await service(t);
+  // The music, sticker layout and design are identical, including the frozen snapshot.
+  const first={...makeCard(),title:'Beat'};
+  const second={...first,id:'variant',requestId:'case-2',idempotencyKey:'case-2',
+    serialNumber:2,code:'#MY-2',title:'beat'};
+  first.contentHash=await buildMintIdempotencyKey(first);
+  second.contentHash=await buildMintIdempotencyKey(second);
+  assert.notEqual(first.contentHash,second.contentHash);
+  assert.equal((await post('/api/cards',first)).statusCode,201);
+  assert.equal((await post('/api/cards',second)).statusCode,201);
+  assert.equal((await post('/api/cards',first)).statusCode,200);
+  assert.equal(await count(),2);
+  assert.deepEqual((await app.inject('/api/cards')).json().cards.map(c=>c.title).sort(),['Beat','beat']);
+  assert.equal(await buildMintIdempotencyKey({...first,title:'  B\u00e9at  '}),
+    await buildMintIdempotencyKey({...first,title:'Be\u0301at'}));
+});
+test('legacy V3 preserves its old idempotency key on replay after hashing a mixed-case title',async t=>{
+  const {app,post,count}=await service(t);
+  const card={...showcaseProject.card,title:'Beat',idempotencyKey:'old::BEAT::prism'};
+  assert.equal((await post('/api/cards',card)).statusCode,201);
+  const replay=await post('/api/cards',{...card,contentHash:await buildMintIdempotencyKey(card)});
+  assert.equal(replay.statusCode,200,replay.body);
+  assert.equal(replay.json().card.idempotencyKey,card.idempotencyKey);
+  assert.equal(await count(),1);
+  assert.deepEqual((await app.inject('/api/cards')).json().cards,[card]);
+});
