@@ -1,172 +1,382 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
-import { buildApp } from '../src/server.ts';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+import test, { type TestContext } from 'node:test';
+import { prepareDefaultDirectory } from '../src/archiveDirectory.ts';
+import { ArchiveDatabase } from '../src/db.ts';
+import { buildApp, listenOptions } from '../src/server.ts';
 
-const sampleCard = {
-  id: 'minted-test-001',
-  schemaVersion: 3,
-  serialNumber: 1,
-  code: '#MY-01',
-  idempotencyKey: 'snap-1::TEST::UR::prism::bamboo-cat::stk-hash',
-  title: '清晨弄堂测试',
-  rarity: 'UR' as const,
-  foil: 'prism' as const,
-  artId: 'bamboo-cat',
-  sourceType: 'beat' as const,
-  isDemo: false,
-  stickers: [
-    { uid: 's1', stickerId: 'clapper', x: 24, y: 30, scale: 1, rotation: -8, zIndex: 1 },
-  ],
-  waveformBars: [0.4, 0.8, 0.5, 0.9],
-  waveformIsRealPcm: true,
-  snapshot: {
-    id: 'snap-test-1',
-    schemaVersion: 3,
-    sourceType: 'beat' as const,
-    title: '清晨弄堂测试',
-    bpm: 116,
-    swing: 0.16,
-    scale: 'PENTA_C' as const,
-    bars: 2 as const,
-    durationMs: 4138,
-    events: [
-      {
-        id: 'ev-1',
-        timeOffsetMs: 0,
-        durationMs: 129,
-        trackIndex: 0,
-        trackCategory: 'BEAT' as const,
-        cardId: 'card-01',
-        pitch: 'C3',
-        velocity: 0.9,
-      },
-    ],
-    createdAt: Date.now(),
-  },
-  lineageDepth: 0,
-  createdAt: Date.now(),
-};
-
-test('HoloBeat Archive Backend: health, idempotent save, lineage, HTML share page & revocation', async () => {
-  const app = await buildApp({ dbPath: ':memory:' });
-
-  const healthRes = await app.inject({ method: 'GET', url: '/api/health' });
-  assert.equal(healthRes.statusCode, 200);
-  assert.equal(healthRes.json().ok, true);
-
-  // Save card once -> 201 created
-  const create1 = await app.inject({ method: 'POST', url: '/api/cards', payload: sampleCard });
-  assert.equal(create1.statusCode, 201);
-  assert.equal(create1.json().created, true);
-
-  // Duplicate idempotencyKey -> 200 idempotent (zero duplicate rows!)
-  const create2 = await app.inject({ method: 'POST', url: '/api/cards', payload: sampleCard });
-  assert.equal(create2.statusCode, 200);
-  assert.equal(create2.json().created, false);
-
-  // Child remix card -> verify lineage graph
-  const childCard = {
-    ...sampleCard,
-    id: 'minted-test-002',
-    serialNumber: 2,
-    code: '#MY-02',
-    idempotencyKey: 'snap-2::REMIX::UR::gold::street-bell::stk-hash',
-    title: '胡同变奏曲',
-    parentCardId: sampleCard.id,
-    parentCode: sampleCard.code,
-    parentTitle: sampleCard.title,
-    lineageDepth: 1,
+// Digests captured from the published v2.1 frontend canonicalization. These vectors
+// must remain stable for clients syncing cards already minted in their browser.
+const fixtureHashes = [
+  'b959f8782a100c87f21df28ae646dd808b7c7d2eefcf42ffa794089fd6b9392d',
+  '5097eee2103bc22b88729cf21fe5bee808676fd2a9248ce52a745200e3e57de1',
+];
+const makeCard = (n = 1) => ({
+  id:'minted-' + n, serialNumber:n, code:'#MY-' + n, idempotencyKey:'request-' + n, requestId:'request-' + n,
+  contentHash:fixtureHashes[n-1], designVersion:1,
+  title:'测试 ' + n, rarity:'UR', foil:'prism', artId:'neon-dj', sourceType:'pinball',
+  stickers:[], waveformBars:[0, 0.75], audioFingerprintSeed:1, lineageDepth:0, createdAt:100,
+  snapshot:{ id:'snapshot-' + n, sourceType:'pinball', capturedAt:100, durationMs:1200,
+    bpm:120, scale:'PENTA_C', pinballEvents:[{timeOffsetMs:0, cardId:'card-01',note:'C4',velocity:1,color:'#000000'}],
+    events:[{id:'e',timeOffsetMs:0,durationMs:100,pitch:'C4',velocity:1,cardId:'card-01',
+      trackCategory:'BEAT',trackIndex:0,color:'#000000'}] },
+});
+function tempDb(t: TestContext) {
+  const base = process.env.HOLOBEAT_TEST_TMP ?? path.resolve('.cache','test-db');
+  mkdirSync(base,{recursive:true});
+  const dir = mkdtempSync(path.join(base,'hb-api-'));
+  t.after(() => rmSync(dir,{recursive:true,force:true}));
+  return path.join(dir,'archive.sqlite');
+}
+async function service(t: TestContext, dbPath=':memory:') {
+  const app = await buildApp({dbPath});
+  t.after(() => app.close());
+  const session = await app.inject('/api/session');
+  assert.equal(session.statusCode,200,session.body);
+  const headers = {'x-holobeat-write-token':session.json().writeToken};
+  const post = (url:string,payload:object) => app.inject({method:'POST',url,headers,payload});
+  const del = (url:string) => app.inject({method:'DELETE',url,headers});
+  const count = async () => (await app.inject('/api/health')).json().cardsCount;
+  const save = async (n=1) => {
+    const res = await post('/api/cards',makeCard(n));
+    assert.equal(res.statusCode,201,res.body);
+    return res.json().card;
   };
-  const createChild = await app.inject({ method: 'POST', url: '/api/cards', payload: childCard });
-  assert.equal(createChild.statusCode, 201);
-
-  const lineageRes = await app.inject({ method: 'GET', url: `/api/lineage/${childCard.id}` });
-  assert.equal(lineageRes.statusCode, 200);
-  assert.equal(lineageRes.json().ancestors.length, 1);
-  assert.equal(lineageRes.json().ancestors[0].id, sampleCard.id);
-
-  // Share token creation -> returns BOTH human-readable HTML shareUrl & JSON apiUrl
-  const shareRes = await app.inject({
-    method: 'POST',
-    url: '/api/shares',
-    payload: { cardId: sampleCard.id },
-  });
-  assert.equal(shareRes.statusCode, 201);
-  const { token, shareUrl, apiUrl } = shareRes.json();
-  assert.ok(shareUrl.endsWith(`/share/${token}`), 'shareUrl must point to /share/:token HTML showcase');
-  assert.ok(apiUrl.endsWith(`/api/shares/${token}`), 'apiUrl must point to JSON API');
-
-  // Read-only HTML showcase page renders cleanly
-  const htmlPage = await app.inject({ method: 'GET', url: `/share/${token}` });
-  assert.equal(htmlPage.statusCode, 200);
-  assert.match(String(htmlPage.headers['content-type']), /text\/html/);
-  assert.match(htmlPage.body, /清晨弄堂测试/);
-  assert.match(htmlPage.body, /只读作品展页/);
-  assert.match(htmlPage.body, /\.holobeat\.json/);
-
-  // JSON API still works cleanly
-  const fetchShared = await app.inject({ method: 'GET', url: `/api/shares/${token}` });
-  assert.equal(fetchShared.statusCode, 200);
-  assert.equal(fetchShared.json().card.code, '#MY-01');
-
-  // Revocation blocks BOTH JSON API and HTML showcase page
-  const revokeRes = await app.inject({ method: 'DELETE', url: `/api/shares/${token}` });
-  assert.equal(revokeRes.statusCode, 200);
-
-  const fetchRevokedJson = await app.inject({ method: 'GET', url: `/api/shares/${token}` });
-  assert.equal(fetchRevokedJson.statusCode, 404);
-
-  const fetchRevokedHtml = await app.inject({ method: 'GET', url: `/share/${token}` });
-  assert.equal(fetchRevokedHtml.statusCode, 404);
-  assert.match(fetchRevokedHtml.body, /已失效/);
-
-  await app.close();
+  const share = async (expiresAt?:number) => {
+    const res = await post('/api/shares',{cardId:'minted-1',expiresAt});
+    assert.equal(res.statusCode,201,res.body);
+    return res.json().token as string;
+  };
+  return {app,post,del,count,save,share,headers};
+}
+test('health and empty fresh database',async t=>{
+  const {app,count}=await service(t);
+  const res=await app.inject('/health');
+  assert.equal(res.statusCode,200);
+  assert.equal(await count(),0);
+});
+test('valid card round trips in archive',async t=>{
+  const {app,save,count}=await service(t);
+  await save();
+  assert.deepEqual((await app.inject('/api/cards')).json().cards,[makeCard()]);
+  assert.equal(await count(),1);
+});
+test('same request is idempotent',async t=>{
+  const {save,post,count}=await service(t);
+  await save();
+  const res=await post('/api/cards',makeCard());
+  assert.equal(res.statusCode,200);
+  assert.equal(res.json().created,false);
+  assert.equal(await count(),1);
+});
+for(const [name,change] of Object.entries({
+  key:{idempotencyKey:'request-1'}, request:{requestId:'request-1'}, id:{id:'minted-1'},
+  serial:{serialNumber:1}, code:{code:'#MY-1'}, content:{title:makeCard().title,contentHash:makeCard().contentHash},
+})) test('conflicting '+name+' rolls back',async t=>{
+  const {post,save,count,app}=await service(t);
+  await save();
+  const res=await post('/api/cards',{...makeCard(2),...change});
+  assert.equal(res.statusCode,409,res.body);
+  assert.equal(await count(),1);
+  assert.deepEqual((await app.inject('/api/cards')).json().cards,[makeCard()]);
+});
+for(const [name,change] of Object.entries({
+  unknown:{extra:{arbitrary:true}}, type:{serialNumber:'1'}, missing:{snapshot:null},
+  largeArray:{waveformBars:new Array(513).fill(0)}, negative:{snapshot:{...makeCard().snapshot,durationMs:-1}},
+  resource:{artId:'data:image/png;base64,data'}, invalidNote:{snapshot:{...makeCard().snapshot,
+    events:[{...makeCard().snapshot.events[0],pitch:'not-a-pitch'}]}}, origin:{sourceType:'beat'},
+  lineage:{parentCardId:'missing'}, malformedBeat:{sourceType:'beat',snapshot:{...makeCard().snapshot,
+    sourceType:'beat',beatSnapshot:{bars:1,tracks:[]}}},
+})) test('invalid '+name+' returns 400 and never inserts',async t=>{
+  const {post,count}=await service(t);
+  const res=await post('/api/cards',{...makeCard(),...change});
+  assert.equal(res.statusCode,400,res.body);
+  assert.equal(await count(),0);
+});
+test('a syntactically valid but incorrect digest cannot reserve a hash or insert a row',async t=>{
+  const {post,save,count}=await service(t);
+  const res=await post('/api/cards',{...makeCard(),title:'Changed after hashing'});
+  assert.equal(res.statusCode,400);
+  assert.equal(res.json().code,'CONTENT_HASH_MISMATCH');
+  assert.equal(await count(),0);
+  await save();
+  assert.equal(await count(),1);
+});
+test('versioned request needs a digest, legacy archive and retry remain valid',async t=>{
+  const {post,count}=await service(t);
+  const {contentHash,designVersion,requestId,...legacyCard}=makeCard();
+  assert.equal((await post('/api/cards',{...legacyCard,designVersion,requestId})).statusCode,400);
+  assert.equal(await count(),0);
+  assert.equal((await post('/api/cards',legacyCard)).statusCode,201);
+  assert.equal((await post('/api/cards',legacyCard)).statusCode,200);
+  assert.equal(await count(),1);
+});
+test('oversized body rejected before persistence',async t=>{
+  const {post,count}=await service(t);
+  assert.equal((await post('/api/cards',{title:'x'.repeat(1024*1024)})).statusCode,413);
+  assert.equal(await count(),0);
+});
+test('delete original without descendants invalidates existing link',async t=>{
+  const {app,save,share,del,count}=await service(t);
+  await save();
+  const token=await share();
+  assert.equal((await del('/api/cards/minted-1')).statusCode,200);
+  assert.equal((await app.inject('/api/shares/'+token)).statusCode,404);
+  assert.equal(await count(),0);
+});
+const child={...makeCard(2),contentHash:'a46143fa54bd15920a0ae2ace1dfba3578f8122967f12211fdf8cae331bab2f4',parentCardId:'minted-1',parentTitle:makeCard().title,parentCode:'#MY-1',lineageDepth:1};
+test('lineage has exact parent and child',async t=>{
+  const {save,post,app,count}=await service(t);
+  assert.equal((await post('/api/cards',child)).statusCode,409);
+  await save();
+  assert.equal((await post('/api/cards',child)).statusCode,201);
+  assert.deepEqual((await app.inject('/api/lineage/minted-2')).json().ancestors,[makeCard()]);
+  assert.deepEqual((await app.inject('/api/lineage/minted-1')).json().children,[child]);
+  assert.equal(await count(),2);
+});
+test('parent with children is protected',async t=>{
+  const {save,post,del,count}=await service(t);
+  await save();
+  assert.equal((await post('/api/cards',child)).statusCode,201);
+  assert.equal((await del('/api/cards/minted-1')).statusCode,409);
+  assert.equal(await count(),2);
+});
+test('share creation reuses active link with same expiry',async t=>{
+  const {save,post,share,count}=await service(t);
+  await save();
+  const token=await share();
+  const res=await post('/api/shares',{cardId:'minted-1'});
+  assert.equal(res.statusCode,200);
+  assert.equal(res.json().token,token);
+  assert.equal(await count(),1);
+});
+test('share GET is read only',async t=>{
+  const {save,share,app,count}=await service(t);
+  await save();
+  const url='/api/shares/'+await share();
+  const res=await app.inject(url);
+  assert.equal(res.statusCode,200);
+  assert.deepEqual(res.json().card,makeCard());
+  assert.equal((await app.inject({method:'DELETE',url})).statusCode,403);
+  assert.equal((await app.inject(url)).statusCode,200);
+  assert.equal(await count(),1);
+});
+test('share revocation immediate',async t=>{
+  const {save,share,del,app,count}=await service(t);
+  await save();
+  const url='/api/shares/'+await share();
+  assert.equal((await del(url)).statusCode,200);
+  assert.equal((await app.inject(url)).statusCode,404);
+  assert.equal(await count(),1);
+});
+test('expiry and expiry changes invalidate old links',async t=>{
+  const {save,share,post,app,count}=await service(t);
+  await save();
+  const old=await share();
+  t.mock.timers.enable({apis:['Date'],now:Date.now()});
+  const expiresAt=Date.now()+10000;
+  const current=await share(expiresAt);
+  assert.equal((await app.inject('/api/shares/'+old)).statusCode,404);
+  assert.equal((await app.inject('/api/shares/'+current)).statusCode,200);
+  t.mock.timers.tick(10000);
+  assert.equal((await app.inject('/api/shares/'+current)).statusCode,404);
+  assert.equal((await post('/api/shares',{cardId:'minted-1',expiresAt})).statusCode,400);
+  assert.equal(await count(),1);
+});
+test('concurrent retry yields one row and one active link',async t=>{
+  const {post,count}=await service(t);
+  for(const [url,payload] of [['/api/cards',makeCard()],['/api/shares',{cardId:'minted-1'}]] as const){
+    const res=await Promise.all(Array.from({length:12},()=>post(url,payload)));
+    assert.equal(res.filter(r=>r.statusCode===201).length,1);
+    assert.equal(res.filter(r=>r.statusCode===200).length,11);
+    if(url.endsWith('shares')) assert.equal(new Set(res.map(r=>r.json().token)).size,1);
+  }
+  assert.equal(await count(),1);
+});
+test('browser origin, host, client address and writes restricted',async t=>{
+  const {app,headers,count}=await service(t);
+  for (const options of [{headers:{origin:'https://example.invalid'}},{headers:{host:'example.invalid'}},
+      {remoteAddress:'192.0.2.1'}]) assert.equal((await app.inject({url:'/api/session',...options})).statusCode,403);
+  assert.equal((await app.inject({url:'/api/cards',method:'POST',payload:makeCard()})).statusCode,403);
+  assert.equal((await app.inject({url:'/api/cards',method:'POST',headers:{...headers,origin:'null'},payload:makeCard()})).statusCode,403);
+  assert.equal(await count(),0);
+  assert.throws(()=>listenOptions({HOST:'0.0.0.0'}));
+  assert.throws(()=>listenOptions({PORT:'0'}));
+});
+const legacySql=readFileSync(new URL('./schema-v0.sql',import.meta.url),'utf8');
+function legacy(file:string, cards = [makeCard()]) {
+  const db=new DatabaseSync(file);
+  db.exec(legacySql);
+  for(const c of cards) db.prepare(`INSERT INTO minted_cards(id,serial_number,code,idempotency_key,title,rarity,foil,art_id,
+    source_type,is_demo,lineage_depth,payload_json,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(c.id,c.serialNumber,c.code,c.idempotencyKey,c.title,c.rarity,c.foil,c.artId,c.sourceType,0,0,JSON.stringify(c),c.createdAt);
+  db.exec("INSERT INTO share_links(token,card_id,created_at) VALUES ('old-link','minted-1',100)");
+  db.close();
+}
+test('v0 upgrade, repeat migration and restart preserve payload and share',t=>{
+  const file=tempDb(t);
+  legacy(file);
+  for(let pass=0;pass<2;pass++){
+    const archive=new ArchiveDatabase(file);
+    assert.equal(archive.countCards(),1);
+    assert.deepEqual(archive.getSharedCard('old-link')?.card,makeCard());
+    archive.close();
+    archive.close();
+  }
+  const db=new DatabaseSync(file);
+  assert.equal(db.prepare('PRAGMA user_version').get()?.user_version,2);
+  db.close();
+  const backups=readdirSync(path.dirname(file)).filter(n=>n.includes('.pre-v2-'));
+  assert.equal(backups.length,1);
+  const backup=new DatabaseSync(path.join(path.dirname(file),backups[0]));
+  assert.equal(backup.prepare('PRAGMA user_version').get()?.user_version,0);
+  backup.close();
+});
+test('failed migration rolls back DDL, retains original rows and can retry',t=>{
+  const file=tempDb(t);
+  legacy(file,[makeCard(),{...makeCard(2),serialNumber:1}]);
+  assert.throws(()=>new ArchiveDatabase(file));
+  const db=new DatabaseSync(file);
+  assert.equal(db.prepare('PRAGMA user_version').get()?.user_version,0);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM minted_cards').get()?.n,2);
+  assert.equal(db.prepare('PRAGMA table_info(share_links)').all().some(c=>c.name==='expires_at'),false);
+  // Simulate explicit operator repair on this disposable fixture.
+  db.prepare('UPDATE minted_cards SET serial_number=2 WHERE id=?').run('minted-2');
+  db.close();
+  const archive=new ArchiveDatabase(file);
+  assert.equal(archive.countCards(),2);
+  archive.close();
+});
+test('damaged SQLite is not replaced',t=>{
+  const file=tempDb(t);
+  writeFileSync(file,'damaged fixture');
+  assert.throws(()=>new ArchiveDatabase(file));
+  assert.equal(readFileSync(file,'utf8'),'damaged fixture');
+});
+test('malformed stored JSON prevents v0 migration without losing original',t=>{
+  const file=tempDb(t);
+  legacy(file);
+  const db=new DatabaseSync(file);
+  db.exec("UPDATE minted_cards SET payload_json='{'");
+  db.close();
+  assert.throws(()=>new ArchiveDatabase(file));
+  const old=new DatabaseSync(file);
+  assert.equal(old.prepare('SELECT payload_json FROM minted_cards').get()?.payload_json,'{');
+  assert.equal(old.prepare('PRAGMA user_version').get()?.user_version,0);
+  old.close();
+});
+test('locked SQLite rejects writes, returns 503 and permits retry',async t=>{
+  const file=tempDb(t);
+  const {app,post,count}=await service(t,file);
+  const db=new DatabaseSync(file);
+  try {
+    db.exec('BEGIN IMMEDIATE');
+    const res=await post('/api/cards',makeCard());
+    assert.equal(res.statusCode,503,res.body);
+    assert.equal(await count(),0);
+    db.exec('ROLLBACK');
+    assert.equal((await post('/api/cards',makeCard())).statusCode,201);
+  } finally { db.close(); await app.close(); }
+});
+test('interrupted migration process leaves old schema recoverable',t=>{
+  const file=tempDb(t);
+  legacy(file);
+  const script = `const {DatabaseSync}=require('node:sqlite');const db=new DatabaseSync(process.argv[1]);
+    db.exec('BEGIN IMMEDIATE; ALTER TABLE share_links ADD COLUMN expires_at INTEGER; PRAGMA user_version=2');
+    process.exit(37);`;
+  const child=spawnSync(process.execPath,['-e',script,file]);
+  assert.equal(child.status,37);
+  const old=new DatabaseSync(file);
+  assert.equal(old.prepare('PRAGMA user_version').get()?.user_version,0);
+  old.close();
+  const archive=new ArchiveDatabase(file);
+  assert.deepEqual(archive.getSharedCard('old-link')?.card,makeCard());
+  archive.close();
 });
 
-test('HoloBeat Archive Backend: strict nested schema rejects invalid BPM, stickers, and events', async () => {
-  const app = await buildApp({ dbPath: ':memory:' });
+test('new default archive directory can store and reopen an archive', t => {
+  const parent = path.dirname(tempDb(t));
+  const directory = path.join(parent,'data');
+  prepareDefaultDirectory(directory);
+  prepareDefaultDirectory(directory);
+  const file = path.join(directory, 'local.sqlite');
+  const store = new ArchiveDatabase(file);
+  assert.equal(store.countCards(), 0);
+  store.close();
+  if (process.platform === 'win32') {
+    const probe = spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',
+      "$acl=[System.IO.Directory]::GetAccessControl($env:HB_ACL_TEST); if (!$acl.AreAccessRulesProtected) {exit 1}; foreach($ace in $acl.Access) { if ($ace.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value -in @('S-1-1-0','S-1-5-11','S-1-5-32-545')) {exit 2} }"],
+      {windowsHide:true,env:{...process.env,HB_ACL_TEST:directory}});
+    assert.equal(probe.status,0);
+  }
+});
 
-  // Invalid BPM (9999) inside nested snapshot
-  const badBpmRes = await app.inject({
-    method: 'POST',
-    url: '/api/cards',
-    payload: {
-      ...sampleCard,
-      id: 'bad-bpm',
-      idempotencyKey: 'bad-bpm-key',
-      snapshot: { ...sampleCard.snapshot, bpm: 9999 },
-    },
-  });
-  assert.equal(badBpmRes.statusCode, 400);
-
-  // Invalid sticker coordinates (x = 999)
-  const badStickerRes = await app.inject({
-    method: 'POST',
-    url: '/api/cards',
-    payload: {
-      ...sampleCard,
-      id: 'bad-sticker',
-      idempotencyKey: 'bad-sticker-key',
-      stickers: [{ uid: 'x', stickerId: 'clapper', x: 999, y: 50, scale: 1, rotation: 0 }],
-    },
-  });
-  assert.equal(badStickerRes.statusCode, 400);
-
-  // Invalid event velocity (> 1)
-  const badEventRes = await app.inject({
-    method: 'POST',
-    url: '/api/cards',
-    payload: {
-      ...sampleCard,
-      id: 'bad-event',
-      idempotencyKey: 'bad-event-key',
-      snapshot: {
-        ...sampleCard.snapshot,
-        events: [{ ...sampleCard.snapshot.events[0], velocity: 5.5 }],
-      },
-    },
-  });
-  assert.equal(badEventRes.statusCode, 400);
-
-  await app.close();
+const showcaseProject = JSON.parse(readFileSync(new URL('../../07_showcase/exports/hutong-groove.holobeat.json', import.meta.url),'utf8'));
+test('shipped V3 work round trips all authoring data through archive, read-only HTML and JSON',async t=>{
+  const {post,app,del,count}=await service(t);
+  const card={...showcaseProject.card,title:'《河岸》 <声卡> & "铜铃"'};
+  assert.equal(showcaseProject.schema,'holobeat.project.v3');
+  for(const track of card.snapshot.beatSnapshot.tracks) assert.equal(track.stepCells.length,32);
+  const save=await post('/api/cards',card);
+  assert.equal(save.statusCode,201,save.body);
+  assert.deepEqual(save.json().card,card);
+  const link=await post('/api/shares',{cardId:card.id});
+  assert.equal(link.statusCode,201,link.body);
+  const htmlUrl=new URL(link.json().shareUrl).pathname;
+  const apiUrl=new URL(link.json().apiUrl).pathname;
+  assert.equal(htmlUrl,'/share/'+link.json().token);
+  assert.equal(apiUrl,'/api/shares/'+link.json().token);
+  const html=await app.inject(htmlUrl);
+  assert.equal(html.statusCode,200);
+  assert.match(String(html.headers['content-type']),/^text\/html/);
+  assert.match(html.body,/&lt;声卡&gt; &amp; &quot;铜铃&quot;/);
+  assert.doesNotMatch(html.body,/<声卡>/);
+  assert.match(html.body,/只读作品展页/);
+  const embedded=html.body.match(/const PROJECT_DATA = (.+);/);
+  assert.ok(embedded);
+  assert.deepEqual(JSON.parse(embedded[1]).card,card);
+  assert.deepEqual((await app.inject(apiUrl)).json().card,card);
+  assert.equal((await del(apiUrl)).statusCode,200);
+  assert.equal((await app.inject(apiUrl)).statusCode,404);
+  assert.equal((await app.inject(htmlUrl)).statusCode,404);
+  assert.equal(await count(),1);
+});
+test('V3 expressive step validation rejects malformed nested cells',async t=>{
+  const {post,count}=await service(t);
+  const card=structuredClone(showcaseProject.card);
+  card.snapshot.beatSnapshot.tracks[0].stepCells[0].lengthSteps=7;
+  assert.equal((await post('/api/cards',card)).statusCode,400);
+  assert.equal(await count(),0);
+});
+test('V3 single phrase audition of two bars accepts its one-bar effective duration',async t=>{
+  const {post,count}=await service(t);
+  const card=structuredClone(showcaseProject.card);
+  card.snapshot.beatSnapshot.activePhraseLoop='A';
+  card.snapshot.bars=1;
+  card.snapshot.durationMs=Math.round(240000/card.snapshot.bpm);
+  card.snapshot.events=card.snapshot.events.filter(e=>e.timeOffsetMs<card.snapshot.durationMs);
+  assert.equal((await post('/api/cards',card)).statusCode,201);
+  assert.equal(await count(),1);
+});
+test('configured credentials remain private and authorize legacy header and session issuance',async t=>{
+  const key='local-test-credential';
+  const app=await buildApp({dbPath:':memory:',writeToken:key});
+  t.after(()=>app.close());
+  assert.equal((await app.inject('/api/session')).statusCode,401);
+  const headers={'x-holobeat-token':key};
+  const result=await app.inject({url:'/api/session',headers});
+  assert.equal(result.statusCode,200);
+  assert.notEqual(result.json().writeToken,key);
+  const saved=await app.inject({url:'/api/cards',method:'POST',headers,payload:makeCard()});
+  assert.equal(saved.statusCode,201,saved.body);
+  assert.equal((await app.inject('/api/health')).json().cardsCount,1);
+});
+test('loopback write quota is shared by session and scoped to one server instance',async t=>{
+  const {post,count}=await service(t);
+  for(let n=0;n<60;n++) assert.equal((await post('/api/shares',{cardId:'missing'})).statusCode,404);
+  assert.equal((await post('/api/cards',makeCard())).statusCode,429);
+  assert.equal(await count(),0);
 });

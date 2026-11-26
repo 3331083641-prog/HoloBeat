@@ -1,88 +1,22 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import cors from '@fastify/cors';
 import Fastify from 'fastify';
+import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import { ArchiveDatabase } from './db.ts';
+import { createSchemas } from '../../shared/card-schema.mjs';
+import { prepareDefaultDirectory } from './archiveDirectory.ts';
+import { ArchiveDatabase, ArchiveError } from './db.ts';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_DB_PATH = path.resolve(__dirname, '..', 'data', 'holobeat-archive.sqlite');
-
-const StickerSchema = z.object({
-  uid: z.string().min(1).max(128),
-  stickerId: z.string().min(1).max(64),
-  x: z.number().min(0).max(100),
-  y: z.number().min(0).max(100),
-  scale: z.number().min(0.2).max(4),
-  rotation: z.number().min(-360).max(360),
-  zIndex: z.number().int().min(0).max(1000).optional(),
-});
-
-const MusicalEventSchema = z.object({
-  id: z.string().min(1).max(128),
-  timeOffsetMs: z.number().min(0).max(120_000),
-  durationMs: z.number().positive().max(30_000),
-  trackIndex: z.number().int().min(0).max(3),
-  trackCategory: z.enum(['BEAT', 'PERC', 'MELODY', 'VIBE']),
-  cardId: z.string().min(1).max(64),
-  pitch: z.string().min(1).max(16),
-  velocity: z.number().min(0).max(1),
-  stepIndex: z.number().int().min(0).max(31).optional(),
-  tone: z.number().min(0).max(1).optional(),
-});
-
-const SnapshotSchema = z.object({
-  id: z.string().min(1).max(128),
-  schemaVersion: z.number().int().min(1).max(10).optional(),
-  contentSignature: z.string().max(256).optional(),
-  sourceType: z.enum(['beat', 'pinball']),
-  title: z.string().min(1).max(64),
-  bpm: z.number().min(40).max(240),
-  swing: z.number().min(0).max(0.8),
-  scale: z.enum(['PENTA_C', 'MINOR_C', 'DORIAN_C']),
-  bars: z.union([z.literal(1), z.literal(2)]),
-  durationMs: z.number().min(100).max(120_000),
-  tailMs: z.number().min(0).max(15_000).optional(),
-  events: z.array(MusicalEventSchema).max(256),
-  beatSnapshot: z.unknown().optional(),
-  pinballSnapshot: z.unknown().optional(),
-  isDemo: z.boolean().optional(),
-  frozenAt: z.number().int().positive().optional(),
-  createdAt: z.number().int().positive().optional(),
-});
-
-const MintedCardSchema = z.object({
-  id: z.string().min(1).max(128),
-  schemaVersion: z.number().int().min(1).max(10).optional(),
-  assetVersion: z.string().max(32).optional(),
-  rendererVersion: z.string().max(32).optional(),
-  serialNumber: z.number().int().min(0),
-  code: z.string().min(1).max(32),
-  idempotencyKey: z.string().min(1).max(512),
-  title: z.string().min(1).max(64),
-  rarity: z.enum(['SSR', 'UR', 'LTD']),
-  foil: z.enum(['prism', 'gold', 'cyber', 'chrome', 'spark']),
-  artId: z.string().min(1).max(64),
-  sourceType: z.enum(['beat', 'pinball']),
-  isDemo: z.boolean().optional(),
-  stickers: z.array(StickerSchema).max(32).default([]),
-  waveformBars: z.array(z.number().min(0).max(1.5)).max(128).default([]),
-  waveformIsRealPcm: z.boolean().optional(),
-  audioCacheKey: z.string().max(256).optional(),
-  audioFingerprintSeed: z.number().optional(),
-  snapshot: SnapshotSchema.optional(),
-  parentCardId: z.string().max(128).optional(),
-  parentCode: z.string().max(32).optional(),
-  parentTitle: z.string().max(64).optional(),
-  lineageDepth: z.number().int().min(0).max(99).default(0),
-  storageStatus: z.enum(['primary', 'fallback']).optional(),
-  createdAt: z.number().int().positive(),
-});
-
+const DEFAULT_DB_PATH = fileURLToPath(new URL('../data/holobeat-archive.sqlite', import.meta.url));
+const { MintedCardSchema } = createSchemas(z);
 const CreateShareSchema = z.object({
   cardId: z.string().min(1).max(128),
-});
+  expiresAt: z.number().int().positive().safe().optional().nullable(),
+}).strict();
+const origins = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:4173', 'http://127.0.0.1:4173'];
+const loopback = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
 
 function escapeHtml(raw: string): string {
   return raw
@@ -303,118 +237,100 @@ function renderShareShowcaseHtml(card: Record<string, unknown>, sharedAt: number
 </html>`;
 }
 
+export function listenOptions(env: NodeJS.ProcessEnv) {
+  const host = env.HOST ?? '127.0.0.1';
+  const port = Number(env.PORT ?? 3789);
+  if (host !== '127.0.0.1') throw Error('The archive supports loopback access only');
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw Error('Invalid archive port');
+  return { port, host };
+}
+
 export async function buildApp(options?: {
-  dbPath?: string;
-  publicBaseUrl?: string;
+  dbPath?: string; publicBaseUrl?: string;
   writeToken?: string;
+  authorizeWrite?: (request: FastifyRequest, resourceId?: string) => boolean | Promise<boolean>;
 }) {
-  const db = new ArchiveDatabase(options?.dbPath ?? DEFAULT_DB_PATH);
   const publicBase = options?.publicBaseUrl ?? 'http://127.0.0.1:3789';
-  const writeToken = options?.writeToken ?? process.env.HOLOBEAT_WRITE_TOKEN;
-
-  const app = Fastify({ logger: false });
-  await app.register(cors, {
-    origin: [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://localhost:4173',
-      'http://127.0.0.1:4173',
-    ],
-    methods: ['GET', 'POST', 'DELETE'],
-  });
-
-  // Simple in-memory sliding-window rate limiter for write routes
-  const writeHits = new Map<string, number[]>();
-  const checkWriteGuard = (req: { ip?: string; headers: Record<string, unknown> }) => {
-    if (writeToken) {
-      const provided = String(req.headers['x-holobeat-token'] ?? '');
-      if (provided !== writeToken) {
-        return { ok: false, code: 401, error: 'Missing or invalid write token' };
-      }
+  if (!options?.dbPath) prepareDefaultDirectory(path.dirname(DEFAULT_DB_PATH));
+  const db = new ArchiveDatabase(options?.dbPath ?? DEFAULT_DB_PATH);
+  const configuredToken = options?.writeToken ?? process.env.HOLOBEAT_WRITE_TOKEN;
+  const writeHits: number[] = []; // Only the trusted loopback principal can write.
+  const matches = (provided: unknown, expected: string) =>
+    typeof provided === 'string' && Buffer.byteLength(provided) === Buffer.byteLength(expected) &&
+    timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+  const token = randomBytes(32).toString('base64url');
+  const app = Fastify({ logger: false, bodyLimit: 1024 * 1024, trustProxy: false });
+  app.addHook('onClose', async () => db.close());
+  app.addHook('onRequest', async (req, reply) => {
+    const origin = req.headers.origin;
+    if (!loopback.has(req.ip) || !/^(?:localhost|127\.0\.0\.1)(?::\d{1,5})?$/.test(req.headers.host ?? '') ||
+      (origin !== undefined && !origins.includes(origin) && origin !== publicBase)) {
+      return reply.code(403).send({ code: 'LOCAL_ONLY', error: 'Untrusted local request' });
     }
-    const ip = req.ip ?? 'local';
+    reply.header('Cache-Control','no-store').header('X-Content-Type-Options','nosniff');
+  });
+  await app.register(cors, { origin: [...origins, publicBase], methods: ['GET','POST','DELETE'],
+    allowedHeaders: ['Content-Type','X-HoloBeat-Write-Token','X-HoloBeat-Token'] });
+  app.addHook('preHandler', async (req, reply) => {
+    if (['GET','HEAD','OPTIONS'].includes(req.method)) return;
+    const configuredAccess = configuredToken && matches(req.headers['x-holobeat-token'], configuredToken);
+    if (!configuredAccess && !matches(req.headers['x-holobeat-write-token'], token)) {
+      return reply.code(configuredToken ? 401 : 403).send({ code: 'WRITE_DENIED', error: 'Local write session required' });
+    }
     const now = Date.now();
-    const recent = (writeHits.get(ip) ?? []).filter((t) => now - t < 60_000);
-    if (recent.length >= 60) {
-      return { ok: false, code: 429, error: 'Too many write requests; please slow down' };
+    while (writeHits.length && writeHits[0] <= now - 60000) writeHits.shift();
+    if (writeHits.length >= 60) return reply.code(429).send({ code:'RATE_LIMIT',error:'Too many writes' });
+    writeHits.push(now);
+    if (options?.authorizeWrite) {
+      const params = req.params as { id?: string; token?: string };
+      const body = req.body as { cardId?: string; id?: string } | undefined;
+      if (!await options.authorizeWrite(req, params.id ?? params.token ?? body?.cardId ?? body?.id))
+        return reply.code(403).send({ code: 'WRITE_DENIED', error: 'Resource access denied' });
     }
-    recent.push(now);
-    writeHits.set(ip, recent);
-    return { ok: true as const };
-  };
-
-  app.addHook('onClose', async () => {
-    db.close();
   });
-
-  app.get('/api/health', async () => ({
-    ok: true,
-    service: 'holobeat-archive-backend',
-    version: '3.0.0',
-    cardsCount: db.countCards(),
-  }));
-
-  app.get('/api/cards', async () => ({
-    cards: db.listCards(),
-  }));
-
+  app.setErrorHandler((err, req, reply) => {
+    if (err instanceof ArchiveError) return reply.code(err.status).send({ code: err.code, error: err.message });
+    const e = err as Error & { errcode?: number; statusCode?: number; code?: string };
+    const sqliteResult = (e.errcode ?? 0) & 255;
+    if (sqliteResult === 19) return reply.code(409).send({ code: 'ARCHIVE_CONSTRAINT', error: 'Duplicate serial/code or incompatible archive parent' });
+    if (sqliteResult === 5 || sqliteResult === 6) return reply.code(503).send({ code: 'ARCHIVE_BUSY', error: 'Archive is busy' });
+    const status = e.statusCode ?? 500;
+    return reply.code(status).send({ code: status === 500 ? 'ARCHIVE_ERROR' : e.code, error: status === 500 ? 'Archive operation failed' : e.message });
+  });
+  const health = async () => ({ ok:true, service:'holobeat-archive-backend', version:'3.0.0', cardsCount:db.countCards() });
+  app.get('/health', health);
+  app.get('/api/health', health);
+  app.get('/api/session', async (req, reply) => {
+    if (configuredToken && !matches(req.headers['x-holobeat-token'], configuredToken))
+      return reply.code(401).send({ code:'WRITE_DENIED',error:'Configured archive credential required' });
+    return { writeToken:token };
+  });
+  app.get('/api/cards', async () => ({ cards:db.listCards() }));
   app.post('/api/cards', async (req, reply) => {
-    const guard = checkWriteGuard(req);
-    if (!guard.ok) return reply.code(guard.code!).send({ error: guard.error });
-
     const parsed = MintedCardSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return reply.code(400).send({
-        error: 'Invalid minted card payload',
-        details: parsed.error.issues,
-      });
-    }
-    const result = db.upsertCardIdempotent(parsed.data);
+    if (!parsed.success) return reply.code(400).send({ code: 'INVALID_CARD', error:'Invalid minted card', details:parsed.error.issues.slice(0,8) });
+    const result = await db.upsertCardIdempotent(parsed.data);
     return reply.code(result.created ? 201 : 200).send(result);
   });
-
   app.delete('/api/cards/:id', async (req, reply) => {
-    const guard = checkWriteGuard(req);
-    if (!guard.ok) return reply.code(guard.code!).send({ error: guard.error });
-
     const { id } = req.params as { id: string };
-    const deleted = db.deleteCard(id);
-    if (!deleted) return reply.code(404).send({ error: 'Card not found' });
-    return { ok: true, id };
+    if (!db.deleteCard(id)) return reply.code(404).send({ error:'Card not found' });
+    return { ok:true,id };
   });
-
   app.get('/api/lineage/:id', async (req, reply) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as { id:string };
     const card = db.getCardById(id);
-    if (!card) return reply.code(404).send({ error: 'Card not found' });
-    return {
-      card,
-      ...db.getLineage(id),
-    };
+    if (!card) return reply.code(404).send({ error:'Card not found' });
+    return { card,...db.getLineage(id) };
   });
-
   app.post('/api/shares', async (req, reply) => {
-    const guard = checkWriteGuard(req);
-    if (!guard.ok) return reply.code(guard.code!).send({ error: guard.error });
-
     const parsed = CreateShareSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return reply.code(400).send({ error: 'Invalid share payload' });
-    }
-    const token = randomBytes(12).toString('base64url');
-    const created = db.createShareLink(token, parsed.data.cardId);
-    if (!created) {
-      return reply.code(404).send({ error: 'Card not found in archive' });
-    }
-    return reply.code(201).send({
-      token: created.token,
-      shareUrl: `${publicBase}/share/${created.token}`,
-      apiUrl: `${publicBase}/api/shares/${created.token}`,
-      createdAt: created.createdAt,
-    });
+    if (!parsed.success) return reply.code(400).send({ code:'INVALID_SHARE',error:'Invalid share payload' });
+    const link = db.createShareLink(randomBytes(24).toString('base64url'),parsed.data.cardId,parsed.data.expiresAt ?? null);
+    if (!link) return reply.code(404).send({ error:'Card not found' });
+    return reply.code(link.created ? 201 : 200).send({ token:link.token,createdAt:link.createdAt,expiresAt:link.expiresAt,
+      shareUrl:publicBase + '/share/' + link.token, apiUrl:publicBase + '/api/shares/' + link.token });
   });
-
-  // Read-only HTML artwork showcase page (Fix #10!)
   app.get('/share/:token', async (req, reply) => {
     const { token } = req.params as { token: string };
     const found = db.getSharedCard(token);
@@ -427,37 +343,27 @@ export async function buildApp(options?: {
     return reply
       .code(200)
       .header('Content-Type', 'text/html; charset=utf-8')
-      .send(renderShareShowcaseHtml(found.card as Record<string, unknown>, found.createdAt));
+      .send(renderShareShowcaseHtml({...found.card}, found.createdAt));
   });
 
   app.get('/api/shares/:token', async (req, reply) => {
-    const { token } = req.params as { token: string };
-    const found = db.getSharedCard(token);
-    if (!found) return reply.code(404).send({ error: 'Share link expired or revoked' });
-    return found;
+    const { token } = req.params as { token:string };
+    return db.getSharedCard(token) ?? reply.code(404).send({ error:'Share expired or revoked' });
   });
-
   app.delete('/api/shares/:token', async (req, reply) => {
-    const guard = checkWriteGuard(req);
-    if (!guard.ok) return reply.code(guard.code!).send({ error: guard.error });
-
-    const { token } = req.params as { token: string };
-    const ok = db.revokeShareLink(token);
-    if (!ok) return reply.code(404).send({ error: 'Share token not found' });
-    return { ok: true, revoked: true };
+    const { token } = req.params as { token:string };
+    if (!db.revokeShareLink(token)) return reply.code(404).send({ error:'Share token not found' });
+    return { ok:true,revoked:true };
   });
-
   return app;
 }
 
-const isDirectRun =
-  process.argv[1] &&
-  path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
-
-if (isDirectRun) {
-  const port = Number(process.env.PORT ?? 3789);
-  const host = process.env.HOST ?? '127.0.0.1';
-  const app = await buildApp({ publicBaseUrl: `http://${host}:${port}` });
-  await app.listen({ port, host });
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const { port, host } = listenOptions(process.env);
+  const app = await buildApp({ dbPath:process.env.HOLOBEAT_DB_PATH,publicBaseUrl:`http://${host}:${port}` });
+  try { await app.listen({ port,host }); }
+  catch (err) { await app.close(); throw err; }
+  process.once('SIGINT', () => void app.close());
+  process.once('SIGTERM', () => void app.close());
   console.log(`HoloBeat Archive Backend listening on http://${host}:${port}`);
 }
