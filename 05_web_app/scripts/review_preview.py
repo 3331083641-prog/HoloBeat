@@ -2,13 +2,13 @@
 import json, shutil, subprocess, tempfile, os
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
-from reliability_e2e import ROOT, FRONT, BACK, service, free_port, wait_service, get
+from reliability_e2e import ROOT, FRONT, BACK, service, free_port, wait_service, get, wav_stats
 from pinball_recording_e2e import BROWSERS
 from review_e2e import SHOTS
 
 def main():
   node=shutil.which('node')
-  report={'passed':False,'modes':{}}
+  report={'passed':False,'testedCommit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'modes':{}}
   try:
     # Keep normal dist intact while generating a genuinely rebased second bundle.
     with (ROOT/'.cache/review-subpath-build.log').open('w',encoding='utf-8') as log:
@@ -59,9 +59,13 @@ def main():
                   }""",basepath)
                   assert images['decoded']==29
                   assert all(path.startswith(basepath) for path in images['paths']),images
+                  with page.expect_download(timeout=60000) as pending:
+                    page.get_by_test_id('forge-export-wav').click()
+                  wav=Path(temp)/f'{mode}-{name}.wav';pending.value.save_as(wav)
+                  pcm=wav_stats(wav)
                   page.screenshot(path=str(SHOTS/f'{name}-preview-{mode}.png'))
                   assert not errors and not bad,(errors,bad)
-                  report['modes'][mode+'-'+name]={'passed':True,'images':images,'pageErrors':errors,'assetErrors':bad}
+                  report['modes'][mode+'-'+name]={'passed':True,'wav':pcm,'images':images,'pageErrors':errors,'assetErrors':bad}
                 finally:browser.close()
     report['passed']=len(report['modes'])==4 and all(m['passed'] for m in report['modes'].values())
   finally:
