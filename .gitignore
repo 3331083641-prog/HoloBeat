@@ -43,3 +43,13 @@ desktop.ini
 __pycache__/
 07_showcase/screenshots/v21/
 07_showcase/exports/v21/
+
+# Film production raw captures, intermediate caches, profiles, heavy WAV stems & local MP4 renders
+07_showcase/film/capture/browser-profile*/
+07_showcase/film/capture/probe*/
+07_showcase/film/capture/_assembly_tmp/
+07_showcase/film/capture/_qa/
+07_showcase/film/capture/clips/
+07_showcase/film/capture/motion/
+07_showcase/film/audio/
+07_showcase/film/renders/

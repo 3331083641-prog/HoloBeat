@@ -1,0 +1,1657 @@
+{
+  "schema": "holobeat.project.v3",
+  "exportedAt": 1795705632167,
+  "kind": "minted-card",
+  "card": {
+    "libraryId": "library-e20f8252-22cc-4864-80e7-392f2132ceb5",
+    "id": "minted-e7e4c657-bc9b-4ba4-9225-ce69bfa8d84f",
+    "schemaVersion": 3,
+    "assetVersion": "assets-v3",
+    "rendererVersion": "holobeat-dsp-5",
+    "serialNumber": 1,
+    "code": "#MY-01",
+    "idempotencyKey": "mint-req-d12c0fc9-fd43-4b2a-8293-0158c2304bc1",
+    "requestId": "mint-req-d12c0fc9-fd43-4b2a-8293-0158c2304bc1",
+    "contentHash": "87652f55ca51ee0a3392676309be7bdd8e7dd4edcd9eaebfe3c7d985e864b981",
+    "designVersion": 1,
+    "title": "铃响晴巷",
+    "rarity": "UR",
+    "foil": "gold",
+    "artId": "street-bell",
+    "sourceType": "beat",
+    "isDemo": false,
+    "stickers": [
+      {
+        "uid": "stk-76a5e51b-6cc9-4511-bc84-e4c90b958ab1",
+        "stickerId": "clapper",
+        "x": 14.926674323996114,
+        "y": 67.17855269820602,
+        "scale": 1,
+        "rotation": -9,
+        "zIndex": 5
+      },
+      {
+        "uid": "stk-6920070c-32d8-460b-80c6-3fdafdb6f233",
+        "stickerId": "starburst",
+        "x": 82,
+        "y": 34,
+        "scale": 1,
+        "rotation": 9,
+        "zIndex": 3
+      },
+      {
+        "uid": "stk-2c5603d1-366a-4cfe-b48f-73059b00fa2e",
+        "stickerId": "note",
+        "x": 84.81064554323186,
+        "y": 65.08767248083043,
+        "scale": 1,
+        "rotation": 10,
+        "zIndex": 7
+      }
+    ],
+    "waveformBars": [
+      0.428,
+      0.048,
+      0.292,
+      0.902,
+      0.604,
+      1,
+      0.102,
+      0.299,
+      0.1,
+      0.976,
+      0.951,
+      0.368,
+      0.116,
+      0.098,
+      0.981,
+      0.996,
+      0.364,
+      0.773,
+      0.435,
+      0.875,
+      0.115,
+      0.008,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "waveformIsRealPcm": true,
+    "audioCacheKey": "holobeat-dsp-5::snap-beat-d2477408-8dea-453d-9e6a-2ff9f0e34e87",
+    "audioFingerprintSeed": 1332462153,
+    "snapshot": {
+      "id": "snap-beat-d2477408-8dea-453d-9e6a-2ff9f0e34e87",
+      "schemaVersion": 3,
+      "rendererVersion": "holobeat-dsp-5",
+      "assetVersion": "assets-v3",
+      "title": "铃响晴巷",
+      "sourceType": "beat",
+      "capturedAt": 1795705561665,
+      "durationMs": 4068,
+      "tailMs": 1492,
+      "bpm": 118,
+      "swing": 0.18,
+      "scale": "PENTA_C",
+      "bars": 2,
+      "beatSnapshot": {
+        "bpm": 118,
+        "swing": 0.18,
+        "scale": "PENTA_C",
+        "bars": 2,
+        "activePhraseLoop": "AB",
+        "liveFx": {
+          "bitcrush": false,
+          "echo": false,
+          "stutter": false
+        },
+        "tracks": [
+          {
+            "category": "BEAT",
+            "cardId": "card-01",
+            "steps": [
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              true,
+              false,
+              false,
+              true,
+              false,
+              false,
+              true,
+              false
+            ],
+            "accents": [
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false
+            ],
+            "stepCells": [
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              }
+            ],
+            "volume": 0.9,
+            "tone": 0.52,
+            "mute": false,
+            "solo": false
+          },
+          {
+            "category": "PERC",
+            "cardId": "card-05",
+            "steps": [
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              true,
+              true,
+              false,
+              true
+            ],
+            "accents": [
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              true
+            ],
+            "stepCells": [
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              }
+            ],
+            "volume": 0.78,
+            "tone": 0.62,
+            "mute": false,
+            "solo": false
+          },
+          {
+            "category": "MELODY",
+            "cardId": "card-11",
+            "steps": [
+              true,
+              false,
+              false,
+              true,
+              false,
+              false,
+              true,
+              false,
+              true,
+              false,
+              false,
+              true,
+              false,
+              false,
+              true,
+              false,
+              true,
+              false,
+              true,
+              false,
+              false,
+              false,
+              true,
+              false,
+              true,
+              false,
+              true,
+              false,
+              true,
+              false,
+              false,
+              false
+            ],
+            "accents": [
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false
+            ],
+            "stepCells": [
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.74,
+                "pitchOffset": 1,
+                "lengthSteps": 2
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 1,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 2,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 2
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              }
+            ],
+            "volume": 0.82,
+            "tone": 0.58,
+            "mute": false,
+            "solo": false
+          },
+          {
+            "category": "VIBE",
+            "cardId": "card-13",
+            "steps": [
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false
+            ],
+            "accents": [
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false
+            ],
+            "stepCells": [
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 2
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 2
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.96,
+                "pitchOffset": 0,
+                "lengthSteps": 2
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": true,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.84,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              },
+              {
+                "on": false,
+                "velocity": 0.74,
+                "pitchOffset": 0,
+                "lengthSteps": 1
+              }
+            ],
+            "volume": 0.72,
+            "tone": 0.52,
+            "mute": false,
+            "solo": false
+          }
+        ]
+      },
+      "events": [
+        {
+          "id": "ev-0-0",
+          "timeOffsetMs": 0,
+          "durationMs": 108,
+          "pitch": "C3",
+          "velocity": 0.96,
+          "cardId": "card-01",
+          "trackCategory": "BEAT",
+          "trackIndex": 0,
+          "stepIndex": 0,
+          "tone": 0.52,
+          "color": "#7C3AED"
+        },
+        {
+          "id": "ev-2-0",
+          "timeOffsetMs": 0,
+          "durationMs": 172,
+          "pitch": "C5",
+          "velocity": 0.96,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 0,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-3-0",
+          "timeOffsetMs": 0,
+          "durationMs": 610,
+          "pitch": "C4",
+          "velocity": 0.96,
+          "cardId": "card-13",
+          "trackCategory": "VIBE",
+          "trackIndex": 3,
+          "stepIndex": 0,
+          "tone": 0.52,
+          "color": "#FFD60A"
+        },
+        {
+          "id": "ev-2-3",
+          "timeOffsetMs": 393,
+          "durationMs": 172,
+          "pitch": "E5",
+          "velocity": 0.74,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 3,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-1-4",
+          "timeOffsetMs": 508,
+          "durationMs": 108,
+          "pitch": "G5",
+          "velocity": 0.96,
+          "cardId": "card-05",
+          "trackCategory": "PERC",
+          "trackIndex": 1,
+          "stepIndex": 4,
+          "tone": 0.62,
+          "color": "#FF5C2B"
+        },
+        {
+          "id": "ev-0-6",
+          "timeOffsetMs": 763,
+          "durationMs": 108,
+          "pitch": "C3",
+          "velocity": 0.84,
+          "cardId": "card-01",
+          "trackCategory": "BEAT",
+          "trackIndex": 0,
+          "stepIndex": 6,
+          "tone": 0.52,
+          "color": "#7C3AED"
+        },
+        {
+          "id": "ev-2-6",
+          "timeOffsetMs": 763,
+          "durationMs": 172,
+          "pitch": "C5",
+          "velocity": 0.84,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 6,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-0-8",
+          "timeOffsetMs": 1017,
+          "durationMs": 108,
+          "pitch": "C3",
+          "velocity": 0.96,
+          "cardId": "card-01",
+          "trackCategory": "BEAT",
+          "trackIndex": 0,
+          "stepIndex": 8,
+          "tone": 0.52,
+          "color": "#7C3AED"
+        },
+        {
+          "id": "ev-2-8",
+          "timeOffsetMs": 1017,
+          "durationMs": 172,
+          "pitch": "G5",
+          "velocity": 0.96,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 8,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-3-8",
+          "timeOffsetMs": 1017,
+          "durationMs": 610,
+          "pitch": "F3",
+          "velocity": 0.84,
+          "cardId": "card-13",
+          "trackCategory": "VIBE",
+          "trackIndex": 3,
+          "stepIndex": 8,
+          "tone": 0.52,
+          "color": "#FFD60A"
+        },
+        {
+          "id": "ev-1-10",
+          "timeOffsetMs": 1271,
+          "durationMs": 108,
+          "pitch": "D6",
+          "velocity": 0.84,
+          "cardId": "card-05",
+          "trackCategory": "PERC",
+          "trackIndex": 1,
+          "stepIndex": 10,
+          "tone": 0.62,
+          "color": "#FF5C2B"
+        },
+        {
+          "id": "ev-2-11",
+          "timeOffsetMs": 1410,
+          "durationMs": 343,
+          "pitch": "G5",
+          "velocity": 0.74,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 11,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-1-12",
+          "timeOffsetMs": 1525,
+          "durationMs": 108,
+          "pitch": "G5",
+          "velocity": 0.96,
+          "cardId": "card-05",
+          "trackCategory": "PERC",
+          "trackIndex": 1,
+          "stepIndex": 12,
+          "tone": 0.62,
+          "color": "#FF5C2B"
+        },
+        {
+          "id": "ev-0-14",
+          "timeOffsetMs": 1780,
+          "durationMs": 108,
+          "pitch": "C3",
+          "velocity": 0.84,
+          "cardId": "card-01",
+          "trackCategory": "BEAT",
+          "trackIndex": 0,
+          "stepIndex": 14,
+          "tone": 0.52,
+          "color": "#7C3AED"
+        },
+        {
+          "id": "ev-2-14",
+          "timeOffsetMs": 1780,
+          "durationMs": 172,
+          "pitch": "G4",
+          "velocity": 0.84,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 14,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-0-16",
+          "timeOffsetMs": 2034,
+          "durationMs": 108,
+          "pitch": "C3",
+          "velocity": 0.96,
+          "cardId": "card-01",
+          "trackCategory": "BEAT",
+          "trackIndex": 0,
+          "stepIndex": 16,
+          "tone": 0.52,
+          "color": "#7C3AED"
+        },
+        {
+          "id": "ev-2-16",
+          "timeOffsetMs": 2034,
+          "durationMs": 172,
+          "pitch": "E5",
+          "velocity": 0.96,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 16,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-3-16",
+          "timeOffsetMs": 2034,
+          "durationMs": 610,
+          "pitch": "C4",
+          "velocity": 0.96,
+          "cardId": "card-13",
+          "trackCategory": "VIBE",
+          "trackIndex": 3,
+          "stepIndex": 16,
+          "tone": 0.52,
+          "color": "#FFD60A"
+        },
+        {
+          "id": "ev-1-18",
+          "timeOffsetMs": 2288,
+          "durationMs": 108,
+          "pitch": "D6",
+          "velocity": 0.84,
+          "cardId": "card-05",
+          "trackCategory": "PERC",
+          "trackIndex": 1,
+          "stepIndex": 18,
+          "tone": 0.62,
+          "color": "#FF5C2B"
+        },
+        {
+          "id": "ev-2-18",
+          "timeOffsetMs": 2288,
+          "durationMs": 172,
+          "pitch": "A5",
+          "velocity": 0.84,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 18,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-1-20",
+          "timeOffsetMs": 2542,
+          "durationMs": 108,
+          "pitch": "G5",
+          "velocity": 0.96,
+          "cardId": "card-05",
+          "trackCategory": "PERC",
+          "trackIndex": 1,
+          "stepIndex": 20,
+          "tone": 0.62,
+          "color": "#FF5C2B"
+        },
+        {
+          "id": "ev-0-22",
+          "timeOffsetMs": 2797,
+          "durationMs": 108,
+          "pitch": "C3",
+          "velocity": 0.84,
+          "cardId": "card-01",
+          "trackCategory": "BEAT",
+          "trackIndex": 0,
+          "stepIndex": 22,
+          "tone": 0.52,
+          "color": "#7C3AED"
+        },
+        {
+          "id": "ev-2-22",
+          "timeOffsetMs": 2797,
+          "durationMs": 172,
+          "pitch": "G5",
+          "velocity": 0.84,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 22,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-3-22",
+          "timeOffsetMs": 2797,
+          "durationMs": 305,
+          "pitch": "A3",
+          "velocity": 0.84,
+          "cardId": "card-13",
+          "trackCategory": "VIBE",
+          "trackIndex": 3,
+          "stepIndex": 22,
+          "tone": 0.52,
+          "color": "#FFD60A"
+        },
+        {
+          "id": "ev-0-24",
+          "timeOffsetMs": 3051,
+          "durationMs": 108,
+          "pitch": "C3",
+          "velocity": 0.96,
+          "cardId": "card-01",
+          "trackCategory": "BEAT",
+          "trackIndex": 0,
+          "stepIndex": 24,
+          "tone": 0.52,
+          "color": "#7C3AED"
+        },
+        {
+          "id": "ev-2-24",
+          "timeOffsetMs": 3051,
+          "durationMs": 172,
+          "pitch": "A5",
+          "velocity": 0.96,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 24,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-1-26",
+          "timeOffsetMs": 3305,
+          "durationMs": 108,
+          "pitch": "D6",
+          "velocity": 0.84,
+          "cardId": "card-05",
+          "trackCategory": "PERC",
+          "trackIndex": 1,
+          "stepIndex": 26,
+          "tone": 0.62,
+          "color": "#FF5C2B"
+        },
+        {
+          "id": "ev-2-26",
+          "timeOffsetMs": 3305,
+          "durationMs": 172,
+          "pitch": "A5",
+          "velocity": 0.84,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 26,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-0-27",
+          "timeOffsetMs": 3444,
+          "durationMs": 108,
+          "pitch": "C3",
+          "velocity": 0.74,
+          "cardId": "card-01",
+          "trackCategory": "BEAT",
+          "trackIndex": 0,
+          "stepIndex": 27,
+          "tone": 0.52,
+          "color": "#7C3AED"
+        },
+        {
+          "id": "ev-1-28",
+          "timeOffsetMs": 3559,
+          "durationMs": 108,
+          "pitch": "G5",
+          "velocity": 0.96,
+          "cardId": "card-05",
+          "trackCategory": "PERC",
+          "trackIndex": 1,
+          "stepIndex": 28,
+          "tone": 0.62,
+          "color": "#FF5C2B"
+        },
+        {
+          "id": "ev-2-28",
+          "timeOffsetMs": 3559,
+          "durationMs": 343,
+          "pitch": "A4",
+          "velocity": 0.96,
+          "cardId": "card-11",
+          "trackCategory": "MELODY",
+          "trackIndex": 2,
+          "stepIndex": 28,
+          "tone": 0.58,
+          "color": "#00D4AA"
+        },
+        {
+          "id": "ev-3-28",
+          "timeOffsetMs": 3559,
+          "durationMs": 305,
+          "pitch": "G3",
+          "velocity": 0.84,
+          "cardId": "card-13",
+          "trackCategory": "VIBE",
+          "trackIndex": 3,
+          "stepIndex": 28,
+          "tone": 0.52,
+          "color": "#FFD60A"
+        },
+        {
+          "id": "ev-1-29",
+          "timeOffsetMs": 3698,
+          "durationMs": 108,
+          "pitch": "D6",
+          "velocity": 0.74,
+          "cardId": "card-05",
+          "trackCategory": "PERC",
+          "trackIndex": 1,
+          "stepIndex": 29,
+          "tone": 0.62,
+          "color": "#FF5C2B"
+        },
+        {
+          "id": "ev-0-30",
+          "timeOffsetMs": 3814,
+          "durationMs": 108,
+          "pitch": "C3",
+          "velocity": 0.96,
+          "cardId": "card-01",
+          "trackCategory": "BEAT",
+          "trackIndex": 0,
+          "stepIndex": 30,
+          "tone": 0.52,
+          "color": "#7C3AED"
+        },
+        {
+          "id": "ev-1-31",
+          "timeOffsetMs": 3952,
+          "durationMs": 108,
+          "pitch": "D6",
+          "velocity": 0.96,
+          "cardId": "card-05",
+          "trackCategory": "PERC",
+          "trackIndex": 1,
+          "stepIndex": 31,
+          "tone": 0.62,
+          "color": "#FF5C2B"
+        }
+      ],
+      "contentSignature": "sig-d34f9b3a-35",
+      "soundSeed": 387822608
+    },
+    "lineageDepth": 0,
+    "createdAt": 1795705603090,
+    "storageStatus": "primary"
+  }
+}

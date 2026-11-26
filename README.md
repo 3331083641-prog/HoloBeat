@@ -18,6 +18,20 @@
 | --- | --- |
 | ![Chrome当前工坊](./07_showcase/screenshots/review-20261126/chrome-forge.png) | ![Edge生产子路径](./07_showcase/screenshots/review-20261126/edge-preview-subpath.png) |
 
+---
+
+## 官方演示影片：《声卡造物局》
+
+> 围绕核心声卡主角 **`#05 二八大杠车铃`** 与两代同源作品 **`#MY-01《铃响晴巷》` → `#MY-02《铃响晴巷·夜行版》`**，以 `2 分 36 秒` 真实 1080p 30fps 运行画面、48 kHz 产品原声与普通话旁白，完整呈现「声卡盲盒 → 插卡编曲 → 弹珠自由实验与编曲剧场纯享演出 → 闪卡铸造与四格式导出 → 本机只读展页与拆封重混」全闭环。
+
+[![《声卡造物局》官方演示影片封面](./07_showcase/film/covers/cover_1920x1080.png)](./07_showcase/film/docs/production_notes.md)
+
+- **本地成片位置**（大体积 MP4 与无损分轨按要求仅本地保留，不上传 Git 仓库）：`07_showcase/film/renders/声卡造物局_演示影片_1080p.mp4`（1920×1080 / 30fps / H.264 + AAC 48kHz）
+- **封面与实景剧照**：[高清封面 1920×1080](./07_showcase/film/covers/cover_1920x1080.png) · [小尺寸封面 480×270](./07_showcase/film/covers/cover_480x270.jpg) · [13 张正式拍摄剧照目录](./07_showcase/film/covers/stills/)
+- **字幕、文档与可复现工程**：[中文字幕 SRT](./07_showcase/film/subtitles/sheka_zaowuju_zh.srt) · [制作记录与章节时间码](./07_showcase/film/docs/production_notes.md) · [主作品工程（《铃响晴巷》）](./07_showcase/film/source/main-work-lingxiang-qingxiang.holobeat.json) · [第 1 代重混工程（《铃响晴巷·夜行版》）](./07_showcase/film/source/remix-work-lingxiang-night.holobeat.json) · [同源四格式真实导出物](./07_showcase/film/capture/exports/)
+
+---
+
 ## 一、核心创作闭环：四工作台实景展示
 
 > 以下 10 张保留自 V3.2 视觉设计基线，均为**真实浏览器运行截图**（全部 29 项 GPT Image 2 实绘声卡主角、哑光模切贴纸与微缩街巷舞台背景均已接入）。
