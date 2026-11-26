@@ -1,3 +1,4 @@
+import { buildMintIdempotencyKey } from '../../../shared/card-content.ts';
 import { z } from 'zod';
 import { createSchemas } from '../../../shared/card-schema.mjs';
 import type { MintedCard } from '../types/holo';
@@ -11,7 +12,7 @@ export interface ShareLinkResult {
   createdAt: number;
   expiresAt: number | null;
 }
-type FailureCode = 'TIMEOUT' | 'CANCELLED' | 'NETWORK' | 'BAD_RESPONSE' | 'HTTP';
+type FailureCode = 'TIMEOUT' | 'CANCELLED' | 'NETWORK' | 'BAD_RESPONSE' | 'HTTP' | 'MISSING_PARENT' | 'PARENT_METADATA_CONFLICT';
 class ArchiveError extends Error {
   code: FailureCode;
   status?: number;
@@ -36,7 +37,11 @@ async function request(path: string, init: RequestInit = {}, signal?: AbortSigna
   if (signal?.aborted) cancel();
   try {
     const response = await fetch(base + path, { ...init, cache: 'no-store', signal: controller.signal });
-    if (!response.ok) throw new ArchiveError('HTTP', '归档服务返回 HTTP ' + response.status, response.status);
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      const code = ['MISSING_PARENT','PARENT_METADATA_CONFLICT'].includes(detail.code) ? detail.code : 'HTTP';
+      throw new ArchiveError(code, detail.error ?? ('归档服务返回 HTTP ' + response.status), response.status);
+    }
     let value;
     try {
       value = await response.json();
@@ -105,15 +110,38 @@ export async function createCardShare(cardId: string, expiresAt?: number, signal
   } catch (error) { return failure('SHARE_FAILED', error); }
 }
 async function syncCard(card: MintedCard,
-  options: { share?: boolean; localOnly?: boolean; signal?: AbortSignal } = {}): Promise<ArchiveResult> {
+  options: { share?: boolean; localOnly?: boolean; signal?: AbortSignal; ancestors?: MintedCard[] } = {}): Promise<ArchiveResult> {
   if (options.localOnly) return { status: 'LOCAL_ONLY' };
-  try {
-    const saved = await write('/api/cards', 'POST', card, options.signal);
-    if (typeof saved.created !== 'boolean' || (saved.card as MintedCard)?.id !== card.id) {
-      throw new ArchiveError('BAD_RESPONSE', '归档确认与当前藏品不符');
+  let canonical: MintedCard;
+  const visited = new Set<string>();
+  const archive = async (work: MintedCard): Promise<MintedCard> => {
+    if (visited.has(work.id)) throw new ArchiveError('PARENT_METADATA_CONFLICT','作品谱系存在循环');
+    visited.add(work.id);
+    let outgoing = work;
+    if (work.parentCardId) {
+      const parent = options.ancestors?.find(c => (c.id === work.parentCardId || c.workId === work.parentCardId));
+      if (parent) {
+        if (parent.title !== work.parentTitle || parent.code !== work.parentCode || parent.lineageDepth+1 !== work.lineageDepth)
+          throw new ArchiveError('PARENT_METADATA_CONFLICT','本地原作与重混来源不一致，请恢复正确原作');
+        const savedParent = await archive(parent);
+        outgoing = {...work,parentCardId:savedParent.id,parentTitle:savedParent.title,parentCode:savedParent.code};
+        outgoing.contentHash = await buildMintIdempotencyKey(outgoing);
+      }
+      // If the parent is absent locally the server may still have it; otherwise it returns MISSING_PARENT.
     }
-  } catch (error) { return failure('SYNC_FAILED', error); }
-  return options.share === false ? { status: 'ARCHIVED' } : createCardShare(card.id, undefined, options.signal);
+    const saved = await write('/api/cards','POST',outgoing,options.signal);
+    const parsed = MintedCardSchema.safeParse(saved.card);
+    if (typeof saved.created !== 'boolean' || !parsed.success ||
+        await buildMintIdempotencyKey(parsed.data) !== await buildMintIdempotencyKey(outgoing) ||
+        parsed.data.lineageDepth !== outgoing.lineageDepth ||
+        parsed.data.parentTitle !== outgoing.parentTitle || parsed.data.parentCode !== outgoing.parentCode) {
+      throw new ArchiveError('BAD_RESPONSE','归档内容验证失败；请用完整原件修复历史裁剪档案');
+    }
+    return parsed.data;
+  };
+  try { canonical = await archive(card); }
+  catch (error) { return failure('SYNC_FAILED', error); }
+  return options.share === false ? { status:'ARCHIVED' } : createCardShare(canonical.id,undefined,options.signal);
 }
 // Preserve the redesign's existing Forge controls, including its error toast and HTML exhibit URL.
 export async function syncCardToBackend(card: MintedCard, options: Parameters<typeof syncCard>[1] = {}) {
@@ -140,4 +168,16 @@ export async function fetchSharedCard(token: string, signal?: AbortSignal): Prom
     const parsed = MintedCardSchema.safeParse(card);
     return parsed.success ? parsed.data : null;
   } catch { return null; }
+}
+
+/** Explicit owner action only: never silently invent missing historical music. */
+export async function repairArchivedCard(fullOriginal: MintedCard, signal?: AbortSignal): Promise<ArchiveResult> {
+  try {
+    const result = await write('/api/cards/'+encodeURIComponent(fullOriginal.id)+'/repair','POST',fullOriginal,signal);
+    const parsed = MintedCardSchema.safeParse(result.card);
+    if (result.repaired !== true || !parsed.success ||
+        await buildMintIdempotencyKey(parsed.data) !== await buildMintIdempotencyKey(fullOriginal))
+      throw new ArchiveError('BAD_RESPONSE','归档修复校验失败');
+    return {status:'ARCHIVED'};
+  } catch(error) { return failure('SYNC_FAILED',error); }
 }

@@ -1,3 +1,6 @@
+import vm from 'node:vm';
+import { z } from 'zod';
+import { createSchemas } from '../../shared/card-schema.mjs';
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -75,12 +78,12 @@ test('same request is idempotent',async t=>{
 });
 for(const [name,change] of Object.entries({
   key:{idempotencyKey:'request-1'}, request:{requestId:'request-1'}, id:{id:'minted-1'},
-  serial:{serialNumber:1}, code:{code:'#MY-1'}, content:{title:makeCard().title,contentHash:makeCard().contentHash},
+  serial:{serialNumber:1}, code:{code:'#MY-1'}, content:{contentHash:makeCard().contentHash},
 })) test('conflicting '+name+' rolls back',async t=>{
   const {post,save,count,app}=await service(t);
   await save();
   const res=await post('/api/cards',{...makeCard(2),...change});
-  assert.equal(res.statusCode,409,res.body);
+  assert.equal(res.statusCode,name === 'content' ? 400 : 409,res.body);
   assert.equal(await count(),1);
   assert.deepEqual((await app.inject('/api/cards')).json().cards,[makeCard()]);
 });
@@ -228,9 +231,9 @@ test('v0 upgrade, repeat migration and restart preserve payload and share',t=>{
     archive.close();
   }
   const db=new DatabaseSync(file);
-  assert.equal(db.prepare('PRAGMA user_version').get()?.user_version,2);
+  assert.equal(db.prepare('PRAGMA user_version').get()?.user_version,3);
   db.close();
-  const backups=readdirSync(path.dirname(file)).filter(n=>n.includes('.pre-v2-'));
+  const backups=readdirSync(path.dirname(file)).filter(n=>n.includes('.pre-v3-'));
   assert.equal(backups.length,1);
   const backup=new DatabaseSync(path.join(path.dirname(file),backups[0]));
   assert.equal(backup.prepare('PRAGMA user_version').get()?.user_version,0);
@@ -421,6 +424,25 @@ test('archive created by the old field-stripping V3 writer recognizes the origin
     assert.equal(response.statusCode,200,response.body);
     assert.deepEqual(response.json().card,stored);
     assert.equal(await count(),1);
+    const share=await post('/api/shares',{cardId:stored.id});
+    const url='/share/'+share.json().token;
+    const raw=await app.inject(url);
+    assert.match(raw.body,/holobeat.raw-archive.v1/);
+    assert.match(raw.body,/不能完整重混/);
+    assert.equal((await post('/api/cards/'+full.id+'/repair',{...full,title:'forged'})).statusCode,409);
+    const repaired=await post('/api/cards/'+full.id+'/repair',full);
+    assert.equal(repaired.statusCode,200,repaired.body);
+    const page=await app.inject(url);
+    const project=JSON.parse(page.body.match(/const PROJECT_DATA = (.*);/)![1]);
+    assert.equal(createSchemas(z).ProjectSchema.safeParse(project).success,true);
+    assert.deepEqual(project.card,full);
+    const inspect=new DatabaseSync(file);
+    const audit=inspect.prepare('SELECT * FROM archive_repairs').get()!;
+    assert.deepEqual(JSON.parse(String(audit.original_json)),stored);
+    assert.deepEqual(JSON.parse(String(audit.repaired_json)),full);
+    assert.equal(inspect.prepare('PRAGMA user_version').get()?.user_version,3);
+    inspect.close();
+
   } finally { await app.close(); }
 });
 
@@ -450,4 +472,106 @@ test('legacy V3 preserves its old idempotency key on replay after hashing a mixe
   assert.equal(replay.json().card.idempotencyKey,card.idempotencyKey);
   assert.equal(await count(),1);
   assert.deepEqual((await app.inject('/api/cards')).json().cards,[card]);
+});
+
+test('independent library namespaces can both archive their number one',async t=>{
+  const {post,count}=await service(t);
+  const a={...makeCard(),libraryId:'book-a'};
+  const b={...makeCard(2),serialNumber:1,code:a.code,libraryId:'book-b'};
+  assert.equal((await post('/api/cards',a)).statusCode,201);
+  assert.equal((await post('/api/cards',b)).statusCode,201);
+  assert.equal(await count(),2);
+});
+test('downloaded work restores canonical archive identity and binds retry receipt',async t=>{
+  const {post,count,app}=await service(t);
+  const a=makeCard();
+  await post('/api/cards',a);
+  const b={...a,id:'import-copy',serialNumber:9,code:'#MY-09',libraryId:'other',
+    requestId:'import-request',idempotencyKey:'import-request',createdAt:200};
+  const restored=await post('/api/cards',b);
+  assert.equal(restored.statusCode,200,restored.body);
+  assert.equal(restored.json().outcome,'RESTORED');
+  assert.equal(restored.json().canonicalId,a.id);
+  assert.equal(await count(),1);
+  const link=await post('/api/shares',{cardId:restored.json().canonicalId});
+  assert.equal(link.statusCode,201);
+  assert.equal((await app.inject('/api/shares/'+link.json().token)).json().card.id,a.id);
+  const changed={...b,title:'Different',id:'different',contentHash:''};
+  changed.contentHash=await buildMintIdempotencyKey(changed);
+  assert.equal((await post('/api/cards',changed)).statusCode,409);
+  assert.equal(await count(),1);
+});
+test('missing and incompatible ancestors return actionable errors without inserting',async t=>{
+  const {post,count}=await service(t);
+  const child={...makeCard(2),parentCardId:'minted-1',parentCode:'#MY-1',parentTitle:'测试 1',lineageDepth:1};
+  child.contentHash=await buildMintIdempotencyKey(child);
+  const missing=await post('/api/cards',child);
+  assert.equal(missing.statusCode,409);
+  assert.equal(missing.json().code,'MISSING_PARENT');
+  await post('/api/cards',makeCard());
+  const wrong=await post('/api/cards',{...child,parentTitle:'Wrong'});
+  assert.equal(wrong.statusCode,409);
+  assert.equal(wrong.json().code,'PARENT_METADATA_CONFLICT');
+  assert.equal(await count(),1);
+  assert.equal((await post('/api/cards',child)).statusCode,201);
+});
+
+test('share contour has correct octaves/accidentals, zero is silent and stop releases nodes',async t=>{
+  const {post,app}=await service(t);
+  const card=makeCard();
+  card.snapshot.events.push({...card.snapshot.events[0],id:'silent',velocity:0});
+  card.contentHash=await buildMintIdempotencyKey(card);
+  await post('/api/cards',card);
+  const share=await post('/api/shares',{cardId:card.id});
+  const html=(await app.inject('/share/'+share.json().token)).body;
+  const callbacks:Record<string,Function>={};
+  const nodes:any[]=[]; const contexts:any[]=[];
+  class AudioContext {
+    currentTime=0; state='running'; destination={}; closed=false;
+    constructor(){contexts.push(this);}
+    createOscillator(){const n={frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},
+      connect(){},start(){},stop(){n.stopped=true;},disconnect(){n.disconnected=true;},stopped:false,disconnected:false}; nodes.push(n);return n;}
+    createGain(){return {gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};}
+    async close(){this.closed=true;}
+  }
+  const context=vm.createContext({document:{hidden:false,getElementById:(id:string)=>({
+    addEventListener:(_type:string,fn:Function)=>callbacks[id]=fn,textContent:''}),
+    addEventListener:(type:string,fn:Function)=>callbacks[type]=fn},
+    window:{AudioContext,addEventListener:(type:string,fn:Function)=>callbacks[type]=fn},
+    setTimeout:()=>1,clearTimeout(){}});
+  vm.runInContext(html.match(/<script>([\s\S]*)<\/script>/)![1],context);
+  for(const [note,hz] of [['C4',261.625565],['A4',440],['F#4',369.994423],['Bb4',466.163762]] as const)
+    assert.ok(Math.abs(vm.runInContext(`noteToHz('${note}')`,context)-hz)<0.0001);
+  await callbacks.playBtn();
+  assert.equal(nodes.length,1,'velocity zero must create no oscillator');
+  await callbacks.playBtn();
+  assert.ok(nodes.every(n=>n.stopped&&n.disconnected));
+  assert.ok(contexts.every(c=>c.closed));
+  await callbacks.playBtn();
+  callbacks.pagehide();
+  assert.ok(contexts.every(c=>c.closed));
+});
+
+test('v2 upgrade retains old namespace numbers, raw payload and existing share across restart',async t=>{
+  const file=tempDb(t);
+  const {app,post}=await service(t,file);
+  await post('/api/cards',makeCard());
+  const link=(await post('/api/shares',{cardId:'minted-1'})).json();
+  await app.close();
+  const old=new DatabaseSync(file);
+  old.exec(`DROP INDEX uq_archive_library_serial; DROP INDEX uq_archive_library_code;
+    CREATE UNIQUE INDEX uq_archive_serial ON minted_cards(serial_number);
+    CREATE UNIQUE INDEX uq_archive_code ON minted_cards(code);
+    PRAGMA user_version=2;`);
+  old.close();
+  for(let i=0;i<2;i++){
+    const next=await buildApp({dbPath:file});
+    assert.deepEqual((await next.inject('/api/shares/'+link.token)).json().card,makeCard());
+    assert.equal((await next.inject('/health')).json().cardsCount,1);
+    await next.close();
+  }
+  const db=new DatabaseSync(file);
+  assert.equal(db.prepare('PRAGMA user_version').get()?.user_version,3);
+  assert.deepEqual(JSON.parse(String(db.prepare('SELECT payload_json FROM minted_cards').get()?.payload_json)),makeCard());
+  db.close();
 });

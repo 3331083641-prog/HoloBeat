@@ -10,7 +10,7 @@ import { prepareDefaultDirectory } from './archiveDirectory.ts';
 import { ArchiveDatabase, ArchiveError } from './db.ts';
 
 const DEFAULT_DB_PATH = fileURLToPath(new URL('../data/holobeat-archive.sqlite', import.meta.url));
-const { MintedCardSchema } = createSchemas(z);
+const { MintedCardSchema, ProjectSchema } = createSchemas(z);
 const CreateShareSchema = z.object({
   cardId: z.string().min(1).max(128),
   expiresAt: z.number().int().positive().safe().optional().nullable(),
@@ -91,12 +91,18 @@ function renderShareShowcaseHtml(card: Record<string, unknown>, sharedAt: number
     ? (card.waveformBars as number[]).slice(0, 32)
     : Array.from({ length: 24 }, (_, i) => 0.25 + ((i * 37) % 65) / 100);
 
-  const projectExport = {
+  const candidate = {
     schema: 'holobeat.project.v3',
     exportedAt: Date.now(),
     kind: 'minted-card',
     card,
   };
+
+  const validatedProject = ProjectSchema.safeParse(candidate);
+  const projectExport = validatedProject.success ? validatedProject.data : {
+    schema:'holobeat.raw-archive.v1', reason:'历史归档缺少完整音乐信息；请用原件受控修复', card,
+  };
+  const recoverable = validatedProject.success;
 
   const barsHtml = bars
     .map((v) => {
@@ -177,60 +183,82 @@ function renderShareShowcaseHtml(card: Record<string, unknown>, sharedAt: number
 
       <div class="actions">
         <button id="playBtn" class="btn-play" type="button">▶ 试听音符轮廓</button>
-        <button id="dlBtn" class="btn-dl" type="button">⬇ 下载可重混工程 (.holobeat.json)</button>
+        <button id="dlBtn" class="btn-dl" type="button">${recoverable ? '⬇ 下载可重混工程 (.holobeat.json)' : '⬇ 下载原始存档（需完整原件修复）'}</button>
       </div>
 
       <p class="foot">
-        此页面为只读展陈视图，不包含编辑与删除权限。下载工程文件后，可在任意本地 HOLOBEAT 工作台「04 闪卡工坊 → 导入工程」中完整还原并拆封重混。
+        此页面为只读展陈视图，不包含编辑与删除权限。${recoverable ? '下载工程可导入本地工作台拆封重混。' : '此历史档案缺少音乐信息，不能完整重混。原始下载保留全部已有数据；拥有完整原件时可通过本机受保护修复接口恢复。'}
       </p>
     </section>
   </main>
 
   <script>
     const PROJECT_DATA = ${safeJsonForScript(projectExport)};
-    const NOTE_MIDI = { C:0, D:2, Eb:3, E:4, F:5, G:7, Ab:8, A:9, Bb:10, B:11 };
+    const NOTE_MIDI = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
     function noteToHz(note) {
-      const m = /^([A-G][b#]?)(\\d)$/.exec(String(note || 'C5'));
-      if (!m) return 523.25;
-      const semi = NOTE_MIDI[m[1]] ?? 0;
-      const midi = Number(m[2]) * 12 + semi;
+      const m = /^([A-G])([b#]?)([0-8])$/.exec(String(note ?? 'C4'));
+      if (!m) return 0;
+      const midi = (Number(m[3])+1)*12 + NOTE_MIDI[m[1]] + (m[2]==='#'?1:m[2]==='b'?-1:0);
       return 440 * Math.pow(2, (midi - 69) / 12);
     }
+    let playing = null;
+    function stopPreview() {
+      const previous = playing;
+      playing = null;
+      document.getElementById('playBtn').textContent = '▶ 试听音符轮廓';
+      if (!previous) return;
+      clearTimeout(previous.timer);
+      previous.nodes.forEach(({osc,gain}) => { osc.onended=null; try { osc.stop(); } catch {} osc.disconnect(); gain.disconnect(); });
+      void previous.ctx.close();
+    }
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stopPreview(); });
+    window.addEventListener('pagehide', stopPreview);
 
     document.getElementById('dlBtn').addEventListener('click', () => {
       const blob = new Blob([JSON.stringify(PROJECT_DATA, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = (PROJECT_DATA.card.title || 'holobeat-card') + '.holobeat.json';
+      a.download = (PROJECT_DATA.card.title || 'holobeat-card') + (${recoverable} ? '.holobeat.json' : '.raw-archive.json');
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
 
     document.getElementById('playBtn').addEventListener('click', async () => {
+      if (playing) { stopPreview(); return; }
       const evs = (PROJECT_DATA.card.snapshot && PROJECT_DATA.card.snapshot.events) || [];
       if (!evs.length) return;
       const Ctx = window.AudioContext || window.webkitAudioContext;
       const ctx = new Ctx();
+      const session = {ctx,nodes:[],timer:0};
+      playing = session;
+      document.getElementById('playBtn').textContent = '■ 停止试听';
+      try {
       if (ctx.state === 'suspended') await ctx.resume();
+      if (playing !== session || document.hidden) { if (playing === session) stopPreview(); return; }
       const base = ctx.currentTime + 0.05;
       evs.forEach((ev) => {
+        if ((ev.velocity ?? 0.7) === 0) return;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
+        session.nodes.push({osc,gain});
         osc.type = ev.trackCategory === 'BEAT' ? 'triangle' : ev.trackCategory === 'MELODY' ? 'square' : 'sine';
         const freq = ev.trackCategory === 'BEAT' ? 88 : noteToHz(ev.pitch);
-        const start = base + (ev.timeOffsetMs || 0) / 1000;
-        const dur = Math.min(0.45, Math.max(0.06, (ev.durationMs || 150) / 1000));
+        const start = base + (ev.timeOffsetMs ?? 0) / 1000;
+        const dur = Math.min(0.45, Math.max(0.06, (ev.durationMs ?? 150) / 1000));
         osc.frequency.setValueAtTime(freq, start);
         if (ev.trackCategory === 'BEAT') osc.frequency.exponentialRampToValueAtTime(42, start + 0.12);
         gain.gain.setValueAtTime(0.001, start);
-        gain.gain.linearRampToValueAtTime(Math.min(0.25, (ev.velocity || 0.7) * 0.22), start + 0.01);
+        gain.gain.linearRampToValueAtTime(Math.min(0.25, (ev.velocity ?? 0.7) * 0.22), start + 0.01);
         gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(start);
         osc.stop(start + dur + 0.02);
       });
+      const end = Math.max(...evs.map(ev=>(ev.timeOffsetMs ?? 0)+Math.min(450,Math.max(60,ev.durationMs ?? 150))))+150;
+      session.timer = setTimeout(()=>{ if (playing===session) stopPreview(); },end);
+      } catch { if (playing===session) stopPreview(); }
     });
   </script>
 </body>
@@ -311,6 +339,13 @@ export async function buildApp(options?: {
     if (!parsed.success) return reply.code(400).send({ code: 'INVALID_CARD', error:'Invalid minted card', details:parsed.error.issues.slice(0,8) });
     const result = await db.upsertCardIdempotent(parsed.data);
     return reply.code(result.created ? 201 : 200).send(result);
+  });
+  app.post('/api/cards/:id/repair', async (req, reply) => {
+    const parsed = MintedCardSchema.safeParse(req.body);
+    const {id} = req.params as {id:string};
+    if (!parsed.success || parsed.data.id !== id)
+      return reply.code(400).send({code:'INVALID_CARD',error:'Full original required'});
+    return {card:await db.repairCard(parsed.data),repaired:true};
   });
   app.delete('/api/cards/:id', async (req, reply) => {
     const { id } = req.params as { id: string };

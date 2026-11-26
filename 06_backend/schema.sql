@@ -17,8 +17,10 @@ CREATE TABLE IF NOT EXISTS minted_cards (
   payload_json TEXT NOT NULL CHECK(json_valid(payload_json)),
   created_at INTEGER NOT NULL
 );
-CREATE UNIQUE INDEX IF NOT EXISTS uq_archive_serial ON minted_cards(serial_number);
-CREATE UNIQUE INDEX IF NOT EXISTS uq_archive_code ON minted_cards(code);
+DROP INDEX IF EXISTS uq_archive_serial;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_archive_library_serial ON minted_cards(COALESCE(json_extract(payload_json,'$.libraryId'),'legacy'),serial_number);
+DROP INDEX IF EXISTS uq_archive_code;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_archive_library_code ON minted_cards(COALESCE(json_extract(payload_json,'$.libraryId'),'legacy'),code);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_archive_content ON minted_cards(json_extract(payload_json, '$.contentHash'));
 CREATE UNIQUE INDEX IF NOT EXISTS uq_archive_request ON minted_cards(json_extract(payload_json, '$.requestId'));
 CREATE INDEX IF NOT EXISTS idx_minted_cards_created ON minted_cards(created_at DESC);
@@ -46,3 +48,15 @@ WHEN EXISTS(SELECT 1 FROM minted_cards WHERE parent_card_id = OLD.id)
 BEGIN SELECT RAISE(ABORT, 'Archive parent has children'); END;
 CREATE TRIGGER IF NOT EXISTS archive_immutable BEFORE UPDATE ON minted_cards
 BEGIN SELECT RAISE(ABORT, 'Archived works are immutable'); END;
+
+CREATE TABLE IF NOT EXISTS archive_requests (
+  request_id TEXT PRIMARY KEY,
+  content_hash TEXT NOT NULL,
+  card_id TEXT NOT NULL REFERENCES minted_cards(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS archive_repairs (
+  card_id TEXT PRIMARY KEY REFERENCES minted_cards(id) ON DELETE CASCADE,
+  original_json TEXT NOT NULL,
+  repaired_json TEXT NOT NULL,
+  repaired_at INTEGER NOT NULL
+);

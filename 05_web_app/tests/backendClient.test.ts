@@ -1,9 +1,10 @@
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { syncCardToBackend, revokeCardShare } from '../src/utils/backendClient.ts';
 import type { MintedCard } from '../src/types/holo.ts';
 
-const card = { id: 'fixture' } as MintedCard;
+const card = JSON.parse(readFileSync(new URL('../../07_showcase/exports/hutong-groove.holobeat.json',import.meta.url),'utf8')).card as MintedCard;
 const json = (value: unknown, status = 200) => Response.json(value, { status });
 
 test('local-only mode makes no requests', async (t) => {

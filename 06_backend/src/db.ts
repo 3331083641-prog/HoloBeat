@@ -6,7 +6,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { buildMintIdempotencyKey } from '../../shared/card-content.ts';
 import type { MintedCard } from '../../05_web_app/src/types/holo.ts';
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const schemaSql = readFileSync(new URL('../schema.sql', import.meta.url), 'utf8');
 
 export class ArchiveError extends Error {
@@ -76,7 +76,7 @@ export class ArchiveDatabase {
   private migrate(dbPath: string) {
     const existing = this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='minted_cards'").get();
     if (existing && dbPath !== ':memory:') {
-      const backup = dbPath + '.pre-v2-' + randomUUID() + '.sqlite';
+      const backup = dbPath + '.pre-v3-' + randomUUID() + '.sqlite';
       this.db.prepare('VACUUM INTO ?').run(backup);
       if (process.platform !== 'win32') chmodSync(backup, 0o600);
     }
@@ -91,7 +91,7 @@ export class ArchiveDatabase {
         (p.id IS NULL OR p.lineage_depth+1 != c.lineage_depth OR p.title IS NOT c.parent_title OR p.code IS NOT c.parent_code)) LIMIT 1`).get();
       if (invalid || this.db.prepare('PRAGMA foreign_key_check').get())
         throw Error('Archive contains unresolved historical references. Repair a copy before migration.');
-      this.db.exec('PRAGMA user_version=2');
+      this.db.exec('PRAGMA user_version=3');
     });
   }
 
@@ -113,25 +113,62 @@ export class ArchiveDatabase {
 
   countCards() { return Number(this.db.prepare('SELECT COUNT(*) AS n FROM minted_cards').get()?.n); }
   listCards() {
-    return this.db.prepare('SELECT payload_json FROM minted_cards ORDER BY created_at DESC').all().map(row => decode(row.payload_json));
+    return this.db.prepare('SELECT payload_json FROM minted_cards ORDER BY created_at DESC').all().map(row => this.decodeCard(row.payload_json));
   }
   getCardById(id: string) {
     const row = this.db.prepare('SELECT payload_json FROM minted_cards WHERE id=?').get(id);
-    return row ? decode(row.payload_json) : null;
+    return row ? this.decodeCard(row.payload_json) : null;
+  }
+
+  private decodeCard(payload: unknown): MintedCard {
+    const card = decode(payload);
+    const repaired = this.db.prepare('SELECT repaired_json FROM archive_repairs WHERE card_id=?').get(card.id);
+    return repaired ? decode(repaired.repaired_json) : card;
+  }
+
+  async repairCard(card: MintedCard) {
+    if (card.contentHash && card.contentHash !== await buildMintIdempotencyKey(card))
+      throw new ArchiveError(400,'CONTENT_HASH_MISMATCH','Repair digest does not match original');
+    const row = this.db.prepare('SELECT payload_json FROM minted_cards WHERE id=?').get(card.id);
+    if (!row) throw new ArchiveError(404,'NOT_FOUND','Archive does not exist');
+    const stored = decode(row.payload_json);
+    if (!isArchiveRetry(stored,card))
+      throw new ArchiveError(409,'REPAIR_CONFLICT','Full original must match every retained historical field');
+    return this.transaction(() => {
+      this.db.prepare('INSERT OR IGNORE INTO archive_repairs VALUES(?,?,?,?)')
+        .run(card.id,String(row.payload_json),JSON.stringify(card),Date.now());
+      return this.getCardById(card.id);
+    });
   }
 
   async upsertCardIdempotent(card: MintedCard) {
-    if (card.contentHash !== undefined && card.contentHash !== await buildMintIdempotencyKey(card)) {
+    const digest = await buildMintIdempotencyKey(card);
+    if (card.contentHash !== undefined && card.contentHash !== digest)
       throw new ArchiveError(400, 'CONTENT_HASH_MISMATCH', 'Content digest does not match this work');
-    }
     return this.transaction(() => {
+      const requestId = card.requestId ?? card.idempotencyKey;
+      const receipt = this.db.prepare('SELECT * FROM archive_requests WHERE request_id=?').get(requestId);
+      if (receipt && receipt.content_hash !== digest)
+        throw new ArchiveError(409,'ARCHIVE_CONFLICT','Request reused for different content');
       const rows = this.db.prepare(`SELECT payload_json FROM minted_cards WHERE id=? OR idempotency_key=?
         OR json_extract(payload_json,'$.requestId')=? OR json_extract(payload_json,'$.contentHash')=?`)
         .all(card.id, card.idempotencyKey, card.requestId ?? null, card.contentHash ?? null);
+      const remember = (id:string) => this.db.prepare('INSERT OR IGNORE INTO archive_requests VALUES(?,?,?)').run(requestId,digest,id);
       if (rows.length) {
-        const existing = decode(rows[0].payload_json);
-        if (rows.length === 1 && isArchiveRetry(existing, card)) return { created: false, card: existing };
+        const existing = this.decodeCard(rows[0].payload_json);
+        const equalContent = existing.contentHash === digest && existing.parentTitle === card.parentTitle &&
+          existing.parentCode === card.parentCode && existing.lineageDepth === card.lineageDepth;
+        if (rows.length === 1 && (isArchiveRetry(existing, card) || equalContent)) {
+          remember(existing.id);
+          return {created:false,card:existing,canonicalId:existing.id,outcome:isArchiveRetry(existing,card)?'UNCHANGED':'RESTORED'};
+        }
         throw new ArchiveError(409, 'ARCHIVE_CONFLICT', 'Request, content or card identity already exists with different data');
+      }
+      if (card.parentCardId) {
+        const parent = this.getCardById(card.parentCardId);
+        if (!parent) throw new ArchiveError(409,'MISSING_PARENT','Archive the original before this remix');
+        if (parent.code !== card.parentCode || parent.title !== card.parentTitle || parent.lineageDepth+1 !== card.lineageDepth)
+          throw new ArchiveError(409,'PARENT_METADATA_CONFLICT','Parent metadata does not match archived original');
       }
       this.db.prepare(`INSERT INTO minted_cards(id,serial_number,code,idempotency_key,title,rarity,foil,art_id,
         source_type,is_demo,parent_card_id,parent_code,parent_title,lineage_depth,payload_json,created_at)
@@ -139,7 +176,8 @@ export class ArchiveDatabase {
         .run(card.id,card.serialNumber,card.code,card.idempotencyKey,card.title,card.rarity,card.foil,card.artId,
           card.sourceType,Number(Boolean(card.isDemo)),card.parentCardId ?? null,card.parentCode ?? null,
           card.parentTitle ?? null,card.lineageDepth,JSON.stringify(card),card.createdAt);
-      return { created: true, card };
+      remember(card.id);
+      return { created:true,card,canonicalId:card.id,outcome:'CREATED' };
     });
   }
 
@@ -164,7 +202,7 @@ export class ArchiveDatabase {
   getSharedCard(token: string) {
     const row = this.db.prepare(`SELECT payload_json, s.created_at, s.expires_at FROM share_links s JOIN minted_cards c ON c.id=s.card_id
       WHERE s.token=? AND s.revoked=0 AND (s.expires_at IS NULL OR s.expires_at>?)`).get(token,Date.now());
-    return row ? { card: decode(row.payload_json), createdAt: Number(row.created_at), expiresAt: row.expires_at } : null;
+    return row ? { card: this.decodeCard(row.payload_json), createdAt: Number(row.created_at), expiresAt: row.expires_at } : null;
   }
 
   revokeShareLink(token: string) {
@@ -183,7 +221,7 @@ export class ArchiveDatabase {
       parentId = parent.parentCardId;
     }
     const children = this.db.prepare('SELECT payload_json FROM minted_cards WHERE parent_card_id=? ORDER BY created_at DESC')
-      .all(id).map(row => decode(row.payload_json));
+      .all(id).map(row => this.decodeCard(row.payload_json));
     return { ancestors, children };
   }
 }
