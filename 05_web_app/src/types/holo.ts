@@ -259,6 +259,8 @@ export interface StorageSaveResult {
 }
 
 export interface MintedCard {
+  libraryId?: string;
+  workId?: string;
   id: string; // Stable UUID
   schemaVersion?: number;
   assetVersion?: string;

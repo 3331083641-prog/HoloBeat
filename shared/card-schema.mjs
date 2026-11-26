@@ -63,7 +63,7 @@ export function createSchemas(z) {
     stickers: z.array(sticker).max(128), sourceType: source };
   const ForgeDraftSchema = obj({ ...design, title: z.string().max(64), snapshot: SnapshotSchema.nullable(),
     remixOrigin: obj(parent).nullable().optional() }).refine(d => !d.snapshot || d.sourceType === d.snapshot.sourceType);
-  const MintedCardSchema = obj({ ...versions, ...design, id,
+  const MintedCardSchema = obj({ ...versions, ...design, id, libraryId: id.optional(), workId: id.optional(),
     storageStatus: z.enum(['primary','fallback']).optional(), audioCacheKey: z.string().max(512).optional(), serialNumber: int(0, Number.MAX_SAFE_INTEGER - 1),
     code, idempotencyKey: z.string().min(1).max(512),
     requestId: id.optional(), contentHash: z.string().regex(/^[a-f0-9]{64}$/).optional(), designVersion: z.literal(1).optional(),

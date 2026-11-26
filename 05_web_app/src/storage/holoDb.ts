@@ -316,6 +316,9 @@ export const holoDb = {
   },
 
   async saveForgeDraft(draft: ForgeDraft): Promise<StorageSaveResult> {
+    const parsed = ForgeDraftSchema.safeParse(draft);
+    if (!parsed.success) return { status:'failed', storageLabel:'草稿校验失败', error:JSON.stringify(parsed.error.issues) };
+    draft = parsed.data;
     return exclusive<StorageSaveResult>(async () => {
       if (testWriteFailureMode === 'all-fail') throw new Error('模拟存储空间不足');
       const old = await idbRead<{revision:number}>('draft-v2').catch(() => undefined);

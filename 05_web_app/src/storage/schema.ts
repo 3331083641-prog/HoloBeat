@@ -1,3 +1,6 @@
+import { z } from 'zod';
+import { createSchemas } from '../../../shared/card-schema.mjs';
+const { ProjectSchema, ForgeDraftSchema } = createSchemas(z);
 import {
   ASSET_VERSION,
   RENDERER_VERSION,
@@ -273,8 +276,9 @@ export function migrateForgeDraft(raw: unknown, warnings: string[] = []): ForgeD
   if (d.sourceType !== 'beat' && d.sourceType !== 'pinball') return null;
   const stickers = sanitizeStickers(d.stickers ?? [], warnings);
   if (!stickers) return null;
-  const snapshot = d.snapshot ? validateAndMigrateSnapshot(d.snapshot, warnings) : null;
-  return {
+  const snapshot = d.snapshot != null ? validateAndMigrateSnapshot(d.snapshot, warnings) : null;
+  if (d.snapshot != null && !snapshot) return null;
+  const candidate = {
     snapshot,
     sourceType: d.sourceType,
     title: typeof d.title === 'string' ? d.title.slice(0, 18) : '胡同放克',
@@ -287,6 +291,8 @@ export function migrateForgeDraft(raw: unknown, warnings: string[] = []): ForgeD
         ? (d.remixOrigin as ForgeDraft['remixOrigin'])
         : null,
   };
+  const parsed = ForgeDraftSchema.safeParse(candidate);
+  return parsed.success ? parsed.data : null;
 }
 
 /**
@@ -337,7 +343,7 @@ export function migrateMintedCardsCollection(
  * Strict validation for imported .holobeat.json files (v2 or v3).
  * Rejects malformed or corrupted files without overwriting any user work!
  */
-export function validateProjectFile(raw: unknown): ProjectValidationResult {
+function convertProjectFile(raw: unknown): ProjectValidationResult {
   const warnings: string[] = [];
   if (!raw || typeof raw !== 'object') {
     return { ok: false, error: '工程文件不是有效的 JSON 对象', warnings };
@@ -385,4 +391,14 @@ export function validateProjectFile(raw: unknown): ProjectValidationResult {
       draft,
     },
   };
+}
+
+// Every import, including converted legacy data, crosses the same current boundary.
+export function validateProjectFile(raw: unknown): ProjectValidationResult {
+  const converted = (raw as {schema?:string})?.schema === 'holobeat.project.v3'
+    ? {ok:true,project:raw,warnings:[] as string[]} : convertProjectFile(raw);
+  if (!converted.ok) return converted as ProjectValidationResult;
+  const parsed = ProjectSchema.safeParse(converted.project);
+  return parsed.success ? {ok:true,project:parsed.data,warnings:converted.warnings}
+    : {ok:false,error:'工程快照、场景或来源数据校验失败',warnings:converted.warnings};
 }

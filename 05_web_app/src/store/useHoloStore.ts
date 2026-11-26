@@ -608,12 +608,14 @@ interface HoloState {
   beatRedoStack: BeatHistoryEntry[];
   beatBounceMode: boolean;
   beatStageMode: boolean;
+  libraryId: string;
   beatRemixOrigin: RemixOrigin | null;
   pinballQuantizePreview: PinballQuantizePreview | null;
 
   // Pinball Synth (Dual Mode: FREE JAM + CHOREOGRAPHED SHOW)
   pinballMode: PinballMode;
   pinballShowSnapshot: CompositionSnapshot | null;
+  pinballShowRemixOrigin: RemixOrigin | null;
   pinballToys: PinballToy[];
   pinballUndoStack: PinballToy[][];
   pinballRedoStack: PinballToy[][];
@@ -843,10 +845,12 @@ export const useHoloStore = create<HoloState>()(
       beatRedoStack: [],
       beatBounceMode: true,
       beatStageMode: false,
+      libraryId: createStableId("library"),
       beatRemixOrigin: null,
       pinballQuantizePreview: null,
 
       pinballMode: 'free',
+      pinballShowRemixOrigin: null,
       pinballShowSnapshot: DEMO_BEAT_SNAPSHOT,
       pinballToys: PINBALL_PRESETS.LOOP.map((t) => ({ ...t })),
       pinballUndoStack: [],
@@ -1491,6 +1495,7 @@ export const useHoloStore = create<HoloState>()(
 
         set({
           pinballShowSnapshot: frozen,
+          pinballShowRemixOrigin: s.beatRemixOrigin ? { ...s.beatRemixOrigin } : null,
           pinballMode: 'show',
           activePage: 'pinball',
           onboarding: { ...s.onboarding, watchedPinballShow: true },
@@ -1725,7 +1730,7 @@ export const useHoloStore = create<HoloState>()(
           snapshot: frozenCopy,
           sourceType: frozenCopy.sourceType,
           title: frozenCopy.title || s.forgeDraft.title || '胡同放克',
-          remixOrigin: s.beatRemixOrigin,
+          remixOrigin: s.pinballShowRemixOrigin,
         };
 
         persistDraft(nextDraft);
@@ -2079,6 +2084,7 @@ export const useHoloStore = create<HoloState>()(
                 : computeEventWaveformBars(request.snapshot.events, request.snapshot.durationMs);
 
             const minted: MintedCard = {
+              libraryId: get().libraryId,
               id: createStableId('minted'),
               schemaVersion: SCHEMA_VERSION,
               assetVersion: request.assetVersion,
@@ -2204,6 +2210,7 @@ export const useHoloStore = create<HoloState>()(
           const evs = found.snapshot.pinballEvents ?? [];
           set({
             pinballMode: 'free',
+            bpm: found.snapshot.bpm,
             pinballRecordedEvents: evs.map((e) => ({ ...e })),
             pinballToys: scene ? scene.toys.map((t) => ({ ...t })) : s.pinballToys,
             pinballDropperX: scene?.dropperX ?? s.pinballDropperX,
@@ -2264,7 +2271,6 @@ export const useHoloStore = create<HoloState>()(
         }
 
         const project = validation.project;
-        await get().hydrateFromIndexedDb();
         const s = get();
         const incoming = project.card?.snapshot ?? project.draft?.snapshot;
         if (incoming) {
@@ -2290,7 +2296,7 @@ export const useHoloStore = create<HoloState>()(
             }
             if (lib.cards.some(c => c.contentHash === contentHash)) return lib;
             const serial = lib.nextMintSerial;
-            const imported = { ...source, id:createStableId('imported'), serialNumber: serial,
+            const imported = { ...source, id:createStableId('imported'), workId:source.workId ?? source.id, libraryId:s.libraryId, serialNumber: serial,
               code:'#MY-' + String(serial).padStart(2, '0'), idempotencyKey:requestId, requestId,
               contentHash, designVersion:CARD_DESIGN_VERSION, createdAt:Date.now(), waveformIsRealPcm:false };
             return {cards:[imported, ...lib.cards], nextMintSerial:serial+1};
@@ -2364,6 +2370,7 @@ export const useHoloStore = create<HoloState>()(
         removeItem: (key) => localStorage.removeItem(key),
       })),
       partialize: (state) => ({
+        libraryId: state.libraryId,
         reducedMotion: state.reducedMotion,
         bpm: state.bpm,
         swing: state.swing,
@@ -2378,6 +2385,10 @@ export const useHoloStore = create<HoloState>()(
         pityCount: state.pityCount,
         selectedGachaCardId: state.selectedGachaCardId,
         tracks: state.tracks,
+        beatRemixOrigin: state.beatRemixOrigin,
+        pinballRemixOrigin: state.pinballRemixOrigin,
+        pinballShowSnapshot: state.pinballShowSnapshot,
+        pinballShowRemixOrigin: state.pinballShowRemixOrigin,
         liveFx: state.liveFx,
         liveFxMode: state.liveFxMode,
         beatBounceMode: state.beatBounceMode,
