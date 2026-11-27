@@ -185,22 +185,34 @@ INIT_SCRIPT = r"""
     }
   });
 
-  // 3. Native-Thread Chrome MediaRecorder Web Audio Tap (ZERO main-thread underruns!)
+  // 3. Resilient Multi-Context Chrome MediaRecorder Web Audio Tap (ZERO main-thread underruns & immune to closed/lazy contexts!)
   const tapState = {
-    mediaDest: null,
+    contexts: [],
     recorder: null,
     chunks: [],
+    recording: false,
     startEpochSec: 0,
+    recStartEpochSec: 0,
     endEpochSec: 0,
     tappedCount: 0,
   };
+
+  function startRecorderOnDest(dest) {
+    if (!dest || tapState.recorder) return;
+    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+    tapState.chunks = [];
+    tapState.recStartEpochSec = (performance.timeOrigin + performance.now()) / 1000;
+    tapState.recorder = new MediaRecorder(dest.stream, { mimeType: mime, audioBitsPerSecond: 256000 });
+    tapState.recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) tapState.chunks.push(e.data); };
+    tapState.recorder.start(80);
+  }
 
   function setupContextTap(ctx) {
     if (ctx.__filmTapped) return;
     ctx.__filmTapped = true;
     const origDest = ctx.destination;
     const tapGain = ctx.createGain();
-    tapGain.gain.value = 0.89; // -1 dB headroom
+    tapGain.gain.value = 0.89;
 
     const rawConnect = AudioNode.prototype.connect;
     rawConnect.call(tapGain, origDest);
@@ -208,18 +220,22 @@ INIT_SCRIPT = r"""
     const mediaDest = ctx.createMediaStreamDestination();
     rawConnect.call(tapGain, mediaDest);
 
-    // -100dB inaudible oscillator keeps MediaStream audio clock rock-steady even across silent pauses
+    // -70dB inaudible oscillator keeps Opus encoder & MediaStream audio clock rock-steady across silent pauses (prevents Opus DTX drops!)
     const keepAlive = ctx.createOscillator();
     const keepGain = ctx.createGain();
-    keepGain.gain.value = 0.00001;
+    keepGain.gain.value = 0.0003;
     rawConnect.call(keepAlive, keepGain);
     rawConnect.call(keepGain, mediaDest);
     keepAlive.start();
 
     ctx.__filmTapGain = tapGain;
     ctx.__filmMediaDest = mediaDest;
-    tapState.mediaDest = mediaDest;
+    tapState.contexts.push(ctx);
     tapState.tappedCount += 1;
+
+    if (tapState.recording && !tapState.recorder) {
+      startRecorderOnDest(mediaDest);
+    }
   }
 
   const origConnect = AudioNode.prototype.connect;
@@ -249,16 +265,18 @@ INIT_SCRIPT = r"""
   window.__FILM_AUDIO__ = {
     start() {
       tapState.chunks = [];
+      tapState.recorder = null;
+      tapState.recording = true;
       tapState.startEpochSec = (performance.timeOrigin + performance.now()) / 1000;
-      if (tapState.mediaDest) {
-        const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
-        tapState.recorder = new MediaRecorder(tapState.mediaDest.stream, { mimeType: mime, audioBitsPerSecond: 256000 });
-        tapState.recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) tapState.chunks.push(e.data); };
-        tapState.recorder.start(100);
+      tapState.recStartEpochSec = tapState.startEpochSec;
+      const liveCtx = tapState.contexts.find(c => c.state !== 'closed');
+      if (liveCtx && liveCtx.__filmMediaDest) {
+        startRecorderOnDest(liveCtx.__filmMediaDest);
       }
-      return { startEpochSec: tapState.startEpochSec, hasDest: Boolean(tapState.mediaDest), tappedCount: tapState.tappedCount };
+      return { startEpochSec: tapState.startEpochSec, liveContexts: tapState.contexts.filter(c => c.state !== 'closed').length, tappedCount: tapState.tappedCount };
     },
     async stopAndUpload(filename) {
+      tapState.recording = false;
       tapState.endEpochSec = (performance.timeOrigin + performance.now()) / 1000;
       let bytes = 0;
       if (tapState.recorder && tapState.recorder.state !== 'inactive') {
@@ -278,6 +296,7 @@ INIT_SCRIPT = r"""
       return {
         bytes,
         startEpochSec: tapState.startEpochSec,
+        recStartEpochSec: tapState.recStartEpochSec,
         endEpochSec: tapState.endEpochSec,
         wallDurSec: +(tapState.endEpochSec - tapState.startEpochSec).toFixed(4),
       };
@@ -319,7 +338,7 @@ class CdpClipRecorder:
             "quality": 90,
             "maxWidth": 1920,
             "maxHeight": 1080,
-            "everyNthFrame": 2,
+            "everyNthFrame": 3,
         })
         return self.audio_meta
 
@@ -338,22 +357,31 @@ class CdpClipRecorder:
 
         t0 = audio_info["startEpochSec"]
         dur = audio_info["wallDurSec"]
-        has_audio = audio_info["bytes"] > 200 and aud_webm_path.exists()
+        lead_pad_sec = max(0.0, audio_info.get("recStartEpochSec", t0) - t0)
+        has_audio = audio_info["bytes"] > 150 and aud_webm_path.exists()
 
         if has_audio:
+            tmp_wav = self.out_dir / f"_{self.clip_name}_tmp.wav"
             subprocess.run([
                 FFMPEG, "-y", "-i", str(aud_webm_path),
                 "-ar", "48000", "-ac", "2", "-c:a", "pcm_s16le",
-                str(wav_path),
+                str(tmp_wav),
             ], check=True, capture_output=True)
             try:
                 aud_webm_path.unlink()
             except Exception:
                 pass
-            wav_data, sr = sf.read(str(wav_path), dtype="float32")
+            wav_data, sr = sf.read(str(tmp_wav), dtype="float32")
+            try:
+                tmp_wav.unlink()
+            except Exception:
+                pass
+            if lead_pad_sec > 0.01:
+                pad_n = int(round(lead_pad_sec * sr))
+                wav_data = np.vstack([np.zeros((pad_n, 2), dtype=np.float32), wav_data])
+            sf.write(str(wav_path), wav_data, sr, subtype="PCM_16")
             wav_dur = len(wav_data) / sr
             wav_peak = float(np.max(np.abs(wav_data))) if len(wav_data) else 0.0
-            # Use exact audio duration as canonical timeline master!
             dur = wav_dur
         else:
             wav_peak = 0.0
@@ -371,6 +399,10 @@ class CdpClipRecorder:
         self.raw_frames = []
 
         total_out_frames = max(1, int(round(dur * self.fps)))
+        # Span the full recorded frame timeline [t_first..t_last] onto dur so no ending action is ever clipped!
+        t_first = decoded[0][0]
+        t_last = max(t_first + 0.1, decoded[-1][0])
+        span = t_last - t_first
         cmd = [
             FFMPEG, "-y",
             "-f", "image2pipe", "-vcodec", "mjpeg", "-framerate", str(self.fps), "-i", "-",
@@ -385,7 +417,8 @@ class CdpClipRecorder:
         fidx = 0
         n_src = len(decoded)
         for k in range(total_out_frames):
-            target_t = t0 + (k + 0.5) / self.fps
+            frac = (k + 0.5) / total_out_frames
+            target_t = t_first + frac * span
             while fidx + 1 < n_src and decoded[fidx + 1][0] <= target_t:
                 fidx += 1
             proc.stdin.write(decoded[fidx][1])
@@ -490,8 +523,8 @@ def main():
         rec = CdpClipRecorder(page, cdp, CLIPS_DIR, fps=TARGET_FPS)
 
         log("1) Launching app & preparing isolated pristine demo state...")
-        page.goto(APP_URL, wait_until="networkidle")
-        page.get_by_test_id("nav-gacha").wait_for(timeout=30000)
+        page.goto(APP_URL, wait_until="domcontentloaded", timeout=60000)
+        page.get_by_test_id("nav-gacha").wait_for(timeout=60000)
         page.evaluate("() => document.fonts.ready")
         attach_store_and_audio(page)
         page.wait_for_timeout(500)
@@ -561,25 +594,25 @@ def main():
         dismiss_toasts(page)
         page.wait_for_timeout(350)
 
-        # ==================== SCENE 01: GACHA UNBOXING & HERO CARD REVEAL ====================
-        log("2) Recording s01_gacha...")
+        # ==================== SCENE 01: GACHA UNBOXING & HERO CARD REVEAL (CALM HUMAN PACE) ====================
+        log("2) Recording s01_gacha (relaxed pace)...")
         set_cursor_visible(page, True)
-        move_fast_smooth(page, 460, 420, steps=4)
+        move_fast_smooth(page, 460, 420, steps=6)
         rec.start("s01_gacha")
-        page.wait_for_timeout(450)
+        page.wait_for_timeout(750)
 
-        # Pull lever down smoothly
+        # Pull lever down unhurriedly
         lever = page.get_by_test_id("gacha-lever")
         lbox = lever.bounding_box()
-        drag_smooth(page, lbox["x"] + 16, lbox["y"] + 24, lbox["x"] + 16, lbox["y"] + 128, steps=12)
-        page.wait_for_timeout(800)
+        drag_smooth(page, lbox["x"] + 16, lbox["y"] + 24, lbox["x"] + 16, lbox["y"] + 128, steps=16)
+        page.wait_for_timeout(1250)
 
-        # Scratch off real silver foil coating across hero card!
+        # Scratch off real silver foil coating smoothly across hero card!
         hero = page.get_by_test_id("hero-holo-card")
         hbox = hero.bounding_box()
         cx, cy = hbox["x"] + hbox["width"] / 2, hbox["y"] + hbox["height"] / 2
         w, h = hbox["width"], hbox["height"]
-        move_fast_smooth(page, cx - w * 0.34, cy - h * 0.28, steps=8)
+        move_fast_smooth(page, cx - w * 0.34, cy - h * 0.28, steps=10)
         page.mouse.down()
         for tx, ty in [
             (cx + w * 0.34, cy - h * 0.22),
@@ -592,156 +625,156 @@ def main():
         ]:
             if not page.evaluate("() => window.__filmStore.getState().needsScratch"):
                 break
-            page.mouse.move(tx, ty, steps=7)
-            page.wait_for_timeout(55)
+            page.mouse.move(tx, ty, steps=9)
+            page.wait_for_timeout(75)
         page.mouse.up()
 
         if page.evaluate("() => window.__filmStore.getState().needsScratch"):
             page.get_by_test_id("gacha-quick-btn").click()
 
-        page.wait_for_timeout(1300)
+        page.wait_for_timeout(2000)
         dismiss_toasts(page)
         page.screenshot(path=str(STILLS_DIR / "01_gacha_bell_hero.png"))
 
-        # Graceful 3D holographic tilt shimmer
-        move_fast_smooth(page, cx - w * 0.32, cy - h * 0.22, steps=10)
-        page.wait_for_timeout(220)
-        move_fast_smooth(page, cx + w * 0.34, cy + h * 0.16, steps=14)
-        page.wait_for_timeout(240)
-        move_fast_smooth(page, cx + w * 0.12, cy - h * 0.24, steps=10)
-        page.wait_for_timeout(220)
-        page.mouse.move(cx - w * 0.6, cy, steps=6)
+        # Graceful unhurried 3D holographic tilt shimmer
+        move_fast_smooth(page, cx - w * 0.32, cy - h * 0.22, steps=12)
+        page.wait_for_timeout(420)
+        move_fast_smooth(page, cx + w * 0.34, cy + h * 0.16, steps=16)
+        page.wait_for_timeout(460)
+        move_fast_smooth(page, cx + w * 0.12, cy - h * 0.24, steps=12)
+        page.wait_for_timeout(420)
+        page.mouse.move(cx - w * 0.6, cy, steps=8)
 
-        # Solo audition (crystal clear bronze bell ring!)
-        click_smooth(page, page.get_by_role("button", name="试听音色"), pause_after=120)
+        # Solo audition (crystal clear bronze bell ring with generous tail!)
+        click_smooth(page, page.get_by_role("button", name="试听音色"), pause_after=150)
         set_cursor_visible(page, False)
-        page.wait_for_timeout(1400)
+        page.wait_for_timeout(2400)
         set_cursor_visible(page, True)
 
-        # Flip card to inspect back archive
-        click_smooth(page, page.get_by_test_id("gacha-flip-btn"), pause_after=120)
-        move_fast_smooth(page, cx + w * 0.72, cy + h * 0.2, steps=6)
+        # Flip card to inspect back archive calmly
+        click_smooth(page, page.get_by_test_id("gacha-flip-btn"), pause_after=150)
+        move_fast_smooth(page, cx + w * 0.72, cy + h * 0.2, steps=8)
         set_cursor_visible(page, False)
-        page.wait_for_timeout(2200)
+        page.wait_for_timeout(3200)
         page.screenshot(path=str(STILLS_DIR / "02_gacha_bell_back.png"))
         set_cursor_visible(page, True)
 
-        click_smooth(page, page.get_by_test_id("gacha-flip-btn"), pause_after=450)
+        click_smooth(page, page.get_by_test_id("gacha-flip-btn"), pause_after=700)
 
         # Open 16-card deck drawer & scroll smoothly
-        click_smooth(page, page.get_by_test_id("open-deck-drawer"), pause_after=400)
+        click_smooth(page, page.get_by_test_id("open-deck-drawer"), pause_after=650)
         drawer_scroll = page.locator("aside .holo-scroll").first
         dbox = drawer_scroll.bounding_box()
         if dbox:
-            move_fast_smooth(page, dbox["x"] + dbox["width"] * 0.5, dbox["y"] + dbox["height"] * 0.5, steps=6)
+            move_fast_smooth(page, dbox["x"] + dbox["width"] * 0.5, dbox["y"] + dbox["height"] * 0.5, steps=8)
             for _ in range(8):
                 page.mouse.wheel(0, 145)
-                page.wait_for_timeout(120)
-            page.wait_for_timeout(350)
-        click_smooth(page, page.get_by_role("button", name="关闭图鉴"), pause_after=250)
+                page.wait_for_timeout(190)
+            page.wait_for_timeout(750)
+        click_smooth(page, page.get_by_role("button", name="关闭图鉴"), pause_after=450)
 
-        # Brief curated soundscapes preview
-        click_smooth(page, page.get_by_test_id("gacha-soundscapes-btn"), pause_after=1500)
-        click_smooth(page, page.get_by_role("button", name="关闭策展声景"), pause_after=220)
+        # Curated soundscapes preview (readable hold)
+        click_smooth(page, page.get_by_test_id("gacha-soundscapes-btn"), pause_after=2300)
+        click_smooth(page, page.get_by_role("button", name="关闭策展声景"), pause_after=450)
 
         # Send #05 二八大杠车铃 into Beat Deck PERC slot (captures real physical flying-card animation!)
-        click_smooth(page, page.get_by_test_id("gacha-slot-btn"), pause_after=400)
-        click_smooth(page, page.get_by_role("button", name="装入→").nth(1), pause_after=950)
+        click_smooth(page, page.get_by_test_id("gacha-slot-btn"), pause_after=650)
+        click_smooth(page, page.get_by_role("button", name="装入→").nth(1), pause_after=1450)
         dismiss_toasts(page)
-        page.wait_for_timeout(250)
+        page.wait_for_timeout(450)
         manifest["clips"].append(rec.stop())
 
-        # ==================== SCENE 02: BEAT DECK LAYERING, SWAP, SOLO, KNOBS & MICRO-EDIT ====================
-        log("3) Recording s02_beat_build...")
+        # ==================== SCENE 02: BEAT DECK LAYERING, SWAP, SOLO, KNOBS & MICRO-EDIT (CALM PACE) ====================
+        log("3) Recording s02_beat_build (relaxed pace)...")
         rec.start("s02_beat_build")
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(550)
 
-        click_smooth(page, page.get_by_test_id("beat-play-btn"), pause_after=1850)
+        click_smooth(page, page.get_by_test_id("beat-play-btn"), pause_after=2600)
 
         # Layer Track 1 (二八大杠车铃) off-beat crisp hits
         for s_idx in [4, 10, 12]:
-            click_smooth(page, page.get_by_test_id(f"pad-1-{s_idx}"), pause_after=110, steps=6)
-        page.wait_for_timeout(1600)
+            click_smooth(page, page.get_by_test_id(f"pad-1-{s_idx}"), pause_after=220, steps=8)
+        page.wait_for_timeout(2600)
 
         # Paint Track 2 (MELODY) steps
         for s_idx in [0, 3, 6, 8, 11]:
-            click_smooth(page, page.get_by_test_id(f"pad-2-{s_idx}"), pause_after=70, steps=5)
-        page.wait_for_timeout(1500)
+            click_smooth(page, page.get_by_test_id(f"pad-2-{s_idx}"), pause_after=150, steps=7)
+        page.wait_for_timeout(2100)
 
         # Swap MELODY cartridge -> #11 赛博古筝拨弦
-        click_smooth(page, page.get_by_role("button", name="更换旋律轨道声卡"), pause_after=380)
-        click_smooth(page, page.locator("button:has-text('赛博古筝拨弦')").first, pause_after=1550)
+        click_smooth(page, page.get_by_role("button", name="更换旋律轨道声卡"), pause_after=650)
+        click_smooth(page, page.locator("button:has-text('赛博古筝拨弦')").first, pause_after=2600)
 
         # Layer Track 3 (VIBE · 夜市铁板滋啦)
-        click_smooth(page, page.get_by_test_id("pad-3-0"), pause_after=120, steps=6)
-        click_smooth(page, page.get_by_test_id("pad-3-8"), pause_after=1750, steps=6)
+        click_smooth(page, page.get_by_test_id("pad-3-0"), pause_after=240, steps=8)
+        click_smooth(page, page.get_by_test_id("pad-3-8"), pause_after=2800, steps=8)
 
-        # Solo Track 1 (二八车铃) briefly, then un-solo
+        # Solo Track 1 (二八车铃) clearly, then un-solo
         solo_btns = page.locator("button[title='独奏']")
-        click_smooth(page, solo_btns.nth(1), pause_after=1850)
-        click_smooth(page, solo_btns.nth(1), pause_after=700)
+        click_smooth(page, solo_btns.nth(1), pause_after=2650)
+        click_smooth(page, solo_btns.nth(1), pause_after=1150)
 
-        # Adjust MELODY tone knob & global swing knob
+        # Adjust MELODY tone knob & global swing knob smoothly
         tkbox = page.locator("[title*='滤波与音色明亮度']").nth(2).bounding_box()
         if tkbox:
             drag_smooth(page, tkbox["x"] + tkbox["width"]/2, tkbox["y"] + tkbox["height"]/2,
-                        tkbox["x"] + tkbox["width"]/2, tkbox["y"] + tkbox["height"]/2 - 34, steps=10)
-        page.wait_for_timeout(550)
+                        tkbox["x"] + tkbox["width"]/2, tkbox["y"] + tkbox["height"]/2 - 34, steps=14)
+        page.wait_for_timeout(950)
 
         skbox = page.locator("[title*='摇摆度']").first.bounding_box()
         if skbox:
             drag_smooth(page, skbox["x"] + skbox["width"]/2, skbox["y"] + skbox["height"]/2,
-                        skbox["x"] + skbox["width"]/2, skbox["y"] + skbox["height"]/2 - 22, steps=10)
-        page.wait_for_timeout(650)
+                        skbox["x"] + skbox["width"]/2, skbox["y"] + skbox["height"]/2 - 22, steps=14)
+        page.wait_for_timeout(1050)
 
         # Open Fine-Tuning bar & adjust pitch +1 and length 2-step on MELODY step 11
-        click_smooth(page, page.get_by_test_id("beat-fine-toggle"), pause_after=260)
+        click_smooth(page, page.get_by_test_id("beat-fine-toggle"), pause_after=550)
         p211 = page.get_by_test_id("pad-2-11").bounding_box()
-        move_fast_smooth(page, p211["x"] + p211["width"]/2, p211["y"] + p211["height"]/2, steps=6)
+        move_fast_smooth(page, p211["x"] + p211["width"]/2, p211["y"] + p211["height"]/2, steps=8)
         page.keyboard.down("Alt")
         page.mouse.click(p211["x"] + p211["width"]/2, p211["y"] + p211["height"]/2)
         page.keyboard.up("Alt")
-        page.wait_for_timeout(200)
+        page.wait_for_timeout(450)
         var_bar = page.get_by_test_id("beat-variation-bar")
-        click_smooth(page, var_bar.get_by_role("button", name="+", exact=True), pause_after=180, steps=6)
-        click_smooth(page, var_bar.get_by_role("button", name="2步", exact=True), pause_after=1500, steps=6)
+        click_smooth(page, var_bar.get_by_role("button", name="+", exact=True), pause_after=450, steps=8)
+        click_smooth(page, var_bar.get_by_role("button", name="2步", exact=True), pause_after=2100, steps=8)
         page.screenshot(path=str(STILLS_DIR / "03_beat_composition.png"))
         manifest["clips"].append(rec.stop())
 
-        # ==================== SCENE 03: INDEPENDENT A/B PHRASE, RULE VARIATION & MOMENTARY LIVE FX ====================
-        log("4) Recording s03_beat_ab_fx...")
+        # ==================== SCENE 03: INDEPENDENT A/B PHRASE, RULE VARIATION & MOMENTARY LIVE FX (CALM PACE) ====================
+        log("4) Recording s03_beat_ab_fx (relaxed pace)...")
         rec.start("s03_beat_ab_fx")
-        page.wait_for_timeout(220)
+        page.wait_for_timeout(450)
 
-        click_smooth(page, page.get_by_role("button", name="复制 A→B"), pause_after=220)
-        click_smooth(page, page.get_by_test_id("phrase-tab-B"), pause_after=300)
-        click_smooth(page, page.get_by_role("button", name="A+B", exact=True), pause_after=300)
+        click_smooth(page, page.get_by_role("button", name="复制 A→B"), pause_after=650)
+        click_smooth(page, page.get_by_test_id("phrase-tab-B"), pause_after=750)
+        click_smooth(page, page.get_by_role("button", name="A+B", exact=True), pause_after=750)
 
         # Rule Variation: 问答 (Call & Response)
-        click_smooth(page, page.get_by_test_id("variation-call_response"), pause_after=260)
+        click_smooth(page, page.get_by_test_id("variation-call_response"), pause_after=450)
         dismiss_toasts(page)
         page.screenshot(path=str(STILLS_DIR / "04_beat_ab_variation.png"))
         set_cursor_visible(page, False)
-        page.wait_for_timeout(4200)
+        page.wait_for_timeout(5200)
         set_cursor_visible(page, True)
 
-        # Close fine-tuning bar, switch Live FX to Momentary (按住生效), live perform!
-        click_smooth(page, page.get_by_test_id("beat-fine-toggle"), pause_after=220)
-        click_smooth(page, page.get_by_test_id("fx-mode-toggle"), pause_after=220)
+        # Close fine-tuning bar, switch Live FX to Momentary (按住生效), live perform clearly!
+        click_smooth(page, page.get_by_test_id("beat-fine-toggle"), pause_after=450)
+        click_smooth(page, page.get_by_test_id("fx-mode-toggle"), pause_after=700)
 
-        for fx_id, hold_ms, gap_ms in [("fx-bitcrush", 1150, 420), ("fx-echo", 1450, 420), ("fx-stutter", 1050, 550)]:
+        for fx_id, hold_ms, gap_ms in [("fx-bitcrush", 1650, 750), ("fx-echo", 1950, 750), ("fx-stutter", 1550, 850)]:
             fbox = page.get_by_test_id(fx_id).bounding_box()
-            move_fast_smooth(page, fbox["x"] + fbox["width"]/2, fbox["y"] + fbox["height"]/2, steps=8)
+            move_fast_smooth(page, fbox["x"] + fbox["width"]/2, fbox["y"] + fbox["height"]/2, steps=10)
             page.mouse.down()
             page.wait_for_timeout(hold_ms)
             page.mouse.up()
             page.wait_for_timeout(gap_ms)
 
-        click_smooth(page, page.get_by_test_id("beat-stop-btn"), pause_after=350)
+        click_smooth(page, page.get_by_test_id("beat-stop-btn"), pause_after=650)
         manifest["clips"].append(rec.stop())
 
-        # ==================== SCENE 04: PINBALL FREE JAM + 8s RECORDING + QUANTIZE A/B COMPARE ====================
-        log("5) Recording s04_pinball_free...")
+        # ==================== SCENE 04: PINBALL FREE JAM + 8s RECORDING + QUANTIZE A/B COMPARE (CALM PACE) ====================
+        log("5) Recording s04_pinball_free (relaxed pace)...")
         page.get_by_test_id("nav-pinball").click()
         page.wait_for_timeout(450)
         page.evaluate("""() => {
@@ -758,21 +791,21 @@ def main():
         page.wait_for_timeout(400)
 
         rec.start("s04_pinball_free")
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(650)
 
-        click_smooth(page, page.get_by_role("button", name="弹簧碰珠"), pause_after=200)
-        click_smooth(page, page.locator("button:has-text('二八大杠车铃')").first, pause_after=350)
+        click_smooth(page, page.get_by_role("button", name="弹簧碰珠"), pause_after=550)
+        click_smooth(page, page.locator("button:has-text('二八大杠车铃')").first, pause_after=650)
 
         canvas = page.locator("canvas").first
         cbox = canvas.bounding_box()
-        move_fast_smooth(page, cbox["x"] + cbox["width"] * 0.66, cbox["y"] + cbox["height"] * 0.34, steps=8)
+        move_fast_smooth(page, cbox["x"] + cbox["width"] * 0.66, cbox["y"] + cbox["height"] * 0.34, steps=10)
         page.mouse.click(cbox["x"] + cbox["width"] * 0.66, cbox["y"] + cbox["height"] * 0.34)
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(700)
 
-        click_smooth(page, page.get_by_test_id("pinball-drop-btn"), pause_after=300)
-        click_smooth(page, page.get_by_test_id("pinball-drop-btn"), pause_after=220, steps=4)
+        click_smooth(page, page.get_by_test_id("pinball-drop-btn"), pause_after=600)
+        click_smooth(page, page.get_by_test_id("pinball-drop-btn"), pause_after=550, steps=6)
         auto_btn = page.locator("button:has-text('自动连发')").first
-        click_smooth(page, auto_btn, pause_after=3200)
+        click_smooth(page, auto_btn, pause_after=4400)
         page.screenshot(path=str(STILLS_DIR / "05_pinball_free_jam.png"))
 
         # Adjust Gravity & Bounce visibly
@@ -781,25 +814,26 @@ def main():
             gbox = grav_slider.bounding_box()
             if gbox:
                 drag_smooth(page, gbox["x"] + gbox["width"]*0.45, gbox["y"] + gbox["height"]/2,
-                            gbox["x"] + gbox["width"]*0.24, gbox["y"] + gbox["height"]/2, steps=10)
+                            gbox["x"] + gbox["width"]*0.24, gbox["y"] + gbox["height"]/2, steps=14)
+        page.wait_for_timeout(550)
         bkbox = page.locator("[title*='弹珠全局弹性']").first.bounding_box()
         if bkbox:
             drag_smooth(page, bkbox["x"] + bkbox["width"]/2, bkbox["y"] + bkbox["height"]/2,
-                        bkbox["x"] + bkbox["width"]/2, bkbox["y"] + bkbox["height"]/2 - 34, steps=10)
+                        bkbox["x"] + bkbox["width"]/2, bkbox["y"] + bkbox["height"]/2 - 34, steps=14)
 
         set_cursor_visible(page, False)
-        page.wait_for_timeout(2400)
+        page.wait_for_timeout(3200)
         set_cursor_visible(page, True)
 
-        click_smooth(page, auto_btn, pause_after=400)
-        click_smooth(page, page.get_by_test_id("pinball-to-quantize-btn"), pause_after=600)
+        click_smooth(page, auto_btn, pause_after=650)
+        click_smooth(page, page.get_by_test_id("pinball-to-quantize-btn"), pause_after=1250)
         dismiss_toasts(page)
 
         q_banner = page.get_by_test_id("quantize-preview-banner")
         q_banner.wait_for(timeout=10000)
-        click_smooth(page, q_banner.get_by_role("button", name="▶ 听原录音"), pause_after=3000)
-        click_smooth(page, q_banner.get_by_role("button", name="▶ 听量化轨"), pause_after=3100)
-        click_smooth(page, q_banner.get_by_role("button", name="合并至当前轨"), pause_after=700)
+        click_smooth(page, q_banner.get_by_role("button", name="▶ 听原录音"), pause_after=3600)
+        click_smooth(page, q_banner.get_by_role("button", name="▶ 听量化轨"), pause_after=3700)
+        click_smooth(page, q_banner.get_by_role("button", name="合并至当前轨"), pause_after=1400)
         dismiss_toasts(page)
         manifest["clips"].append(rec.stop())
 
@@ -892,8 +926,8 @@ def main():
         dismiss_toasts(page)
         manifest["clips"].append(rec.stop())
 
-        # ==================== SCENE 06: FORGE DESIGN, 5 FOILS, CLEAN STICKERS, MINT CEREMONY & AUDITION ====================
-        log("7) Recording s06_forge_mint...")
+        # ==================== SCENE 06: FORGE DESIGN, 5 FOILS, CLEAN STICKERS, MINT CEREMONY & AUDITION (CALM PACE) ====================
+        log("7) Recording s06_forge_mint (relaxed pace)...")
         page.wait_for_function("document.querySelector('[data-testid=\"forge-pcm-badge\"]')?.textContent?.includes('真实 PCM')", timeout=15000)
         # Ensure draft starts clean with blank title & zero stickers so we design live cleanly on camera!
         page.evaluate("""() => {
@@ -903,44 +937,43 @@ def main():
         page.wait_for_timeout(250)
 
         rec.start("s06_forge_mint")
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(600)
 
         # 1. Type work name: 铃响晴巷
         title_input = page.get_by_test_id("forge-title-input")
-        click_smooth(page, title_input, pause_after=120)
+        click_smooth(page, title_input, pause_after=250)
         for ch in "铃响晴巷":
-            title_input.type(ch, delay=85)
-        page.wait_for_timeout(260)
+            title_input.type(ch, delay=120)
+        page.wait_for_timeout(650)
 
         # 2. Switch hero artwork to 二八大杠车铃 (street-bell)
         art_btn = page.get_by_role("button", name="换主角插画")
         for _ in range(18):
             if page.evaluate("() => window.__filmStore.getState().forgeDraft.artId") == "street-bell":
                 break
-            click_smooth(page, art_btn, pause_after=110, steps=5)
-        page.wait_for_timeout(220)
+            click_smooth(page, art_btn, pause_after=160, steps=6)
+        page.wait_for_timeout(550)
 
         # 3. Choose UR rarity
-        click_smooth(page, page.get_by_role("button", name="✦ UR ✦"), pause_after=250)
+        click_smooth(page, page.get_by_role("button", name="✦ UR ✦"), pause_after=550)
 
-        # 4. Showcase all 5 holographic foils with gentle tilt shimmer, landing on 温暖金箔!
+        # 4. Showcase all 5 holographic foils unhurriedly with gentle tilt shimmer, resting calmly on 温暖金箔!
         card_loc = page.get_by_test_id("hero-holo-card")
         fbox = card_loc.bounding_box()
         fcx, fcy = fbox["x"] + fbox["width"]/2, fbox["y"] + fbox["height"]/2
         for foil_label in ["棱镜", "星尘", "激光", "铬银", "金箔"]:
-            click_smooth(page, page.get_by_role("button", name=foil_label, exact=True), pause_after=120, steps=6)
-            move_fast_smooth(page, fcx - 95, fcy - 65, steps=6)
-            page.wait_for_timeout(160)
-            move_fast_smooth(page, fcx + 105, fcy + 55, steps=8)
-            page.wait_for_timeout(180)
-        page.wait_for_timeout(220)
+            click_smooth(page, page.get_by_role("button", name=foil_label, exact=True), pause_after=280, steps=8)
+            move_fast_smooth(page, fcx - 95, fcy - 65, steps=9)
+            page.wait_for_timeout(300)
+            move_fast_smooth(page, fcx + 105, fcy + 55, steps=11)
+            page.wait_for_timeout(340)
+        page.wait_for_timeout(1050)
 
         # 5. Add 3 crisp non-overlapping matte street stickers into clean corner safe zones!
         for stk_id in ["clapper", "starburst", "note"]:
-            click_smooth(page, page.get_by_test_id(f"forge-sticker-{stk_id}"), pause_after=180, steps=6)
+            click_smooth(page, page.get_by_test_id(f"forge-sticker-{stk_id}"), pause_after=320, steps=8)
 
         stickers_state = page.evaluate("() => window.__filmStore.getState().forgeDraft.stickers")
-        # Safe corners: clapper bottom-left (17%, 64%), starburst top-right (82%, 23%), note bottom-right (82%, 65%)
         targets = [(0.17, 0.64), (0.82, 0.23), (0.82, 0.65)]
         for idx, stk in enumerate(stickers_state[:3]):
             sloc = page.get_by_test_id(f"card-sticker-{stk['uid']}")
@@ -948,34 +981,34 @@ def main():
             if sbox:
                 tx = fbox["x"] + fbox["width"] * targets[idx][0]
                 ty = fbox["y"] + fbox["height"] * targets[idx][1]
-                drag_smooth(page, sbox["x"] + sbox["width"]/2, sbox["y"] + sbox["height"]/2, tx, ty, steps=10)
-                page.wait_for_timeout(140)
+                drag_smooth(page, sbox["x"] + sbox["width"]/2, sbox["y"] + sbox["height"]/2, tx, ty, steps=13)
+                page.wait_for_timeout(320)
                 if idx == 1:
                     rot_btn = page.get_by_role("button", name="旋转贴纸")
                     zoom_btn = page.get_by_role("button", name="放大贴纸")
                     if rot_btn.is_visible():
-                        click_smooth(page, rot_btn, pause_after=120, steps=5)
+                        click_smooth(page, rot_btn, pause_after=280, steps=6)
                     if zoom_btn.is_visible():
-                        click_smooth(page, zoom_btn, pause_after=120, steps=5)
+                        click_smooth(page, zoom_btn, pause_after=280, steps=6)
         page.mouse.click(fbox["x"] - 24, fbox["y"] + 40)
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(1000)
         page.screenshot(path=str(STILLS_DIR / "09_forge_editor_ready.png"))
 
         # 6. Trigger REAL persistence-gated 5-step Mint Ceremony & wait until #MY-01 inspect state lands!
-        click_smooth(page, page.get_by_test_id("forge-mint-btn"), pause_after=120)
+        click_smooth(page, page.get_by_test_id("forge-mint-btn"), pause_after=180)
         set_cursor_visible(page, False)
         page.wait_for_function("() => Boolean(window.__filmStore.getState().inspectMintedId)", timeout=15000)
-        page.wait_for_timeout(1300)
+        page.wait_for_timeout(2100)
         dismiss_toasts(page)
         page.screenshot(path=str(STILLS_DIR / "10_forge_minted_my01.png"))
 
         # 7. Canonical Audition on minted #MY-01 (plays exact same WAV & sweeps live PCM bars!)
         set_cursor_visible(page, True)
-        click_smooth(page, page.get_by_test_id("forge-play-btn"), pause_after=80)
+        click_smooth(page, page.get_by_test_id("forge-play-btn"), pause_after=100)
         set_cursor_visible(page, False)
         page.wait_for_function("() => window.__filmHoloAudio.isSnapshotPlaying()", timeout=10000)
         page.wait_for_function("() => !window.__filmHoloAudio.isSnapshotPlaying()", timeout=15000)
-        page.wait_for_timeout(450)
+        page.wait_for_timeout(950)
         set_cursor_visible(page, True)
         manifest["clips"].append(rec.stop())
 
@@ -1012,8 +1045,8 @@ def main():
         }
 
         rec.start("s07_share_click")
-        page.wait_for_timeout(250)
-        click_smooth(page, page.get_by_role("button", name="只读分享"), pause_after=1400)
+        page.wait_for_timeout(550)
+        click_smooth(page, page.get_by_role("button", name="只读分享"), pause_after=1850)
         share_url = page.evaluate("""() => {
             const st = window.__filmStore.getState();
             for (const t of st.toasts) {
@@ -1024,7 +1057,7 @@ def main():
         }""")
         manifest["shareUrl"] = share_url
         log(f"  Share URL: {share_url}")
-        page.wait_for_timeout(450)
+        page.wait_for_timeout(750)
         dismiss_toasts(page)
         manifest["clips"].append(rec.stop())
 
@@ -1041,100 +1074,126 @@ def main():
 
             share_rec.start("s07_share_page")
             set_cursor_visible(share_page, True)
-            share_page.wait_for_timeout(450)
+            share_page.wait_for_timeout(1350)
             click_smooth(share_page, share_page.locator("#playBtn"), pause_after=100)
             set_cursor_visible(share_page, False)
-            share_page.wait_for_timeout(3600)
+            share_page.wait_for_timeout(4200)
             if "停止" in (share_page.locator("#playBtn").inner_text() or ""):
                 share_page.locator("#playBtn").click()
-            share_page.wait_for_timeout(350)
+            share_page.wait_for_timeout(650)
             manifest["clips"].append(share_rec.stop())
             share_page.close()
 
-        # ==================== SCENE 08: PROJECT IMPORT + UNSEAL & REMIX (#MY-02 铃响晴巷·夜行版) ====================
-        log("9) Recording s08_import_and_remix...")
+        # ==================== SCENE 08: PROJECT IMPORT + UNSEAL & REMIX (#MY-02 铃响晴巷·夜行版, CALM PACE) ====================
+        log("9) Recording s08_import_and_remix (relaxed pace)...")
         rec.start("s08_import_and_remix")
         set_cursor_visible(page, True)
-        page.wait_for_timeout(250)
+        page.wait_for_timeout(550)
 
         # Genuine project import restore demonstration
-        click_smooth(page, page.get_by_role("button", name="返回草稿"), pause_after=300)
+        click_smooth(page, page.get_by_role("button", name="返回草稿"), pause_after=600)
         ib = page.get_by_role("button", name="导入工程").bounding_box()
         if ib:
-            move_fast_smooth(page, ib["x"] + ib["width"]/2, ib["y"] + ib["height"]/2, steps=8)
+            move_fast_smooth(page, ib["x"] + ib["width"]/2, ib["y"] + ib["height"]/2, steps=10)
         page.locator("input[type='file']").set_input_files(str(json_path))
-        page.wait_for_timeout(1100)
+        page.wait_for_timeout(1900)
         dismiss_toasts(page)
 
         # Unseal & Remix #MY-01!
         my01_item = page.locator("[data-testid^='binder-item-minted-']:has-text('铃响晴巷')").first
-        click_smooth(page, my01_item, pause_after=400)
-        click_smooth(page, page.get_by_test_id("forge-unseal-btn"), pause_after=600)
+        click_smooth(page, my01_item, pause_after=800)
+        click_smooth(page, page.get_by_test_id("forge-unseal-btn"), pause_after=1100)
         dismiss_toasts(page)
 
-        # Unmistakable Night Remix transformation:
+        # Unmistakable Night Remix transformation at readable pace:
         # 1) Swap VIBE -> #15 港风霓虹电流
-        click_smooth(page, page.get_by_role("button", name="更换氛围轨道声卡"), pause_after=350)
-        click_smooth(page, page.locator("button:has-text('港风霓虹电流')").first, pause_after=300)
+        click_smooth(page, page.get_by_role("button", name="更换氛围轨道声卡"), pause_after=650)
+        click_smooth(page, page.locator("button:has-text('港风霓虹电流')").first, pause_after=700)
 
         # 2) Scale C 五声 -> C 小调
-        click_smooth(page, page.locator("button[title*='调式锁定']").first, pause_after=220)
+        click_smooth(page, page.locator("button[title*='调式锁定']").first, pause_after=650)
 
         # 3) BPM 118 -> 126
         bpm_up = page.get_by_role("button", name="提高速度")
-        click_smooth(page, bpm_up, pause_after=100, steps=6)
-        click_smooth(page, bpm_up, pause_after=180, steps=4)
+        click_smooth(page, bpm_up, pause_after=300, steps=7)
+        click_smooth(page, bpm_up, pause_after=650, steps=5)
 
         # 4) Phrase B rule variation 「加密」
-        click_smooth(page, page.get_by_test_id("beat-fine-toggle"), pause_after=200)
-        click_smooth(page, page.get_by_test_id("phrase-tab-B"), pause_after=180)
-        click_smooth(page, page.get_by_test_id("variation-density_up"), pause_after=220)
-        click_smooth(page, page.get_by_test_id("beat-fine-toggle"), pause_after=180)
+        click_smooth(page, page.get_by_test_id("beat-fine-toggle"), pause_after=450)
+        click_smooth(page, page.get_by_test_id("phrase-tab-B"), pause_after=550)
+        click_smooth(page, page.get_by_test_id("variation-density_up"), pause_after=700)
+        click_smooth(page, page.get_by_test_id("beat-fine-toggle"), pause_after=450)
 
         # 5) Enable Street Echo in Latch mode
         if "按住" in (page.get_by_test_id("fx-mode-toggle").inner_text() or ""):
-            click_smooth(page, page.get_by_test_id("fx-mode-toggle"), pause_after=140)
-        click_smooth(page, page.get_by_test_id("fx-echo"), pause_after=200)
+            click_smooth(page, page.get_by_test_id("fx-mode-toggle"), pause_after=400)
+        click_smooth(page, page.get_by_test_id("fx-echo"), pause_after=600)
 
-        # 6) Play transformed Night Remix for full 2-bar loop (~4.2s)
-        click_smooth(page, page.get_by_test_id("beat-play-btn"), pause_after=120)
+        # 6) Play transformed Night Remix for full unhurried loop (~5.2s)
+        click_smooth(page, page.get_by_test_id("beat-play-btn"), pause_after=150)
         set_cursor_visible(page, False)
-        page.wait_for_timeout(4300)
+        page.wait_for_timeout(5200)
         page.screenshot(path=str(STILLS_DIR / "12_beat_remix_night.png"))
         set_cursor_visible(page, True)
-        click_smooth(page, page.get_by_test_id("beat-stop-btn"), pause_after=280)
+        click_smooth(page, page.get_by_test_id("beat-stop-btn"), pause_after=650)
 
-        # 7) Forge & Mint #MY-02 《铃响晴巷·夜行版》 (定向激光 UR)
-        click_smooth(page, page.get_by_test_id("beat-to-forge-btn"), pause_after=550)
+        # 7) Forge & Mint #MY-02 《铃响晴巷·夜行版》 (定向激光 UR + matching #05 二八大杠车铃 + 3 clean corner stickers!)
+        click_smooth(page, page.get_by_test_id("beat-to-forge-btn"), pause_after=900)
         dismiss_toasts(page)
+        page.evaluate("""() => {
+            const st = window.__filmStore;
+            st.setState({ forgeDraft: { ...st.getState().forgeDraft, stickers: [] } });
+        }""")
+        art_btn = page.get_by_role("button", name="换主角插画")
+        for _ in range(18):
+            if page.evaluate("() => window.__filmStore.getState().forgeDraft.artId") == "street-bell":
+                break
+            click_smooth(page, art_btn, pause_after=130, steps=6)
+        page.wait_for_timeout(350)
+
         title_input = page.get_by_test_id("forge-title-input")
-        click_smooth(page, title_input, pause_after=100)
+        click_smooth(page, title_input, pause_after=200)
         title_input.fill("")
-        page.wait_for_timeout(80)
+        page.wait_for_timeout(120)
         for ch in "铃响晴巷·夜行版":
-            title_input.type(ch, delay=65)
-        page.wait_for_timeout(180)
-        click_smooth(page, page.get_by_role("button", name="激光", exact=True), pause_after=220)
-        click_smooth(page, page.get_by_test_id("forge-mint-btn"), pause_after=120)
+            title_input.type(ch, delay=95)
+        page.wait_for_timeout(450)
+        click_smooth(page, page.get_by_role("button", name="激光", exact=True), pause_after=650)
+        page.evaluate("""() => {
+            const st = window.__filmStore;
+            const d = st.getState().forgeDraft;
+            st.setState({
+                forgeDraft: {
+                    ...d,
+                    stickers: [
+                        { uid: 'rmx-1', stickerId: 'clapper',   x: 17, y: 64, scale: 1.0,  rotation: -8 },
+                        { uid: 'rmx-2', stickerId: 'starburst', x: 82, y: 23, scale: 1.12, rotation: 14 },
+                        { uid: 'rmx-3', stickerId: 'note',      x: 82, y: 65, scale: 1.0,  rotation: 8 },
+                    ],
+                },
+            });
+        }""")
+        page.wait_for_timeout(700)
+        click_smooth(page, page.get_by_test_id("forge-mint-btn"), pause_after=160)
         set_cursor_visible(page, False)
 
         # Wait strictly until #MY-02 finishes minting & enters inspect mode!
         page.wait_for_function("""() => {
             const st = window.__filmStore.getState();
             const card = st.mintedCards.find(c => c.id === st.inspectMintedId);
-            return Boolean(card && card.code === '#MY-02');
+            return Boolean(card && card.title.includes('夜行版'));
         }""", timeout=15000)
-        page.wait_for_timeout(1200)
+        page.wait_for_timeout(1950)
         dismiss_toasts(page)
         page.screenshot(path=str(STILLS_DIR / "13_forge_minted_my02_lineage.png"))
 
         # Play audition of #MY-02 with complete echoing tail!
         set_cursor_visible(page, True)
-        click_smooth(page, page.get_by_test_id("forge-play-btn"), pause_after=80)
+        click_smooth(page, page.get_by_test_id("forge-play-btn"), pause_after=100)
         set_cursor_visible(page, False)
         page.wait_for_function("() => window.__filmHoloAudio.isSnapshotPlaying()", timeout=10000)
         page.wait_for_function("() => !window.__filmHoloAudio.isSnapshotPlaying()", timeout=15000)
-        page.wait_for_timeout(500)
+        page.wait_for_timeout(850)
         manifest["clips"].append(rec.stop())
 
         # Export #MY-02 artifacts for dual-card outro & finale audio!

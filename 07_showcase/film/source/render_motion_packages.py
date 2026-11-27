@@ -291,6 +291,34 @@ def build_stage_html(port: int, wav_data: dict) -> str:
       #F7F3E9;
     background-size: 100% 100%, 100% 100%, 26px 26px, 100% 100%;
   }}
+
+  /* ================= SCENE 5: CHAPTER INTERSTITIAL CARDS ================= */
+  #scene-chapter {{
+    display: none; align-items: center; justify-content: center;
+  }}
+  #scene-chapter.active {{ display: flex; }}
+  #chap-card {{
+    display: flex; flex-direction: column; align-items: center; gap: 28px;
+    text-align: center; padding: 54px 86px; border-radius: 36px;
+    border: 5px solid #1A1A1F; box-shadow: 14px 14px 0px #1A1A1F;
+    background: #FFFDF8;
+  }}
+  #chap-card.dark-card {{
+    background: #1B1D26; border-color: #FFD60A;
+    box-shadow: 12px 12px 0px rgba(255,214,10,0.38), 0 28px 70px rgba(0,0,0,0.65);
+  }}
+  #chap-pill {{
+    display: inline-flex; align-items: center; gap: 14px;
+    padding: 10px 30px; border-radius: 999px;
+    border: 3.5px solid #1A1A1F; box-shadow: 5px 5px 0px #1A1A1F;
+    font-size: 26px; font-weight: 900; letter-spacing: 0.08em;
+  }}
+  #chap-title {{
+    font-size: 86px; font-weight: 900; letter-spacing: 0.06em; line-height: 1.08;
+  }}
+  #chap-sub {{
+    font-size: 32px; font-weight: 800; letter-spacing: 0.05em; opacity: 0.85;
+  }}
 </style>
 </head>
 <body>
@@ -493,6 +521,15 @@ def build_stage_html(port: int, wav_data: dict) -> str:
   <img src="{base}/08_assets/optimized/stickers/note.webp" style="position:absolute;right:610px;bottom:86px;width:122px;height:122px;transform:rotate(-12deg);filter:drop-shadow(4px 6px 0 rgba(26,26,31,0.35));" />
 </div>
 
+<!-- ==================== CHAPTER INTERSTITIAL CARD ==================== -->
+<div id="scene-chapter" class="scene cream-bg">
+  <div id="chap-card">
+    <div id="chap-pill"><span id="chap-num" class="mono">01</span><span id="chap-tag">CHAPTER</span></div>
+    <div id="chap-title">声卡盲盒</div>
+    <div id="chap-sub">每个声音，先是一件有性格的潮玩</div>
+  </div>
+</div>
+
 <script>
 const BASE = "{base}";
 const CARDS = {json.dumps(cards, ensure_ascii=False)};
@@ -584,20 +621,52 @@ window.renderIntro = (t) => {{
     node.style.opacity = ribOp.toFixed(3);
   }});
 
-  // 3.3s - 7.5s: Neo-Brutalism Brand Title Lockup springs to center!
+  // 3.3s - 9.0s: Neo-Brutalism Brand Title Lockup springs to center with calm breathing hold!
   const lockup = document.getElementById('intro-title-lockup');
-  const pTitle = clamp((t - 3.35) / 0.62, 0, 1);
-  const pSlogan = clamp((t - 3.85) / 0.55, 0, 1);
-  const pSteps = clamp((t - 4.25) / 0.55, 0, 1);
-  const pExit = easeInOutCubic(clamp((t - 7.05) / 0.45, 0, 1));
+  const pTitle = clamp((t - 3.60) / 0.72, 0, 1);
+  const pSlogan = clamp((t - 4.20) / 0.65, 0, 1);
+  const pSteps = clamp((t - 4.70) / 0.65, 0, 1);
+  const pExit = easeInOutCubic(clamp((t - 8.45) / 0.55, 0, 1));
 
   lockup.style.opacity = (pTitle > 0 ? 1 - pExit : 0).toFixed(3);
-  const bScale = easeOutBack(pTitle) * (1 + pExit * 0.08);
-  document.getElementById('intro-main-badge').style.transform = `scale(${{bScale.toFixed(3)}}) translateY(${{((1 - easeOutCubic(pTitle)) * 38).toFixed(1)}}px)`;
+  const bScale = easeOutBack(pTitle) * (1 + pExit * 0.06);
+  document.getElementById('intro-main-badge').style.transform = `scale(${{bScale.toFixed(3)}}) translateY(${{((1 - easeOutCubic(pTitle)) * 36).toFixed(1)}}px)`;
   document.getElementById('intro-slogan').style.opacity = easeOutCubic(pSlogan).toFixed(3);
-  document.getElementById('intro-slogan').style.transform = `translateY(${{((1 - easeOutCubic(pSlogan)) * 26).toFixed(1)}}px)`;
+  document.getElementById('intro-slogan').style.transform = `translateY(${{((1 - easeOutCubic(pSlogan)) * 24).toFixed(1)}}px)`;
   document.getElementById('intro-steps').style.opacity = easeOutCubic(pSteps).toFixed(3);
-  document.getElementById('intro-steps').style.transform = `translateY(${{((1 - easeOutCubic(pSteps)) * 22).toFixed(1)}}px)`;
+  document.getElementById('intro-steps').style.transform = `translateY(${{((1 - easeOutCubic(pSteps)) * 20).toFixed(1)}}px)`;
+}};
+
+window.configureChapter = (cfg) => {{
+  const sc = document.getElementById('scene-chapter');
+  sc.classList.remove('cream-bg', 'dark-bg');
+  sc.classList.add(cfg.dark ? 'dark-bg' : 'cream-bg');
+  const card = document.getElementById('chap-card');
+  card.classList.toggle('dark-card', Boolean(cfg.dark));
+  const pill = document.getElementById('chap-pill');
+  pill.style.background = cfg.pillBg;
+  pill.style.color = cfg.pillFg;
+  document.getElementById('chap-num').textContent = cfg.num;
+  document.getElementById('chap-tag').textContent = cfg.tag;
+  const titleEl = document.getElementById('chap-title');
+  titleEl.textContent = cfg.title;
+  titleEl.style.color = cfg.dark ? '#FFFDF8' : '#1A1A1F';
+  const subEl = document.getElementById('chap-sub');
+  subEl.textContent = cfg.sub;
+  subEl.style.color = cfg.dark ? '#FFD60A' : '#4A4A58';
+}};
+
+window.renderChapter = (t) => {{
+  // Calm 2.3s chapter breathing card: smooth spring in (0..0.48s), serene readable hold (0.48..1.85s), gentle ease out (1.85..2.3s)
+  const pIn = clamp(t / 0.48, 0, 1);
+  const pSub = clamp((t - 0.16) / 0.42, 0, 1);
+  const pOut = easeInOutCubic(clamp((t - 1.85) / 0.45, 0, 1));
+  const card = document.getElementById('chap-card');
+  const sc = (0.88 + 0.12 * easeOutBack(pIn)) * (1 - pOut * 0.04);
+  const ty = (1 - easeOutCubic(pIn)) * 34 - pOut * 16;
+  card.style.transform = `translateY(${{ty.toFixed(1)}}px) scale(${{sc.toFixed(3)}})`;
+  card.style.opacity = (easeOutCubic(pIn) * (1 - pOut)).toFixed(3);
+  document.getElementById('chap-sub').style.opacity = (easeOutCubic(pSub) * (1 - pOut) * 0.88).toFixed(3);
 }};
 
 window.renderExports = (t, frameIdx) => {{
@@ -627,11 +696,11 @@ window.renderExports = (t, frameIdx) => {{
 }};
 
 window.renderOutro = (t) => {{
-  // 0.0 - 4.0s: Dual cards #MY-01 & #MY-02 prominently displayed side by side with shimmering foil
-  // 4.0 - 9.5s: Cards gracefully glide outward to frame edges as Brand Lockup rises center stage!
-  const pIn = easeOutBack(clamp(t / 0.72, 0, 1));
-  const pSplit = easeInOutCubic(clamp((t - 3.9) / 0.9, 0, 1));
-  const pBrand = easeOutCubic(clamp((t - 4.35) / 0.75, 0, 1));
+  // 0.0 - 4.6s: Dual cards #MY-01 & #MY-02 prominently displayed side by side with shimmering foil
+  // 4.6 - 11.2s: Cards gracefully glide outward to frame edges as Brand Lockup rises center stage with generous closing hold!
+  const pIn = easeOutBack(clamp(t / 0.78, 0, 1));
+  const pSplit = easeInOutCubic(clamp((t - 4.55) / 1.0, 0, 1));
+  const pBrand = easeOutCubic(clamp((t - 5.05) / 0.85, 0, 1));
 
   const cL = document.getElementById('outro-card-left');
   const cR = document.getElementById('outro-card-right');
@@ -719,7 +788,7 @@ def composite_real_webm_into_exports(base_mp4: Path, real_webm: Path, out_mp4: P
     patch_path = CACHE_DIR / "webm_footer_patch.png"
     patch.save(patch_path)
 
-    # Loop real_webm smoothly to match 7.6s showcase, fade in with panel at t=0.14s..0.69s
+    # Loop real_webm smoothly to match 9.6s relaxed showcase, fade in with panel at t=0.14s..0.69s
     fc = (
         f"[1:v]fps={FPS},scale={sw}:{sh}:flags=lanczos,format=rgba,"
         f"fade=t=in:st=0.14:d=0.45:alpha=1[wm];"
@@ -734,7 +803,7 @@ def composite_real_webm_into_exports(base_mp4: Path, real_webm: Path, out_mp4: P
         "-loop", "1", "-i", str(patch_path),
         "-filter_complex", fc,
         "-map", "[vout]",
-        "-t", "7.6",
+        "-t", "9.6",
         "-c:v", "libx264", "-preset", "fast", "-crf", "13", "-pix_fmt", "yuv420p",
         str(out_mp4),
     ]
@@ -755,11 +824,19 @@ def main():
     print("1) Preparing film-display clean poster copies & extracting genuine WAV spectrum...")
     prepare_clean_poster_display(my01_png, CACHE_DIR / "my01_poster_clean.png", CACHE_DIR / "my01_card_face.png")
     prepare_clean_poster_display(my02_png, CACHE_DIR / "my02_poster_clean.png", CACHE_DIR / "my02_card_face.png")
-    wav_data = extract_wav_envelope_bars(my01_wav, total_frames=int(7.6 * FPS))
+    wav_data = extract_wav_envelope_bars(my01_wav, total_frames=int(9.6 * FPS))
 
     server, port = start_repo_http_server()
     stage_html_path = CACHE_DIR / "motion_stage.html"
     stage_html_path.write_text(build_stage_html(port, wav_data), encoding="utf-8")
+
+    chapters = [
+        ("chapter_01_gacha.mp4",   {"num": "01", "tag": "DISCOVER", "title": "声卡盲盒",   "sub": "每个声音，先是一件有性格的潮玩", "pillBg": "#7C3AED", "pillFg": "#FFFDF8", "dark": False}),
+        ("chapter_02_beat.mp4",    {"num": "02", "tag": "COMPOSE",  "title": "插卡编曲",   "sub": "四轨街巷声源，一层层长成节奏",   "pillBg": "#FF5C2B", "pillFg": "#FFFDF8", "dark": False}),
+        ("chapter_03_pinball.mp4", {"num": "03", "tag": "PERFORM",  "title": "弹珠剧场",   "sub": "自由碰撞找灵感 · 编曲登台纯享演出", "pillBg": "#00D4AA", "pillFg": "#1A1A1F", "dark": False}),
+        ("chapter_04_forge.mp4",   {"num": "04", "tag": "FORGE",    "title": "闪卡铸造",   "sub": "挑箔面、贴贴纸，把音乐压印入册",   "pillBg": "#FFD60A", "pillFg": "#1A1A1F", "dark": True}),
+        ("chapter_05_outputs.mp4", {"num": "05", "tag": "REMIX",    "title": "导出与重混", "sub": "带走同源作品，随时拆封改出下一版", "pillBg": "#00D4AA", "pillFg": "#1A1A1F", "dark": True}),
+    ]
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -772,20 +849,26 @@ def main():
         page.evaluate("() => document.fonts.ready")
         page.wait_for_timeout(400)
 
-        # Render 00 Intro (7.5s @ 60fps)
-        print("2) Rendering motion_00_intro.mp4 (7.5s @ 60fps)...")
-        render_sequence(page, "intro", "renderIntro", 7.5, MOTION_DIR / "motion_00_intro.mp4")
+        # Render 00 Intro (9.0s @ 30fps)
+        print("2) Rendering motion_00_intro.mp4 (9.0s)...")
+        render_sequence(page, "intro", "renderIntro", 9.0, MOTION_DIR / "motion_00_intro.mp4")
 
-        # Render 06 Exports Base (7.6s @ 60fps) & record exact WebM window coordinates
-        print("3) Rendering motion_06_exports_base.mp4 (7.6s @ 60fps)...")
-        page.evaluate("() => { window.setMode('exports'); window.renderExports(2.0, 120); }")
+        # Render 5 calm 2.3s Chapter Interstitial Cards!
+        print("2b) Rendering 5 calm 2.3s Neo-Brutalism chapter breathing cards...")
+        for fname, cfg in chapters:
+            page.evaluate("(c) => window.configureChapter(c)", cfg)
+            render_sequence(page, "chapter", "renderChapter", 2.3, MOTION_DIR / fname)
+
+        # Render 06 Exports Base (9.6s) & record exact WebM window coordinates
+        print("3) Rendering motion_06_exports_base.mp4 (9.6s)...")
+        page.evaluate("() => { window.setMode('exports'); window.renderExports(2.0, 60); }")
         slot_box = page.locator("#webm-window").bounding_box()
         (CACHE_DIR / "webm_slot.json").write_text(json.dumps(slot_box), encoding="utf-8")
-        render_sequence(page, "exports", "renderExports", 7.6, CACHE_DIR / "motion_06_exports_base.mp4")
+        render_sequence(page, "exports", "renderExports", 9.6, CACHE_DIR / "motion_06_exports_base.mp4")
 
-        # Render 07 Outro (9.5s @ 60fps)
-        print("4) Rendering motion_07_outro.mp4 (9.5s @ 60fps)...")
-        render_sequence(page, "outro", "renderOutro", 9.5, MOTION_DIR / "motion_07_outro.mp4")
+        # Render 07 Outro (11.2s)
+        print("4) Rendering motion_07_outro.mp4 (11.2s)...")
+        render_sequence(page, "outro", "renderOutro", 11.2, MOTION_DIR / "motion_07_outro.mp4")
 
         # Render HD Cover (1920x1080) & Small Cover (480x270 PNG + JPG)
         print("5) Rendering 1920x1080 & 480x270 covers...")
@@ -800,9 +883,8 @@ def main():
 
         browser.close()
 
-    server.shutdown()
-
-    print("6) Compositing real 5:7 WebM motion card into motion_06_exports.mp4...")
+    # Daemon HTTP server exits cleanly with process (avoids keep-alive shutdown deadlock)
+    print("6) Compositing real 5:7 WebM motion card into motion_06_exports.mp4...", flush=True)
     composite_real_webm_into_exports(
         CACHE_DIR / "motion_06_exports_base.mp4",
         my01_webm,

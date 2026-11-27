@@ -8,170 +8,202 @@
     {
       "id": "v01_hook",
       "chapter": "00_intro",
-      "rate": "+3%",
-      "pitch": "+2Hz",
-      "text": "如果把一条街的声音，装进一盒能亲手编曲的潮玩盲盒？",
-      "subtitle": "如果把一条街的声音，装进一盒能亲手编曲的潮玩盲盒？"
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "如果把一条街的声音，做进一盒能编曲的盲盒？",
+      "subtitle": "如果把一条街的声音，做进一盒能编曲的盲盒？"
     },
     {
       "id": "v02_title",
       "chapter": "00_intro",
-      "rate": "+1%",
-      "pitch": "+1Hz",
+      "rate": "-6%",
+      "pitch": "+0Hz",
       "text": "欢迎来到，声卡造物局。",
       "subtitle": "欢迎来到——声卡造物局"
     },
     {
       "id": "v03_gacha_pull",
       "chapter": "01_gacha",
-      "rate": "+7%",
-      "pitch": "+2Hz",
-      "text": "每个声音，先是一张潮玩声卡。拉下摇杆，刮开银膜——",
-      "subtitle": "每个声音，先是一张有性格的潮玩声卡。拉下摇杆，刮开银膜——"
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "先抽一张声卡，刮开银膜——",
+      "subtitle": "先抽一张声卡，刮开银膜——"
     },
     {
       "id": "v04_gacha_bell",
       "chapter": "01_gacha",
-      "rate": "+6%",
-      "pitch": "+2Hz",
-      "text": "二八大杠车铃登场！这声清亮铜铃，来自街巷灵感合成。",
-      "subtitle": "「二八大杠车铃」登场！听听这声街巷灵感合成的清亮铜铃"
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "二八大杠车铃。听听这声程序合成的铜铃。",
+      "subtitle": "「二八大杠车铃」——听听这声街巷灵感合成的清亮铜铃"
     },
     {
-      "id": "v05_gacha_back_deck",
+      "id": "v05_gacha_back",
       "chapter": "01_gacha",
-      "rate": "+7%",
+      "rate": "-5%",
+      "pitch": "+0Hz",
+      "text": "翻开卡背，能看到它的合成配方。",
+      "subtitle": "翻开卡背，市井档案与程序合成配方一目了然"
+    },
+    {
+      "id": "v05b_gacha_slot",
+      "chapter": "01_gacha",
+      "rate": "-5%",
       "pitch": "+1Hz",
-      "text": "翻看卡背档案与合成配方，十六张声卡与三组策展声景，随时装入节奏。",
-      "subtitle": "翻看卡背档案与合成配方，16 张声卡与策展声景随时装入节奏"
+      "text": "挑好心仪的声卡，装入节拍台。",
+      "subtitle": "16 张街巷声卡与策展声景，随时装入节拍台"
     },
     {
       "id": "v06_beat_layer",
       "chapter": "02_beat",
-      "rate": "+6%",
-      "pitch": "+2Hz",
-      "text": "插卡入槽，音乐一层层生长：竹板打底，抹亮二八车铃的反拍脆响——",
-      "subtitle": "插卡入槽，音乐一层层生长：竹板打底，抹亮车铃反拍"
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "音乐一层层生长：竹板打底，加上车铃反拍。",
+      "subtitle": "插卡入槽，音乐一层层生长：竹板打底，加上车铃反拍"
     },
     {
       "id": "v07_beat_swap",
       "chapter": "02_beat",
-      "rate": "+6%",
-      "pitch": "+2Hz",
-      "text": "把旋律轨换成赛博古筝，叠上夜市铁板，四轨街巷律动瞬间成形。",
-      "subtitle": "换上「赛博古筝」与「夜市铁板」，四轨街巷律动瞬间成形"
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "把旋律换成赛博古筝，再叠上夜市铁板。",
+      "subtitle": "换上「赛博古筝」与「夜市铁板」，四轨律动成形"
     },
     {
       "id": "v08_beat_detail",
       "chapter": "02_beat",
-      "rate": "+6%",
-      "pitch": "+1Hz",
-      "text": "独奏听清细节，拧动音色与摇摆，再微调每步音高与时值。",
-      "subtitle": "独奏、音色、摇摆与每步微调，每处细节都能听见变化"
+      "rate": "-5%",
+      "pitch": "+0Hz",
+      "text": "可以独奏听细节，也能微调音色、摇摆和每个音符。",
+      "subtitle": "独奏听清细节，随时微调音色、摇摆与单步音高时值"
     },
     {
-      "id": "v09_beat_ab_var",
+      "id": "v09_beat_ab",
       "chapter": "02_beat",
-      "rate": "+6%",
-      "pitch": "+2Hz",
-      "text": "三十二步独立AB乐句，一键复制并触发规则变奏，B段自然回应。",
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "三十二步分为AB两段，一键触发规则变奏。",
       "subtitle": "32 步独立 A/B 乐句，规则变奏让 B 段自然回应"
     },
     {
       "id": "v10_beat_fx",
       "chapter": "02_beat",
-      "rate": "+7%",
-      "pitch": "+3Hz",
-      "text": "按住触发像素碎音、街巷回声与切拍重复，随时现场演奏。",
-      "subtitle": "按住触发像素碎音、街巷回声与切拍重复，随时现场演奏"
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "按住下方效果条，随时来一段现场演奏。",
+      "subtitle": "按住触发像素碎音、街巷回声与切拍重复，现场演奏"
     },
     {
       "id": "v11_pinball_free",
       "chapter": "03_pinball_free",
-      "rate": "+7%",
-      "pitch": "+2Hz",
-      "text": "想碰出意外灵感？进弹珠自由实验！组合斜板、碰珠、叶轮与传送门，调调重力与弹性——",
-      "subtitle": "弹珠自由实验：组合声学机关、调节重力与弹性，碰撞出意外灵感"
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "想碰出意外灵感，就来弹珠自由实验。",
+      "subtitle": "弹珠自由实验：摆好机关、调节重力，碰出意外灵感"
+    },
+    {
+      "id": "v11b_pinball_play",
+      "chapter": "03_pinball_free",
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "摆好斜板、碰珠和传送门，让弹珠撞出随机节奏。",
+      "subtitle": "组合声音斜板、碰珠、叶轮与传送门，实时碰撞发声"
     },
     {
       "id": "v12a_pinball_send",
       "chapter": "03_pinball_free",
-      "rate": "+6%",
-      "pitch": "+1Hz",
-      "text": "八秒碰撞自动成轨，送回节拍台——",
-      "subtitle": "8 秒碰撞自动成轨，送回节拍台——"
+      "rate": "-5%",
+      "pitch": "+0Hz",
+      "text": "把八秒碰撞送回节拍台，听听原录音和量化轨的区别。",
+      "subtitle": "8 秒碰撞送回节拍台，对比「原录音」与「量化轨」"
     },
     {
       "id": "v12b_pinball_merge",
       "chapter": "03_pinball_free",
-      "rate": "+5%",
+      "rate": "-5%",
       "pitch": "+1Hz",
-      "text": "对比原录音与量化轨，一键合并，排进音乐里。",
-      "subtitle": "对比原录音与量化轨，一键合并排进音乐里"
+      "text": "听着满意，一键合并进编曲。",
+      "subtitle": "一键合并，把碰撞灵感整理进当前编曲"
     },
     {
-      "id": "v13_pinball_show_intro",
+      "id": "v13_pinball_show",
       "chapter": "04_pinball_show",
-      "rate": "+3%",
-      "pitch": "+1Hz",
-      "text": "现在，冻结这首《铃响晴巷》，登上微缩街巷编曲剧场。",
+      "rate": "-6%",
+      "pitch": "+0Hz",
+      "text": "现在，冻结这首《铃响晴巷》，请它登台演出。",
       "subtitle": "冻结《铃响晴巷》，登上微缩街巷编曲剧场"
     },
     {
-      "id": "v14_forge_design",
+      "id": "v14_forge_foil",
       "chapter": "05_forge",
-      "rate": "+5%",
-      "pitch": "+2Hz",
-      "text": "送进闪卡工坊，命名《铃响晴巷》，对比五种全息箔面，选定温暖金箔。",
-      "subtitle": "进入闪卡工坊：命名《铃响晴巷》，对比五种全息材质，选定温暖金箔"
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "把音乐送进闪卡工坊，给它起个名字，挑一层全息箔面。",
+      "subtitle": "闪卡工坊：命名《铃响晴巷》，对比五种全息箔面"
     },
     {
-      "id": "v15_forge_sticker_mint",
+      "id": "v15_forge_mint",
       "chapter": "05_forge",
-      "rate": "+6%",
-      "pitch": "+2Hz",
-      "text": "点缀哑光市井贴纸，一键压印提取真实声纹，收入本设备卡册。",
-      "subtitle": "点缀哑光市井贴纸，真实渲染声纹并压印收入本设备卡册"
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "添几枚市井贴纸，一键压印，存进这台设备的卡册。",
+      "subtitle": "点缀哑光市井贴纸，真实渲染声纹并压印入册"
     },
     {
       "id": "v16a_exports",
       "chapter": "06_outputs_remix",
-      "rate": "+5%",
-      "pitch": "+1Hz",
-      "text": "高清海报、无损音频、完整动态卡与可编辑工程，同源一次带走。",
-      "subtitle": "海报、无损音频、动态闪卡与可编辑工程同源一次导出"
+      "rate": "-5%",
+      "pitch": "+0Hz",
+      "text": "海报、无损音频、动态闪卡和工程，一次同源导出。",
+      "subtitle": "高清海报、无损音频、动态闪卡与可编辑工程同源导出"
     },
     {
       "id": "v16b_share",
       "chapter": "06_outputs_remix",
-      "rate": "+6%",
+      "rate": "-5%",
+      "pitch": "+0Hz",
+      "text": "开启本机归档，还能生成只读展页，试听简化轮廓。",
+      "subtitle": "本机归档支持只读作品展页，快速试听简化音符轮廓"
+    },
+    {
+      "id": "v17a_remix",
+      "chapter": "06_outputs_remix",
+      "rate": "-5%",
       "pitch": "+1Hz",
-      "text": "本机归档生成只读展页，快速试听音符轮廓。",
-      "subtitle": "本机归档生成只读作品展页，快速试听简化音符轮廓"
+      "text": "随时导入工程，或者从卡册拆封重混。",
+      "subtitle": "随时导入工程，或从卡册对原作「拆封重混创作」"
     },
     {
-      "id": "v17a_import_remix",
+      "id": "v17b_remix_change",
       "chapter": "06_outputs_remix",
-      "rate": "+6%",
-      "pitch": "+2Hz",
-      "text": "故事还没结束。随时导入工程，或在卡册拆封重混——换上霓虹电流、转入小调提速！",
-      "subtitle": "导入工程或在卡册拆封重混：换上霓虹电流、转入小调提速"
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "换上霓虹电流、转小调提速，听听夜行版的感觉。",
+      "subtitle": "切换霓虹电流、C 小调与 126 BPM，即时重混夜行版"
     },
     {
-      "id": "v17b_mint_remix",
+      "id": "v17c_remix_mint",
       "chapter": "06_outputs_remix",
-      "rate": "+5%",
-      "pitch": "+2Hz",
-      "text": "换一层定向激光，再铸出第 1 代《铃响晴巷 · 夜行版》。",
+      "rate": "-5%",
+      "pitch": "+1Hz",
+      "text": "换一层定向激光，铸出第 1 代《铃响晴巷 · 夜行版》。",
       "subtitle": "换上定向激光箔面，铸出第 1 代《铃响晴巷 · 夜行版》"
     },
     {
       "id": "v18_outro",
       "chapter": "07_outro",
-      "rate": "+1%",
-      "pitch": "+1Hz",
-      "text": "发现声音，动手编曲，珍藏闪卡，再改出下一版。声卡造物局，下一拍，由你决定。",
-      "subtitle": "发现声音 · 编织节奏 · 珍藏闪卡 · 拆封重混 —— 声卡造物局，下一拍，由你决定"
+      "rate": "-6%",
+      "pitch": "+0Hz",
+      "text": "发现声音，编织节奏，珍藏闪卡，再改出下一版。",
+      "subtitle": "发现声音 · 编织节奏 · 珍藏闪卡 · 拆封重混"
+    },
+    {
+      "id": "v18b_outro_tag",
+      "chapter": "07_outro",
+      "rate": "-6%",
+      "pitch": "+0Hz",
+      "text": "声卡造物局，下一拍，由你决定。",
+      "subtitle": "声卡造物局 —— 下一拍，由你决定"
     }
   ]
 }
